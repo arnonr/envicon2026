@@ -28,7 +28,8 @@
 
       <!-- Meadow ground -->
       <div
-        class="absolute bottom-0 left-0 right-0 h-[28%] bg-gradient-to-t from-meadow-400 via-meadow-300 to-meadow-200/80" />
+        class="absolute bottom-0 left-0 right-0 h-[28%]"
+        style="background: linear-gradient(to top, #4ade80 0%, #65e292 15%, #86efac 35%, #a8f3c0 55%, #bbf7d0 72%, #d4fae3 87%, transparent 100%)" />
 
 
       <!-- Bubbles -->
