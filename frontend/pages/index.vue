@@ -61,7 +61,15 @@
           เทคโนโลยีสิ่งแวดล้อมเชิงนวัตกรรมเพื่ออนาคตที่ยั่งยืนและสังคมคาร์บอนต่ำ
         </p>
 
-        <div class="flex flex-col sm:flex-row gap-4 justify-center hero-fade hero-fade--5">
+        <!-- Countdown -->
+        <div class="flex items-center justify-center gap-3 sm:gap-5 mb-10 hero-fade hero-fade--5">
+          <div v-for="unit in countdown" :key="unit.label" class="countdown-unit">
+            <div class="countdown-value">{{ unit.value }}</div>
+            <div class="countdown-label">{{ unit.label }}</div>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center hero-fade hero-fade--6">
           <NuxtLink to="/submit"
             class="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-meadow-500 to-meadow-600 font-bold text-white text-lg shadow-lg shadow-meadow-300/40 hover:shadow-meadow-400/60 hover:scale-[1.04] hover:-translate-y-0.5 transition-all duration-300">
             ส่งบทคัดย่อ
@@ -79,7 +87,7 @@
 
       <!-- Scroll hint -->
       <div
-        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-meadow-500/40 hero-fade hero-fade--6">
+        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-meadow-500/40 hero-fade hero-fade--7">
         <span class="text-xs tracking-[0.2em] uppercase font-medium">Scroll</span>
         <div class="w-px h-8 bg-gradient-to-b from-meadow-400/40 to-transparent scroll-line" />
       </div>
@@ -237,6 +245,32 @@
 </template>
 
 <script setup lang="ts">
+// ── Countdown ──
+const EVENT_DATE = new Date('2026-11-12T08:00:00+07:00').getTime()
+
+const pad = (n: number) => String(n).padStart(2, '0')
+
+const getCountdown = () => {
+  const diff = Math.max(0, EVENT_DATE - Date.now())
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+  return [
+    { value: String(days), label: 'วัน' },
+    { value: pad(hours), label: 'ชั่วโมง' },
+    { value: pad(minutes), label: 'นาที' },
+    { value: pad(seconds), label: 'วินาที' },
+  ]
+}
+
+const countdown = ref(getCountdown())
+
+onMounted(() => {
+  const timer = setInterval(() => { countdown.value = getCountdown() }, 1000)
+  onUnmounted(() => clearInterval(timer))
+})
+
 const stats = [
   {
     value: "12–13",
@@ -685,6 +719,10 @@ const timelineBubbleStyle = (_i: number) => {
 }
 
 .hero-fade--6 {
+  animation-delay: 0.9s;
+}
+
+.hero-fade--7 {
   animation-delay: 1.1s;
 }
 
@@ -693,6 +731,41 @@ const timelineBubbleStyle = (_i: number) => {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ── Countdown ── */
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 1rem;
+  padding: 0.75rem 1.25rem;
+  min-width: 4.5rem;
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.countdown-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, #059669, #0284c7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-top: 0.25rem;
 }
 
 /* ── Scroll indicator ── */
