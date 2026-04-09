@@ -1,0 +1,13 @@
+node_modules/
+.nuxt/
+.output/
+dist/
+.env
+*.log
+uploads/*
+!uploads/.gitkeep
+mysql_data/
+.superpowers/
+.DS_Store
+.claude/
+.playwright-mcp/

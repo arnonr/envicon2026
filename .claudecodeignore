@@ -1,0 +1,45 @@
+# Dependencies
+**/node_modules/
+
+# Build outputs
+frontend/.nuxt/
+frontend/.output/
+frontend/dist/
+backend/dist/
+
+# Lock files
+*.lock
+bun.lock
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Uploads
+backend/uploads/
+
+# Docker data
+mysql_data/
+
+# Superpowers brainstorm artifacts
+.superpowers/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Source maps
+*.map
