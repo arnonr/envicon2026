@@ -2,6 +2,7 @@
 definePageMeta({ middleware: ["auth"] });
 
 const { user, logout } = useAuth();
+const { show: showComingSoon } = useComingSoon();
 </script>
 
 <template>
@@ -49,7 +50,7 @@ const { user, logout } = useAuth();
         </template>
         <div class="text-center py-8 text-gray-400">
           <p>ยังไม่มีผลงาน</p>
-          <UButton to="/submit" color="primary" variant="soft" class="mt-4" size="sm">
+          <UButton color="primary" variant="soft" class="mt-4" size="sm" @click="showComingSoon">
             ส่งผลงานใหม่
           </UButton>
         </div>

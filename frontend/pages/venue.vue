@@ -23,14 +23,9 @@
       </template>
       <div class="aspect-video rounded-lg overflow-hidden bg-gray-100">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3874.5!2d100.5139!3d13.8199!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29cf401c08a0d%3A0x3feb4e2e7a40bb98!2sKMUTNB%20Technopark!5e0!3m2!1sen!2sth!4v1"
-          width="100%"
-          height="100%"
-          style="border: 0"
-          allowfullscreen
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-        ></iframe>
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6674.084683217916!2d100.51142257509149!3d13.821093636577967!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e29b9fec733295%3A0xabfe9c6fbd6d88d7!2zS01VVE5CIFRFQ0hOTyBQQVJLIOC4reC4uOC4l-C4ouC4suC4meC5gOC4l-C4hOC5guC4meC5guC4peC4ouC4tSDguKHguKvguLLguKfguLTguJfguKLguLLguKXguLHguKLguYDguJfguITguYLguJnguYLguKXguKLguLXguJ7guKPguLDguIjguK3guKHguYDguIHguKXguYnguLLguJ7guKPguLDguJnguITguKPguYDguKvguJnguLfguK0!5e1!3m2!1sen!2sth!4v1775725654100!5m2!1sen!2sth"
+          width="100%" height="100%" style="border: 0" allowfullscreen loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade" class="min-h-[300px]"></iframe>
       </div>
     </UCard>
 

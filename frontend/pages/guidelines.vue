@@ -53,11 +53,11 @@
     </UCard>
 
     <!-- Download Template -->
-    <div class="text-center">
+    <!-- <div class="text-center">
       <p class="text-gray-500 mb-4">ดาวน์โหลด Template บทความ</p>
       <UButton color="primary" size="lg" icon="i-heroicons-arrow-down-tray" disabled>
         ดาวน์โหลด Template (เร็วๆ นี้)
       </UButton>
-    </div>
+    </div> -->
   </div>
 </template>

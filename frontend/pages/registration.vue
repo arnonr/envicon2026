@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { show: showComingSoon } = useComingSoon();
+
 const fees = [
   {
     category: "นิสิต/นักศึกษา",
@@ -57,14 +59,13 @@ const fees = [
         <h2 class="font-semibold text-lg">วิธีการชำระเงิน</h2>
       </template>
       <div class="space-y-3 text-sm text-gray-600">
-        <p>ชำระเงินได้ ณ จุดลงทะเบียนในวันงาน หรือโอนเงินผ่านบัญชีธนาคาร</p>
-        <p>หลังโอนเงิน กรุณาแจ้งชำระเงินผ่านระบบเว็บไซต์ เจ้าหน้าที่จะยืนยันการชำระเงินให้ภายใน 3 วันทำการ</p>
+        <p>Coming Soon</p>
       </div>
     </UCard>
 
     <!-- CTA -->
     <div class="text-center">
-      <UButton to="/auth/login" color="primary" size="lg">
+      <UButton color="primary" size="lg" @click="showComingSoon">
         ลงทะเบียนเข้าร่วมงาน
       </UButton>
     </div>

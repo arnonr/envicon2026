@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { show: showComingSoon } = useComingSoon();
+
 const links = [
   { label: "หน้าแรก", to: "/" },
   { label: "เกี่ยวกับ", to: "/about" },
@@ -20,7 +22,7 @@ const mobileMenuOpen = ref(false);
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-2">
-          <span class="text-meadow-600 text-xl font-bold">🌿 ENVICON 2026</span>
+          <img src="~/assets/logo.png" alt="ENVICON 2026" class="h-10 w-auto" />
         </NuxtLink>
 
         <!-- Desktop nav -->
@@ -38,7 +40,7 @@ const mobileMenuOpen = ref(false);
 
         <!-- CTA Buttons -->
         <div class="hidden md:flex items-center gap-2">
-          <UButton to="/submit" color="primary" variant="solid" size="sm">
+          <UButton color="primary" variant="solid" size="sm" @click="showComingSoon">
             ส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
@@ -49,7 +51,7 @@ const mobileMenuOpen = ref(false);
               ออกจากระบบ
             </UButton>
           </template>
-          <UButton v-else to="/auth/login" color="primary" variant="outline" size="sm">
+          <UButton v-else color="primary" variant="outline" size="sm" @click="showComingSoon">
             เข้าสู่ระบบ
           </UButton>
         </div>
@@ -72,7 +74,7 @@ const mobileMenuOpen = ref(false);
           {{ link.label }}
         </NuxtLink>
         <div class="flex gap-2 mt-3 px-3">
-          <UButton to="/submit" color="primary" variant="solid" size="sm" block>
+          <UButton color="primary" variant="solid" size="sm" block @click="showComingSoon">
             ส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
@@ -80,7 +82,7 @@ const mobileMenuOpen = ref(false);
               แดชบอร์ด
             </UButton>
           </template>
-          <UButton v-else to="/auth/login" color="primary" variant="outline" size="sm" block>
+          <UButton v-else color="primary" variant="outline" size="sm" block @click="showComingSoon">
             เข้าสู่ระบบ
           </UButton>
         </div>

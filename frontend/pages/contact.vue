@@ -5,7 +5,7 @@
       <p class="text-gray-500 text-lg">Contact Us</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 md:grid-cols-1 gap-8">
       <!-- Contact Info -->
       <div class="space-y-6">
         <UCard>
@@ -45,7 +45,7 @@
       </div>
 
       <!-- Contact Form -->
-      <UCard>
+      <!-- <UCard>
         <template #header>
           <h2 class="font-semibold">ส่งข้อความ</h2>
         </template>
@@ -66,7 +66,7 @@
             ส่งข้อความ
           </UButton>
         </form>
-      </UCard>
+      </UCard> -->
     </div>
   </div>
 </template>
