@@ -13,7 +13,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Sarabun", "sans-serif"],
-        display: ["Outfit", "sans-serif"],
+        display: ["Sarabun", "sans-serif"],
       },
       colors: {
         primary: {
