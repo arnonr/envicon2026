@@ -27,8 +27,7 @@
       </svg>
 
       <!-- Meadow ground -->
-      <div
-        class="absolute bottom-0 left-0 right-0 h-[28%]"
+      <div class="absolute bottom-0 left-0 right-0 h-[28%]"
         style="background: linear-gradient(to top, #4ade80 0%, #65e292 15%, #86efac 35%, #a8f3c0 55%, #bbf7d0 72%, #d4fae3 87%, transparent 100%)" />
 
 
@@ -51,10 +50,10 @@
           <span
             class="block bg-gradient-to-r from-amber-500 via-orange-400 to-rose-400 bg-clip-text text-transparent mt-1 drop-shadow-sm">Environmental</span>
           <span
-            class="block bg-gradient-to-r from-sky-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent mt-1 drop-shadow-sm">Technologies</span>
+            class="block bg-gradient-to-r from-sky-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent mt-1 drop-shadow-sm pb-2">Technologies</span>
         </h1>
 
-        <p class="text-lg sm:text-xl text-meadow-700/80 font-medium max-w-2xl mx-auto mb-3 hero-fade hero-fade--3">
+        <p class="text-lg sm:text-xl text-meadow-700/80 font-medium max-w-2xl mx-auto mb-3 hero-fade hero-fade--3 mt-3">
           for a Sustainable and Low-Carbon Future
         </p>
         <p class="text-base text-meadow-600/60 max-w-xl mx-auto mb-10 hero-fade hero-fade--4">
@@ -213,7 +212,7 @@
               <div class="flex-1 pb-6 pt-2">
                 <div class="font-semibold text-white/90 mb-0.5">{{ item.title }}</div>
                 <div class="text-sm" :class="item.highlight ? 'text-amber-200' : 'text-white/60'">{{ item.date
-                  }}</div>
+                }}</div>
               </div>
             </div>
           </div>
@@ -744,7 +743,7 @@ const timelineBubbleStyle = (_i: number) => {
   border-radius: 1rem;
   padding: 0.75rem 1.25rem;
   min-width: 4.5rem;
-  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .countdown-value {
