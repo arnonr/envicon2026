@@ -13,6 +13,7 @@ interface Submission {
   titleEn: string | null;
   abstract: string | null;
   keywords: string | null;
+  creators: string | null;
   track: number;
   status: string;
   abstractFileUrl: string | null;
@@ -95,6 +96,22 @@ const formatDate = (iso: string | null) => {
   return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
+interface Creator {
+  firstName: string;
+  lastName: string;
+}
+
+const parsedCreators = computed<Creator[]>(() => {
+  const raw = submission.value?.creators;
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+});
+
 const parsedKeywords = computed(() => {
   const kw = submission.value?.keywords;
   if (!kw) return [];
@@ -149,6 +166,16 @@ watch(() => props.modelValue, (open) => {
           <UBadge v-for="kw in parsedKeywords" :key="kw" color="gray" variant="soft" size="xs">
             {{ kw }}
           </UBadge>
+        </div>
+
+        <!-- Creators -->
+        <div v-if="parsedCreators.length">
+          <h3 class="text-xs text-gray-500 mb-1.5">ผู้สร้างสรรค์ผลงาน</h3>
+          <div class="flex flex-wrap gap-1.5">
+            <UBadge v-for="(c, i) in parsedCreators" :key="i" color="primary" variant="soft" size="xs">
+              {{ c.firstName }} {{ c.lastName }}
+            </UBadge>
+          </div>
         </div>
 
         <!-- Abstract -->
