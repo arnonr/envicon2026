@@ -7,6 +7,11 @@ export interface SubmissionFormData {
   track: string;
 }
 
+export interface Creator {
+  firstName: string;
+  lastName: string;
+}
+
 const props = defineProps<{
   modelValue: SubmissionFormData;
 }>();
@@ -25,9 +30,26 @@ const TRACK_OPTIONS = [
   { label: '7. สิ่งแวดล้อมและสุขภาพ', value: '7' },
 ];
 
+const creators = ref<Creator[]>([{ firstName: '', lastName: '' }]);
+
 const update = (field: keyof SubmissionFormData, value: string) => {
   emit('update:modelValue', { ...props.modelValue, [field]: value });
 };
+
+const addCreator = () => {
+  creators.value.push({ firstName: '', lastName: '' });
+};
+
+const removeCreator = (index: number) => {
+  if (creators.value.length <= 1) return;
+  creators.value.splice(index, 1);
+};
+
+const updateCreator = (index: number, field: keyof Creator, value: string) => {
+  creators.value[index] = { ...creators.value[index], [field]: value };
+};
+
+defineExpose({ creators });
 </script>
 
 <template>
@@ -55,6 +77,42 @@ const update = (field: keyof SubmissionFormData, value: string) => {
     <UFormGroup label="ประเภทกาการนำเสนอ (Track)" required>
       <USelect :model-value="modelValue.track" :options="TRACK_OPTIONS" placeholder="-- เลือกประเภท --"
         @update:model-value="update('track', $event as string)" />
+    </UFormGroup>
+
+    <UFormGroup label="ผู้สร้างสรรค์ผลงาน (Creators)" required>
+      <div class="space-y-3">
+        <div v-for="(creator, index) in creators" :key="index" class="flex items-start gap-2">
+          <UInput
+            :model-value="creator.firstName"
+            placeholder="ชื่อ"
+            class="flex-1"
+            @update:model-value="updateCreator(index, 'firstName', $event as string)"
+          />
+          <UInput
+            :model-value="creator.lastName"
+            placeholder="นามสกุล"
+            class="flex-1"
+            @update:model-value="updateCreator(index, 'lastName', $event as string)"
+          />
+          <UButton
+            v-if="creators.length > 1"
+            color="red"
+            variant="soft"
+            icon="i-heroicons-x-mark"
+            size="sm"
+            @click="removeCreator(index)"
+          />
+        </div>
+        <UButton
+          color="gray"
+          variant="soft"
+          icon="i-heroicons-plus"
+          size="sm"
+          @click="addCreator"
+        >
+          เพิ่มผู้สร้างสรรค์ผลงาน
+        </UButton>
+      </div>
     </UFormGroup>
   </div>
 </template>
