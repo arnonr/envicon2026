@@ -77,6 +77,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         titleEn: body.titleEn ?? null,
         abstract: body.abstract ?? null,
         keywords: body.keywords ?? null,
+        creators: body.creators ?? null,
         track: body.track,
       });
 
@@ -95,6 +96,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         titleEn: t.Optional(t.String()),
         abstract: t.Optional(t.String()),
         keywords: t.Optional(t.String()),
+        creators: t.Optional(t.String()),
         track: t.Number({ minimum: 1, maximum: 7 }),
       }),
     }
@@ -130,6 +132,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.titleEn !== undefined && { titleEn: body.titleEn }),
           ...(body.abstract !== undefined && { abstract: body.abstract }),
           ...(body.keywords !== undefined && { keywords: body.keywords }),
+          ...(body.creators !== undefined && { creators: body.creators }),
           ...(body.track && { track: body.track }),
         })
         .where(eq(submissions.id, params.id));
@@ -148,12 +151,13 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         titleEn: t.Optional(t.String()),
         abstract: t.Optional(t.String()),
         keywords: t.Optional(t.String()),
+        creators: t.Optional(t.String()),
         track: t.Optional(t.Number({ minimum: 1, maximum: 7 })),
       }),
     }
   )
 
-  // Upload abstract PDF → status becomes "submitted"
+  // Upload abstract PDF → status becomes "pending_payment"
   .post(
     "/:id/upload-abstract",
     async ({ params, body, user, set }) => {
@@ -285,7 +289,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       await db
         .update(submissions)
-        .set({ status: "submitted", fullPaperFileUrl: fileUrl })
+        .set({ status: "pending_payment", fullPaperFileUrl: fileUrl })
         .where(eq(submissions.id, params.id));
 
       return ok({ message: "Revision submitted successfully", version: nextVersion });
