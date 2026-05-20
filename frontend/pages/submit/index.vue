@@ -84,7 +84,18 @@ const createSubmission = async () => {
   step.value = 2;
 };
 
-const uploadAbstract = async (file: File) => {
+const selectedFile = ref<File | null>(null);
+
+const onFileSelected = (file: File) => {
+  selectedFile.value = file;
+};
+
+const uploadAbstract = async () => {
+  if (!submissionId.value || !selectedFile.value) return;
+  uploading.value = true;
+
+  const formData = new FormData();
+  formData.append('file', selectedFile.value);
   if (!submissionId.value) return;
   uploading.value = true;
 
@@ -125,10 +136,8 @@ const uploadAbstract = async (file: File) => {
     <!-- Steps indicator -->
     <div class="flex items-center gap-2 mb-8">
       <template v-for="n in 3" :key="n">
-        <div
-          class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-colors"
-          :class="step >= n ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-500'"
-        >
+        <div class="flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-colors"
+          :class="step >= n ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-500'">
           {{ n }}
         </div>
         <div v-if="n < 3" class="flex-1 h-0.5" :class="step > n ? 'bg-primary-600' : 'bg-gray-200'" />
@@ -150,12 +159,7 @@ const uploadAbstract = async (file: File) => {
 
       <template #footer>
         <div class="flex justify-end">
-          <UButton
-            color="primary"
-            :loading="submitting"
-            :disabled="!isStep1Valid"
-            @click="createSubmission"
-          >
+          <UButton color="primary" :loading="submitting" :disabled="!isStep1Valid" @click="createSubmission">
             ถัดไป: อัปโหลด PDF
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
           </UButton>
@@ -173,11 +177,7 @@ const uploadAbstract = async (file: File) => {
         <p class="text-sm text-gray-600">
           กรุณาอัปโหลดไฟล์ PDF บทคัดย่อ (Abstract) ขนาดไม่เกิน 50 MB
         </p>
-        <CommonFileUpload
-          :loading="uploading"
-          :max-size-mb="50"
-          @change="uploadAbstract"
-        />
+        <CommonFileUpload :loading="uploading" :max-size-mb="50" @change="onFileSelected" />
       </div>
 
       <template #footer>
@@ -186,7 +186,16 @@ const uploadAbstract = async (file: File) => {
             <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
             ย้อนกลับ
           </UButton>
-          <p class="text-xs text-gray-400 self-center">เลือกไฟล์เพื่อส่งโดยอัตโนมัติ</p>
+          <UButton
+            v-if="selectedFile"
+            color="primary"
+            :loading="uploading"
+            @click="uploadAbstract"
+          >
+            บันทึก
+            <UIcon name="i-heroicons-check" class="w-4 h-4 ml-1" />
+          </UButton>
+          <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึก</p>
         </div>
       </template>
     </UCard>
@@ -203,7 +212,7 @@ const uploadAbstract = async (file: File) => {
         </div>
         <h3 class="text-xl font-semibold text-gray-900">ส่งบทคัดย่อเรียบร้อยแล้ว!</h3>
         <p class="text-gray-500 text-sm max-w-sm">
-          ขณะนี้ผลงานของคุณอยู่ในสถานะ<strong>รอชำระเงิน</strong> กรุณาชำระเงินค่าลงทะเบียนเพื่อดำเนินการต่อไป
+          ขณะนี้ผลงานของคุณอยู่ในสถานะ<strong>รอชำระเงิน</strong> กรุณาชำระเงินค่าส่งผลงานเพื่อดำเนินการต่อไป
         </p>
       </div>
 
