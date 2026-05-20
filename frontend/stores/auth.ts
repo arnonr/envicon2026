@@ -5,18 +5,21 @@ interface User {
   email: string;
   name: string;
   affiliation: string | null;
+  phone: string | null;
   role: "author" | "reviewer" | "admin";
 }
 
 interface AuthState {
   token: string | null;
   user: User | null;
+  initialized: boolean;
 }
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
     token: null,
     user: null,
+    initialized: false,
   }),
 
   getters: {
@@ -56,6 +59,7 @@ export const useAuthStore = defineStore("auth", {
           this.token = token;
           this.user = JSON.parse(userStr);
         }
+        this.initialized = true;
       }
     },
   },

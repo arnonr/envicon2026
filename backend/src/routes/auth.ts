@@ -11,7 +11,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .post(
     "/register",
     async ({ body, jwt, set }) => {
-      const { email, password, name, affiliation } = body;
+      const { email, password, name, affiliation, phone } = body;
 
       // Check if email already exists
       const [existing] = await db
@@ -37,13 +37,14 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         passwordHash,
         name,
         affiliation: affiliation ?? null,
+        phone: phone ?? null,
         role: "author",
       });
 
       const token = await jwt.sign({ sub: id });
 
       set.status = 201;
-      return ok({ token, user: { id, email, name, affiliation, role: "author" as const } });
+      return ok({ token, user: { id, email, name, affiliation, phone: phone ?? null, role: "author" as const } });
     },
     {
       body: t.Object({
@@ -51,6 +52,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         password: t.String({ minLength: 8 }),
         name: t.String({ minLength: 1 }),
         affiliation: t.Optional(t.String()),
+        phone: t.Optional(t.String()),
       }),
     }
   )
@@ -85,6 +87,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           email: user.email,
           name: user.name,
           affiliation: user.affiliation,
+          phone: user.phone,
           role: user.role,
         },
       });

@@ -1,18 +1,82 @@
 <script setup lang="ts">
-const { show: showComingSoon } = useComingSoon();
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBase as string;
+const authStore = useAuthStore();
+const { handleApiCall, showError, showSuccess } = useApiError();
 
-const fees = [
-  {
-    category: "นิสิต/นักศึกษา",
-    earlyBird: "500 บาท",
-    regular: "700 บาท",
-  },
-  {
-    category: "อาจารย์/นักวิจัย/บุคคลทั่วไป",
-    earlyBird: "2,000 บาท",
-    regular: "2,500 บาท",
-  },
+const selectedType = ref<"student" | "general">("student");
+const loading = ref(false);
+const submitting = ref(false);
+
+interface Registration {
+  id: string;
+  type: "student" | "general";
+  fee: number;
+  paymentStatus: "pending" | "confirmed";
+  registeredAt: string;
+}
+
+const registration = ref<Registration | null>(null);
+const notRegistered = ref(false);
+
+const feeTable = [
+  { category: "นิสิต/นักศึกษา", type: "student" as const, earlyBird: 500, regular: 700 },
+  { category: "อาจารย์/นักวิจัย/บุคคลทั่วไป", type: "general" as const, earlyBird: 2000, regular: 2500 },
 ];
+
+const currentFee = computed(() => {
+  const row = feeTable.find((f) => f.type === selectedType.value);
+  if (!row) return 0;
+  const deadline = new Date("2026-10-14T23:59:59+07:00");
+  return new Date() <= deadline ? row.earlyBird : row.regular;
+});
+
+async function fetchRegistration() {
+  if (!authStore.token) return;
+  loading.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: Registration }>(`${apiBase}/registrations`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    }),
+  );
+  loading.value = false;
+  if (error?.status === 404) {
+    notRegistered.value = true;
+    return;
+  }
+  if (error) {
+    showError(error);
+    return;
+  }
+  if (data) {
+    registration.value = data.data;
+  }
+}
+
+async function handleSubmit() {
+  submitting.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: Registration }>(`${apiBase}/registrations`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: { type: selectedType.value },
+    }),
+  );
+  submitting.value = false;
+  if (error) {
+    showError(error);
+    return;
+  }
+  showSuccess("ลงทะเบียนสำเร็จ");
+  if (data) {
+    registration.value = data.data;
+    notRegistered.value = false;
+  }
+}
+
+onMounted(() => {
+  if (authStore.isLoggedIn) fetchRegistration();
+});
 </script>
 
 <template>
@@ -43,15 +107,83 @@ const fees = [
             </tr>
           </thead>
           <tbody>
-            <tr v-for="fee in fees" :key="fee.category" class="border-b last:border-0">
+            <tr v-for="fee in feeTable" :key="fee.type" class="border-b last:border-0">
               <td class="py-3 px-4 font-medium">{{ fee.category }}</td>
-              <td class="py-3 px-4 text-center text-primary-600 font-semibold">{{ fee.earlyBird }}</td>
-              <td class="py-3 px-4 text-center">{{ fee.regular }}</td>
+              <td class="py-3 px-4 text-center text-primary-600 font-semibold">
+                {{ fee.earlyBird.toLocaleString() }} บาท
+              </td>
+              <td class="py-3 px-4 text-center">
+                {{ fee.regular.toLocaleString() }} บาท
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </UCard>
+
+    <!-- Registration Status (already registered) -->
+    <UCard v-if="registration" class="mb-8">
+      <template #header>
+        <h2 class="font-semibold text-lg">สถานะการลงทะเบียน</h2>
+      </template>
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-500">ประเภท</span>
+          <span class="font-medium">
+            {{ registration.type === "student" ? "นิสิต/นักศึกษา" : "อาจารย์/นักวิจัย/บุคคลทั่วไป" }}
+          </span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-500">ค่าลงทะเบียน</span>
+          <span class="font-semibold text-primary-600">{{ registration.fee.toLocaleString() }} บาท</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-gray-500">สถานะชำระเงิน</span>
+          <UBadge
+            :color="registration.paymentStatus === 'confirmed' ? 'green' : 'yellow'"
+            variant="soft"
+          >
+            {{ registration.paymentStatus === "confirmed" ? "ยืนยันแล้ว" : "รอตรวจสอบ" }}
+          </UBadge>
+        </div>
+      </div>
+    </UCard>
+
+    <!-- Registration Form (not logged in) -->
+    <UCard v-else-if="!authStore.isLoggedIn" class="mb-8">
+      <div class="text-center py-6 text-gray-500">
+        <p>กรุณาเข้าสู่ระบบเพื่อลงทะเบียน</p>
+        <UButton color="primary" class="mt-4" to="/auth/login">เข้าสู่ระบบ</UButton>
+      </div>
+    </UCard>
+
+    <!-- Registration Form (logged in, not registered) -->
+    <UCard v-else-if="notRegistered" class="mb-8">
+      <template #header>
+        <h2 class="font-semibold text-lg">ลงทะเบียนเข้าร่วมงาน</h2>
+      </template>
+      <div class="space-y-4">
+        <URadio
+          v-for="fee in feeTable"
+          :key="fee.type"
+          v-model="selectedType"
+          :value="fee.type"
+          :label="fee.category"
+        />
+        <div class="bg-gray-50 rounded-lg p-4 text-center">
+          <p class="text-sm text-gray-500">ค่าลงทะเบียน</p>
+          <p class="text-2xl font-bold text-primary-600">{{ currentFee.toLocaleString() }} บาท</p>
+        </div>
+        <UButton color="primary" block size="lg" :loading="submitting" @click="handleSubmit">
+          ลงทะเบียน
+        </UButton>
+      </div>
+    </UCard>
+
+    <!-- Loading -->
+    <div v-else-if="loading" class="flex justify-center py-8">
+      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-gray-400 animate-spin" />
+    </div>
 
     <!-- Payment Info -->
     <UCard class="mb-8">
@@ -62,12 +194,5 @@ const fees = [
         <p>Coming Soon</p>
       </div>
     </UCard>
-
-    <!-- CTA -->
-    <div class="text-center">
-      <UButton color="primary" size="lg" @click="showComingSoon">
-        ลงทะเบียนเข้าร่วมงาน
-      </UButton>
-    </div>
   </div>
 </template>

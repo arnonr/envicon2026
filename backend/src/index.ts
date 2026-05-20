@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
+import path from "path";
 import { authRoutes } from "./routes/auth";
 import { submissionRoutes } from "./routes/submissions";
 import { reviewRoutes } from "./routes/reviews";
@@ -12,8 +13,8 @@ const app = new Elysia({ prefix: "/envicon2026/api" })
   .onError(({ code, error, set }) => {
     console.error(`[${code}]`, error);
 
-    if (code === "VALIDATION") {
-      set.status = 400;
+    if (code === "VALIDATION" || code === "INVALID_FILE_TYPE" as any) {
+      set.status = 422;
       return fail("VALIDATION_ERROR", error.message);
     }
 
@@ -26,6 +27,15 @@ const app = new Elysia({ prefix: "/envicon2026/api" })
     return fail("INTERNAL_ERROR", "Internal server error");
   })
   .get("/health", () => ok({ status: "ok", timestamp: new Date().toISOString() }))
+  .get("/files/:filename", async ({ params, set }) => {
+    const filepath = path.resolve(process.cwd(), "uploads", params.filename);
+    const file = Bun.file(filepath);
+    if (!(await file.exists())) {
+      set.status = 404;
+      return fail("NOT_FOUND", "File not found");
+    }
+    return file;
+  })
   .use(authRoutes)
   .use(submissionRoutes)
   .use(reviewRoutes)

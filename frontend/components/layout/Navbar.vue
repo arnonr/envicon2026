@@ -27,21 +27,17 @@ const mobileMenuOpen = ref(false);
 
         <!-- Desktop nav -->
         <div class="hidden md:flex items-center gap-1">
-          <NuxtLink
-            v-for="link in links"
-            :key="link.to"
-            :to="link.to"
+          <NuxtLink v-for="link in links" :key="link.to" :to="link.to"
             class="px-3 py-2 text-sm text-gray-700 hover:text-meadow-600 rounded-md transition-colors"
-            active-class="text-meadow-600 font-semibold"
-          >
+            active-class="text-meadow-600 font-semibold">
             {{ link.label }}
           </NuxtLink>
         </div>
 
         <!-- CTA Buttons -->
         <div class="hidden md:flex items-center gap-2">
-          <UButton color="primary" variant="solid" size="sm" @click="showComingSoon">
-            ส่งผลงาน
+          <UButton v-if="!isLoggedIn" color="primary" variant="solid" size="sm" to="/auth/login?mode=register">
+            ลงทะเบียนส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
             <UButton to="/dashboard" color="primary" variant="ghost" size="sm">
@@ -51,7 +47,7 @@ const mobileMenuOpen = ref(false);
               ออกจากระบบ
             </UButton>
           </template>
-          <UButton v-else color="primary" variant="outline" size="sm" @click="showComingSoon">
+          <UButton v-else color="primary" variant="outline" size="sm" to="/auth/login">
             เข้าสู่ระบบ
           </UButton>
         </div>
@@ -64,25 +60,20 @@ const mobileMenuOpen = ref(false);
 
       <!-- Mobile menu -->
       <div v-if="mobileMenuOpen" class="md:hidden pb-4">
-        <NuxtLink
-          v-for="link in links"
-          :key="link.to"
-          :to="link.to"
-          class="block px-3 py-2 text-sm text-gray-700 hover:text-primary-600"
-          @click="mobileMenuOpen = false"
-        >
+        <NuxtLink v-for="link in links" :key="link.to" :to="link.to"
+          class="block px-3 py-2 text-sm text-gray-700 hover:text-primary-600" @click="mobileMenuOpen = false">
           {{ link.label }}
         </NuxtLink>
         <div class="flex gap-2 mt-3 px-3">
-          <UButton color="primary" variant="solid" size="sm" block @click="showComingSoon">
-            ส่งผลงาน
+          <UButton v-if="!isLoggedIn" to="/auth/login?mode=register" color="primary" variant="solid" size="sm" block>
+            ลงทะเบียนส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
             <UButton to="/dashboard" color="primary" variant="ghost" size="sm" block>
               แดชบอร์ด
             </UButton>
           </template>
-          <UButton v-else color="primary" variant="outline" size="sm" block @click="showComingSoon">
+          <UButton v-else color="primary" variant="outline" size="sm" block to="/auth/login">
             เข้าสู่ระบบ
           </UButton>
         </div>
