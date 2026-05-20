@@ -29,6 +29,7 @@ export const submissions = mysqlTable("submissions", {
   titleEn: varchar("title_en", { length: 500 }),
   abstract: text("abstract"),
   keywords: varchar("keywords", { length: 500 }),
+  creators: text("creators"),
   track: int("track").notNull(),
   status: mysqlEnum("status", [
     "draft",
