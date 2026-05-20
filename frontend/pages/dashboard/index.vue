@@ -40,6 +40,16 @@ const openSubmissionModal = (id: string) => {
   modalOpen.value = true;
 };
 
+const getCreatorCount = (raw: string | null): number => {
+  if (!raw) return 0;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.length : 0;
+  } catch {
+    return 0;
+  }
+};
+
 const TRACK_NAMES: Record<number, string> = {
   1: 'วิทยาศาสตร์สิ่งแวดล้อมฯ',
   2: 'การจัดการระบบนิเวศฯ',
@@ -81,6 +91,7 @@ onMounted(async () => {
         <h1 class="text-2xl font-bold text-gray-900">แดชบอร์ด</h1>
         <p class="text-gray-500">สวัสดี, {{ user?.name }}</p>
       </div>
+      <UButton color="gray" variant="ghost" @click="logout">ออกจากระบบ</UButton>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -163,7 +174,7 @@ onMounted(async () => {
                 </p>
                 <p class="text-xs text-gray-400 mt-0.5">
                   ประเภท {{ TRACK_NAMES[sub.track] || sub.track }}
-                  <template v-if="sub.creators"> · ผู้สร้างสรรค์ {{ JSON.parse(sub.creators).length }} คน</template>
+                  <template v-if="getCreatorCount(sub.creators)"> · ผู้สร้างสรรค์ {{ getCreatorCount(sub.creators) }} คน</template>
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">

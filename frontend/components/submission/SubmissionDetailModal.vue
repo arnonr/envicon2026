@@ -96,10 +96,7 @@ const formatDate = (iso: string | null) => {
   return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
-interface Creator {
-  firstName: string;
-  lastName: string;
-}
+import type { Creator } from '~/components/submission/SubmissionForm.vue';
 
 const parsedCreators = computed<Creator[]>(() => {
   const raw = submission.value?.creators;

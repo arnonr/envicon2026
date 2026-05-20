@@ -6,6 +6,22 @@ import { requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
 import { saveFile } from "../services/storage";
 
+const MAX_CREATORS = 20;
+
+function parseCreators(raw: string | undefined): string | null {
+  if (!raw) return null;
+  let parsed: unknown;
+  try { parsed = JSON.parse(raw); } catch { throw new Error("creators must be valid JSON"); }
+  if (!Array.isArray(parsed)) throw new Error("creators must be an array");
+  if (parsed.length === 0) return null;
+  if (parsed.length > MAX_CREATORS) throw new Error(`creators must have at most ${MAX_CREATORS} entries`);
+  for (const c of parsed) {
+    if (typeof c.firstName !== "string" || typeof c.lastName !== "string")
+      throw new Error("each creator must have firstName and lastName");
+  }
+  return JSON.stringify(parsed);
+}
+
 export const submissionRoutes = new Elysia({ prefix: "/submissions" })
   .use(requireAuth)
 
@@ -70,6 +86,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       }
 
       const id = crypto.randomUUID();
+      const creators = parseCreators(body.creators);
       await db.insert(submissions).values({
         id,
         authorId: user!.id,
@@ -77,7 +94,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         titleEn: body.titleEn ?? null,
         abstract: body.abstract ?? null,
         keywords: body.keywords ?? null,
-        creators: body.creators ?? null,
+        creators,
         track: body.track,
       });
 
@@ -132,7 +149,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.titleEn !== undefined && { titleEn: body.titleEn }),
           ...(body.abstract !== undefined && { abstract: body.abstract }),
           ...(body.keywords !== undefined && { keywords: body.keywords }),
-          ...(body.creators !== undefined && { creators: body.creators }),
+          ...(body.creators !== undefined && { creators: parseCreators(body.creators) }),
           ...(body.track && { track: body.track }),
         })
         .where(eq(submissions.id, params.id));
