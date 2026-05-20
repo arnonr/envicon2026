@@ -13,7 +13,7 @@ const submissionId = ref<string | null>(null);
 const submitting = ref(false);
 const uploading = ref(false);
 
-const submissionFormRef = ref<{ creators: { value: { firstName: string; lastName: string }[] } } | null>(null);
+const submissionFormRef = ref<{ creators: { firstName: string; lastName: string }[] } | null>(null);
 
 const form = ref<SubmissionFormData>({
   title: '',
@@ -53,7 +53,7 @@ const createSubmission = async () => {
   if (!isStep1Valid.value) return;
   submitting.value = true;
 
-  const creators = submissionFormRef.value?.creators.value ?? [];
+  const creators = submissionFormRef.value?.creators ?? [];
   const creatorsJson = JSON.stringify(
     creators.filter(c => c.firstName.trim() && c.lastName.trim())
   );
