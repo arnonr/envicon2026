@@ -5,6 +5,7 @@ interface Submission {
   id: string;
   title: string;
   track: number;
+  creators: string | null;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -80,7 +81,6 @@ onMounted(async () => {
         <h1 class="text-2xl font-bold text-gray-900">แดชบอร์ด</h1>
         <p class="text-gray-500">สวัสดี, {{ user?.name }}</p>
       </div>
-      <UButton color="gray" variant="ghost" @click="logout">ออกจากระบบ</UButton>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -161,7 +161,10 @@ onMounted(async () => {
                 <p class="text-sm font-medium text-gray-900 line-clamp-1">
                   {{ sub.title }}
                 </p>
-                <p class="text-xs text-gray-400 mt-0.5">ประเภท {{ TRACK_NAMES[sub.track] || sub.track }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">
+                  ประเภท {{ TRACK_NAMES[sub.track] || sub.track }}
+                  <template v-if="sub.creators"> · ผู้สร้างสรรค์ {{ JSON.parse(sub.creators).length }} คน</template>
+                </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <SubmissionStatusBadge :status="sub.status" />
