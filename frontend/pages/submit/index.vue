@@ -26,7 +26,7 @@ const form = ref<SubmissionFormData>({
 const isStep1Valid = computed(() => {
   const f = form.value;
   if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track) return false;
-  const creators = submissionFormRef.value?.creators.value ?? [];
+  const creators = submissionFormRef.value?.creators ?? [];
   return creators.some(c => c.firstName.trim() && c.lastName.trim());
 });
 
