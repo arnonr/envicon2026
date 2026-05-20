@@ -13,6 +13,8 @@ const submissionId = ref<string | null>(null);
 const submitting = ref(false);
 const uploading = ref(false);
 
+const submissionFormRef = ref<{ creators: { value: { firstName: string; lastName: string }[] } } | null>(null);
+
 const form = ref<SubmissionFormData>({
   title: '',
   title_en: '',
@@ -21,9 +23,12 @@ const form = ref<SubmissionFormData>({
   track: '',
 });
 
-const isStep1Valid = computed(() =>
-  form.value.title.trim() && form.value.title_en.trim() && form.value.abstract.trim() && form.value.track
-);
+const isStep1Valid = computed(() => {
+  const f = form.value;
+  if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track) return false;
+  const creators = submissionFormRef.value?.creators.value ?? [];
+  return creators.some(c => c.firstName.trim() && c.lastName.trim());
+});
 
 const checkExisting = async () => {
   const { data } = await handleApiCall(() =>
@@ -48,6 +53,11 @@ const createSubmission = async () => {
   if (!isStep1Valid.value) return;
   submitting.value = true;
 
+  const creators = submissionFormRef.value?.creators.value ?? [];
+  const creatorsJson = JSON.stringify(
+    creators.filter(c => c.firstName.trim() && c.lastName.trim())
+  );
+
   const { data, error } = await handleApiCall(() =>
     $fetch<{ success: true; data: { id: string } }>(`${apiBase}/submissions`, {
       method: 'POST',
@@ -57,6 +67,7 @@ const createSubmission = async () => {
         titleEn: form.value.title_en.trim(),
         abstract: form.value.abstract.trim(),
         keywords: form.value.keywords.trim() || undefined,
+        creators: creatorsJson,
         track: parseInt(form.value.track),
       },
     })
@@ -135,7 +146,7 @@ const uploadAbstract = async (file: File) => {
         <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 1: ข้อมูลผลงาน</h2>
       </template>
 
-      <SubmissionForm v-model="form" />
+      <SubmissionForm ref="submissionFormRef" v-model="form" />
 
       <template #footer>
         <div class="flex justify-end">
