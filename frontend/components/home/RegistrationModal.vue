@@ -22,6 +22,13 @@ const submitting = ref(false);
 const success = ref(false);
 
 async function handleSubmit() {
+  if (submitting.value) return;
+
+  if (form.value.fullName.trim().length < 2) {
+    showError({ status: 400, error: "กรุณากรอกชื่อ-นามสกุลอย่างน้อย 2 ตัวอักษร" });
+    return;
+  }
+
   submitting.value = true;
   const { error } = await handleApiCall(() =>
     $fetch(`${apiBase}/public/register`, {
@@ -59,6 +66,7 @@ function close() {
             icon="i-heroicons-x-mark"
             variant="ghost"
             color="gray"
+            aria-label="ปิด"
             @click="close"
           />
         </div>
@@ -69,7 +77,8 @@ function close() {
           <UIcon name="i-heroicons-check-circle" class="w-10 h-10 text-meadow-600" />
         </div>
         <h4 class="text-lg font-semibold text-meadow-800 mb-2">ลงทะเบียนสำเร็จ!</h4>
-        <p class="text-gray-500">ขอบคุณที่สนใจเข้าร่วมงาน ENVICON 2026</p>
+        <p class="text-gray-500 mb-4">ขอบคุณที่สนใจเข้าร่วมงาน ENVICON 2026</p>
+        <UButton color="primary" @click="close">ปิด</UButton>
       </div>
 
       <form v-else class="space-y-4" @submit.prevent="handleSubmit">
