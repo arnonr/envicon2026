@@ -10,10 +10,10 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   .use(requireAdmin)
   .get("/stats", async () => {
     const [
-      [{ count: totalSubmissions }],
-      [{ count: totalRegistrations }],
-      [{ count: totalUsers }],
-      [{ count: totalReviews }],
+      subsCount,
+      regsCount,
+      usersCount,
+      reviewsCount,
     ] = await Promise.all([
       db.select({ count: sql<number>`count(*)` }).from(submissions),
       db.select({ count: sql<number>`count(*)` }).from(registrations),
@@ -32,10 +32,10 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       .groupBy(registrations.paymentStatus);
 
     return ok({
-      totalSubmissions: Number(totalSubmissions),
-      totalRegistrations: Number(totalRegistrations),
-      totalUsers: Number(totalUsers),
-      totalReviews: Number(totalReviews),
+      totalSubmissions: Number(subsCount[0]?.count ?? 0),
+      totalRegistrations: Number(regsCount[0]?.count ?? 0),
+      totalUsers: Number(usersCount[0]?.count ?? 0),
+      totalReviews: Number(reviewsCount[0]?.count ?? 0),
       submissionsByStatus: Object.fromEntries(
         submissionsByStatus.map((s) => [s.status, Number(s.count)])
       ),
