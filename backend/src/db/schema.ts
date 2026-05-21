@@ -86,3 +86,12 @@ export const revisions = mysqlTable("revisions", {
   changelog: text("changelog"),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
 });
+
+export const eventRegistrations = mysqlTable("event_registrations", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  affiliation: varchar("affiliation", { length: 500 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
