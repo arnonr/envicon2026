@@ -18,18 +18,24 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
       return fail("CONFLICT", "อีเมลนี้ลงทะเบียนแล้ว");
     }
 
-    const id = crypto.randomUUID();
+    try {
+      const result = await db.insert(eventRegistrations).values({
+        fullName: body.fullName,
+        affiliation: body.affiliation,
+        phone: body.phone,
+        email: body.email,
+      });
 
-    await db.insert(eventRegistrations).values({
-      id,
-      fullName: body.fullName,
-      affiliation: body.affiliation,
-      phone: body.phone,
-      email: body.email,
-    });
-
-    set.status = 201;
-    return ok({ id }, "ลงทะเบียนสำเร็จ");
+      const id = (result as any)[0]?.insertId || crypto.randomUUID();
+      set.status = 201;
+      return ok({ id }, "ลงทะเบียนสำเร็จ");
+    } catch (err: any) {
+      if (err?.code === "ER_DUP_ENTRY") {
+        set.status = 409;
+        return fail("CONFLICT", "อีเมลนี้ลงทะเบียนแล้ว");
+      }
+      throw err;
+    }
   },
   {
     body: t.Object({

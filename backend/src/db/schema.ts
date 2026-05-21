@@ -92,6 +92,6 @@ export const eventRegistrations = mysqlTable("event_registrations", {
   fullName: varchar("full_name", { length: 255 }).notNull(),
   affiliation: varchar("affiliation", { length: 500 }),
   phone: varchar("phone", { length: 20 }),
-  email: varchar("email", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
