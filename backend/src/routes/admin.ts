@@ -1,16 +1,84 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { registrations, users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { registrations, users, submissions, reviews } from "../db/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { requireAdmin } from "../middleware/roles";
 import { ok, fail } from "../utils/response";
 import { calculateFee } from "../utils/fees";
 
 export const adminRoutes = new Elysia({ prefix: "/admin" })
-  .get("/stats", () => ({ message: "TODO" }))
-  .get("/submissions", () => ({ message: "TODO" }))
-  .get("/reviewers", () => ({ message: "TODO" }))
   .use(requireAdmin)
+  .get("/stats", async () => {
+    const [
+      [{ count: totalSubmissions }],
+      [{ count: totalRegistrations }],
+      [{ count: totalUsers }],
+      [{ count: totalReviews }],
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(submissions),
+      db.select({ count: sql<number>`count(*)` }).from(registrations),
+      db.select({ count: sql<number>`count(*)` }).from(users),
+      db.select({ count: sql<number>`count(*)` }).from(reviews),
+    ]);
+
+    const submissionsByStatus = await db
+      .select({ status: submissions.status, count: sql<number>`count(*)` })
+      .from(submissions)
+      .groupBy(submissions.status);
+
+    const registrationsByPayment = await db
+      .select({ paymentStatus: registrations.paymentStatus, count: sql<number>`count(*)` })
+      .from(registrations)
+      .groupBy(registrations.paymentStatus);
+
+    return ok({
+      totalSubmissions: Number(totalSubmissions),
+      totalRegistrations: Number(totalRegistrations),
+      totalUsers: Number(totalUsers),
+      totalReviews: Number(totalReviews),
+      submissionsByStatus: Object.fromEntries(
+        submissionsByStatus.map((s) => [s.status, Number(s.count)])
+      ),
+      registrationsByPayment: Object.fromEntries(
+        registrationsByPayment.map((r) => [r.paymentStatus, Number(r.count)])
+      ),
+    });
+  })
+  .get("/submissions", async ({ query }) => {
+    const conditions = [];
+    if (query.status) conditions.push(eq(submissions.status, query.status));
+    if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
+
+    const rows = await db
+      .select({
+        id: submissions.id,
+        title: submissions.title,
+        titleEn: submissions.titleEn,
+        track: submissions.track,
+        submitterType: submissions.submitterType,
+        status: submissions.status,
+        abstractFileUrl: submissions.abstractFileUrl,
+        fullPaperFileUrl: submissions.fullPaperFileUrl,
+        paymentSlipUrl: submissions.paymentSlipUrl,
+        submittedAt: submissions.submittedAt,
+        updatedAt: submissions.updatedAt,
+        authorName: users.name,
+        authorEmail: users.email,
+        authorAffiliation: users.affiliation,
+      })
+      .from(submissions)
+      .leftJoin(users, eq(submissions.authorId, users.id))
+      .where(conditions.length ? and(...conditions) : undefined)
+      .orderBy(desc(submissions.updatedAt));
+
+    return ok(rows);
+  }, {
+    query: t.Object({
+      status: t.Optional(t.String()),
+      track: t.Optional(t.String()),
+    }),
+  })
+  .get("/reviewers", () => ({ message: "TODO" }))
   .get("/registrations", async ({ query }) => {
     let rows = await db
       .select({
@@ -69,6 +137,46 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     {
       params: t.Object({
         id: t.String(),
+      }),
+    },
+  )
+  .patch(
+    "/submissions/:id/status",
+    async ({ params, body, set }) => {
+      const [existing] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      if (!existing) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบข้อมูลการส่งบทความ");
+      }
+
+      const [updated] = await db
+        .update(submissions)
+        .set({ status: body.status })
+        .where(eq(submissions.id, params.id))
+        .returning();
+
+      return ok(updated);
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      body: t.Object({
+        status: t.Union([
+          t.Literal("draft"),
+          t.Literal("pending_payment"),
+          t.Literal("payment_verifying"),
+          t.Literal("submitted"),
+          t.Literal("under_review"),
+          t.Literal("accepted"),
+          t.Literal("rejected"),
+          t.Literal("revision_requested"),
+        ]),
       }),
     },
   );
