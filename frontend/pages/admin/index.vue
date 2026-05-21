@@ -43,7 +43,7 @@ const submissions = ref<Submission[]>([]);
 const loading = ref(true);
 const filterStatus = ref("");
 const filterTrack = ref("");
-const updating = ref<string | null>(null);
+const updating = ref<Set<string>>(new Set());
 
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมฯ",
@@ -103,7 +103,7 @@ async function fetchSubmissions() {
 }
 
 async function updateStatus(id: string, status: string) {
-  updating.value = id;
+  updating.value.add(id);
   const { error } = await handleApiCall(() =>
     $fetch<{ success: true }>(
       `${apiBase}/admin/submissions/${id}/status`,
@@ -114,7 +114,7 @@ async function updateStatus(id: string, status: string) {
       },
     ),
   );
-  updating.value = null;
+  updating.value.delete(id);
   if (error) {
     showError(error);
     return;
@@ -282,7 +282,7 @@ onMounted(() => {
                 v-if="sub.status === 'payment_verifying'"
                 color="green"
                 size="xs"
-                :loading="updating === sub.id"
+                :loading="updating.has(sub.id)"
                 @click="updateStatus(sub.id, 'submitted')"
               >
                 อนุมัติ
@@ -291,7 +291,7 @@ onMounted(() => {
                 v-else-if="sub.status === 'submitted'"
                 color="yellow"
                 size="xs"
-                :loading="updating === sub.id"
+                :loading="updating.has(sub.id)"
                 @click="updateStatus(sub.id, 'under_review')"
               >
                 ส่งพิจารณา
@@ -300,7 +300,7 @@ onMounted(() => {
                 <UButton
                   color="green"
                   size="xs"
-                  :loading="updating === sub.id"
+                  :loading="updating.has(sub.id)"
                   @click="updateStatus(sub.id, 'accepted')"
                 >
                   ผ่าน
@@ -308,7 +308,7 @@ onMounted(() => {
                 <UButton
                   color="red"
                   size="xs"
-                  :loading="updating === sub.id"
+                  :loading="updating.has(sub.id)"
                   @click="updateStatus(sub.id, 'rejected')"
                 >
                   ไม่ผ่าน
@@ -316,7 +316,7 @@ onMounted(() => {
                 <UButton
                   color="orange"
                   size="xs"
-                  :loading="updating === sub.id"
+                  :loading="updating.has(sub.id)"
                   @click="updateStatus(sub.id, 'revision_requested')"
                 >
                   แก้ไข
@@ -332,7 +332,7 @@ onMounted(() => {
     <!-- Pagination -->
     <div v-if="totalPages > 1" class="flex items-center justify-between mt-4 px-3">
       <p class="text-sm text-gray-500">
-        แสดง {{ submissions.length }} จาก {{ totalItems }} รายการ
+        แสดง {{ (currentPage - 1) * PER_PAGE + 1 }}-{{ Math.min(currentPage * PER_PAGE, totalItems) }} จาก {{ totalItems }} รายการ
       </p>
       <div class="flex gap-1">
         <UButton
