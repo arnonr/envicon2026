@@ -14,22 +14,18 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       regsCount,
       usersCount,
       reviewsCount,
+      submissionsByStatus,
+      registrationsByPayment,
     ] = await Promise.all([
       db.select({ count: sql<number>`count(*)` }).from(submissions),
       db.select({ count: sql<number>`count(*)` }).from(registrations),
       db.select({ count: sql<number>`count(*)` }).from(users),
       db.select({ count: sql<number>`count(*)` }).from(reviews),
+      db.select({ status: submissions.status, count: sql<number>`count(*)` })
+        .from(submissions).groupBy(submissions.status),
+      db.select({ paymentStatus: registrations.paymentStatus, count: sql<number>`count(*)` })
+        .from(registrations).groupBy(registrations.paymentStatus),
     ]);
-
-    const submissionsByStatus = await db
-      .select({ status: submissions.status, count: sql<number>`count(*)` })
-      .from(submissions)
-      .groupBy(submissions.status);
-
-    const registrationsByPayment = await db
-      .select({ paymentStatus: registrations.paymentStatus, count: sql<number>`count(*)` })
-      .from(registrations)
-      .groupBy(registrations.paymentStatus);
 
     return ok({
       totalSubmissions: Number(subsCount[0]?.count ?? 0),
@@ -82,7 +78,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       db
         .select({ count: sql<number>`count(*)` })
         .from(submissions)
-        .leftJoin(users, eq(submissions.authorId, users.id))
         .where(where),
     ]);
 
