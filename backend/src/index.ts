@@ -6,6 +6,7 @@ import { submissionRoutes } from "./routes/submissions";
 import { reviewRoutes } from "./routes/reviews";
 import { adminRoutes } from "./routes/admin";
 import { registrationRoutes } from "./routes/registrations";
+import { publicRoutes } from "./routes/public";
 import { ok, fail } from "./utils/response";
 
 const app = new Elysia({ prefix: "/envicon2026/api" })
@@ -41,6 +42,7 @@ const app = new Elysia({ prefix: "/envicon2026/api" })
   .use(reviewRoutes)
   .use(adminRoutes)
   .use(registrationRoutes)
+  .use(publicRoutes)
   .listen(3001);
 
 console.log(`🌿 ENVICON 2026 API running at http://localhost:${app.server?.port}`);
