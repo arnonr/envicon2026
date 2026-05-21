@@ -35,6 +35,7 @@ const mobileMenuOpen = ref(false);
         </div>
 
         <!-- CTA Buttons -->
+        <ClientOnly>
         <div class="hidden md:flex items-center gap-2">
           <UButton v-if="!isLoggedIn" color="primary" variant="solid" size="sm" to="/auth/login?mode=register">
             ลงทะเบียนส่งผลงาน
@@ -51,6 +52,7 @@ const mobileMenuOpen = ref(false);
             เข้าสู่ระบบ
           </UButton>
         </div>
+        </ClientOnly>
 
         <!-- Mobile menu button -->
         <button class="md:hidden" @click="mobileMenuOpen = !mobileMenuOpen">
@@ -64,6 +66,7 @@ const mobileMenuOpen = ref(false);
           class="block px-3 py-2 text-sm text-gray-700 hover:text-primary-600" @click="mobileMenuOpen = false">
           {{ link.label }}
         </NuxtLink>
+        <ClientOnly>
         <div class="flex gap-2 mt-3 px-3">
           <UButton v-if="!isLoggedIn" to="/auth/login?mode=register" color="primary" variant="solid" size="sm" block>
             ลงทะเบียนส่งผลงาน
@@ -77,6 +80,7 @@ const mobileMenuOpen = ref(false);
             เข้าสู่ระบบ
           </UButton>
         </div>
+        </ClientOnly>
       </div>
     </nav>
   </header>

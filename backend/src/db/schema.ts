@@ -31,9 +31,11 @@ export const submissions = mysqlTable("submissions", {
   keywords: varchar("keywords", { length: 500 }),
   creators: text("creators"),
   track: int("track").notNull(),
+  submitterType: mysqlEnum("submitter_type", ["student", "general"]).notNull().default("student"),
   status: mysqlEnum("status", [
     "draft",
     "pending_payment",
+    "payment_verifying",
     "submitted",
     "under_review",
     "accepted",
@@ -42,6 +44,7 @@ export const submissions = mysqlTable("submissions", {
   ]).notNull().default("draft"),
   abstractFileUrl: varchar("abstract_file_url", { length: 500 }),
   fullPaperFileUrl: varchar("full_paper_file_url", { length: 500 }),
+  paymentSlipUrl: varchar("payment_slip_url", { length: 500 }),
   submittedAt: timestamp("submitted_at"),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });

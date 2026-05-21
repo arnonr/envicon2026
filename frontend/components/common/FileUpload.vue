@@ -64,7 +64,7 @@ const formatSize = (bytes: number) => {
       <p class="text-sm text-gray-600">
         ลากและวางไฟล์ หรือ <span class="text-primary-600 font-semibold">คลิกเพื่อเลือก</span>
       </p>
-      <p class="text-xs text-gray-400">PDF เท่านั้น{{ maxSizeMb ? ` · ไม่เกิน ${maxSizeMb} MB` : '' }}</p>
+      <p class="text-xs text-gray-400">{{ accept === '.pdf' ? 'PDF เท่านั้น' : 'PDF, PNG, JPG' }}{{ maxSizeMb ? ` · ไม่เกิน ${maxSizeMb} MB` : '' }}</p>
     </div>
   </div>
 </template>

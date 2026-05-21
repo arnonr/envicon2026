@@ -4,6 +4,7 @@ const props = defineProps<{ status: string }>();
 const STATUS_CONFIG = {
   draft: { label: 'ร่าง', color: 'gray' },
   pending_payment: { label: 'รอชำระเงิน', color: 'orange' },
+  payment_verifying: { label: 'รอตรวจสอบการชำระเงิน', color: 'yellow' },
   submitted: { label: 'ส่งแล้ว', color: 'blue' },
   under_review: { label: 'กำลังพิจารณา', color: 'yellow' },
   accepted: { label: 'ผ่านการพิจารณา', color: 'green' },

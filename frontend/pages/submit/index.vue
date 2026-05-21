@@ -21,11 +21,12 @@ const form = ref<SubmissionFormData>({
   abstract: '',
   keywords: '',
   track: '',
+  submitterType: 'student',
 });
 
 const isStep1Valid = computed(() => {
   const f = form.value;
-  if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track) return false;
+  if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track || !f.submitterType) return false;
   const creators = submissionFormRef.value?.creators ?? [];
   return creators.some(c => c.firstName.trim() && c.lastName.trim());
 });
@@ -69,6 +70,7 @@ const createSubmission = async () => {
         keywords: form.value.keywords.trim() || undefined,
         creators: creatorsJson,
         track: parseInt(form.value.track),
+        submitterType: form.value.submitterType,
       },
     })
   );
@@ -96,11 +98,6 @@ const uploadAbstract = async () => {
 
   const formData = new FormData();
   formData.append('file', selectedFile.value);
-  if (!submissionId.value) return;
-  uploading.value = true;
-
-  const formData = new FormData();
-  formData.append('file', file);
 
   const { data, error } = await handleApiCall(() =>
     $fetch(`${apiBase}/submissions/${submissionId.value}/upload-abstract`, {

@@ -96,6 +96,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         keywords: body.keywords ?? null,
         creators,
         track: body.track,
+        submitterType: body.submitterType,
       });
 
       const [sub] = await db
@@ -115,6 +116,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         keywords: t.Optional(t.String()),
         creators: t.Optional(t.String()),
         track: t.Number({ minimum: 1, maximum: 7 }),
+        submitterType: t.Union([t.Literal("student"), t.Literal("general")]),
       }),
     }
   )
@@ -151,6 +153,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.keywords !== undefined && { keywords: body.keywords }),
           ...(body.creators !== undefined && { creators: parseCreators(body.creators) }),
           ...(body.track && { track: body.track }),
+          ...(body.submitterType && { submitterType: body.submitterType }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -170,6 +173,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         keywords: t.Optional(t.String()),
         creators: t.Optional(t.String()),
         track: t.Optional(t.Number({ minimum: 1, maximum: 7 })),
+        submitterType: t.Optional(t.Union([t.Literal("student"), t.Literal("general")])),
       }),
     }
   )
@@ -256,6 +260,51 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     {
       body: t.Object({
         file: t.File({ type: "application/pdf", maxSize: "50mb" }),
+      }),
+    }
+  )
+
+  // Upload payment slip
+  .post(
+    "/:id/upload-slip",
+    async ({ params, body, user, set }) => {
+      const [sub] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      if (!sub) {
+        set.status = 404;
+        return fail("NOT_FOUND", "Submission not found");
+      }
+      if (sub.authorId !== user!.id) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Access denied");
+      }
+      if (sub.status !== "pending_payment") {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "Cannot upload slip in current status");
+      }
+
+      const fileUrl = await saveFile(body.file, `slip-${params.id}`);
+
+      await db
+        .update(submissions)
+        .set({ paymentSlipUrl: fileUrl, status: "payment_verifying" })
+        .where(eq(submissions.id, params.id));
+
+      const [updated] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      return ok(updated);
+    },
+    {
+      body: t.Object({
+        file: t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: "10mb" }),
       }),
     }
   )

@@ -5,6 +5,7 @@ export interface SubmissionFormData {
   abstract: string;
   keywords: string;
   track: string;
+  submitterType: string;
 }
 
 export interface Creator {
@@ -29,6 +30,8 @@ const TRACK_OPTIONS = [
   { label: '6. เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม', value: '6' },
   { label: '7. สิ่งแวดล้อมและสุขภาพ', value: '7' },
 ];
+
+const { studentLabel, generalLabel } = useFees();
 
 const creators = ref<Creator[]>([{ firstName: '', lastName: '' }]);
 
@@ -77,6 +80,17 @@ defineExpose({ creators });
     <UFormGroup label="ประเภทกาการนำเสนอ (Track)" required>
       <USelect :model-value="modelValue.track" :options="TRACK_OPTIONS" placeholder="-- เลือกประเภท --"
         @update:model-value="update('track', $event as string)" />
+    </UFormGroup>
+
+    <UFormGroup label="ประเภทผู้ส่งผลงาน" required>
+      <URadioGroup
+        :model-value="modelValue.submitterType"
+        :options="[
+          { label: studentLabel, value: 'student' },
+          { label: generalLabel, value: 'general' },
+        ]"
+        @update:model-value="update('submitterType', $event as string)"
+      />
     </UFormGroup>
 
     <UFormGroup label="ผู้สร้างสรรค์ผลงาน (Creators)" required>

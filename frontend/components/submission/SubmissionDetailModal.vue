@@ -15,9 +15,11 @@ interface Submission {
   keywords: string | null;
   creators: string | null;
   track: number;
+  submitterType: string;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  paymentSlipUrl: string | null;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
@@ -36,10 +38,19 @@ const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
 const authStore = useAuthStore();
 const { handleApiCall, showError, showSuccess } = useApiError();
+const { fees } = useFees();
+
+const fileLink = (url: string | null) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  try { return new URL(apiBase).origin + url; } catch { return url; }
+};
 
 const submission = ref<Submission | null>(null);
 const loading = ref(false);
 const uploadingPaper = ref(false);
+const uploadingSlip = ref(false);
+const slipPreviewOpen = ref(false);
 
 const TRACK_NAMES: Record<number, string> = {
   1: 'วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ',
@@ -88,6 +99,31 @@ const uploadFullPaper = async (file: File) => {
   uploadingPaper.value = false;
   if (error) { showError(error); return; }
   showSuccess('อัปโหลดบทความฉบับสมบูรณ์เรียบร้อยแล้ว');
+  await fetchSubmission();
+};
+
+const selectedSlipFile = ref<File | null>(null);
+
+const onSlipSelected = (file: File) => {
+  selectedSlipFile.value = file;
+};
+
+const uploadSlip = async () => {
+  if (!props.submissionId || !selectedSlipFile.value) return;
+  uploadingSlip.value = true;
+  const formData = new FormData();
+  formData.append('file', selectedSlipFile.value);
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/submissions/${props.submissionId}/upload-slip`, {
+      method: 'POST',
+      headers: headers.value,
+      body: formData,
+    })
+  );
+  uploadingSlip.value = false;
+  if (error) { showError(error); return; }
+  showSuccess('อัปโหลดหลักฐานการชำระเงินเรียบร้อยแล้ว');
+  selectedSlipFile.value = null;
   await fetchSubmission();
 };
 
@@ -153,6 +189,10 @@ watch(() => props.modelValue, (open) => {
             <dd class="font-medium mt-0.5">{{ TRACK_NAMES[submission.track] ?? submission.track }}</dd>
           </div>
           <div>
+            <dt class="text-gray-500">ประเภทผู้ส่ง</dt>
+            <dd class="font-medium mt-0.5">{{ submission.submitterType === 'student' ? `นิสิต/นักศึกษา (${fees.student.toLocaleString()} บาท)` : `อาจารย์/นักวิจัย/บุคคลทั่วไป (${fees.general.toLocaleString()} บาท)` }}</dd>
+          </div>
+          <div>
             <dt class="text-gray-500">วันที่ส่ง</dt>
             <dd class="mt-0.5">{{ formatDate(submission.submittedAt) }}</dd>
           </div>
@@ -192,9 +232,11 @@ watch(() => props.modelValue, (open) => {
                 <UIcon name="i-heroicons-document" class="w-4 h-4 text-gray-400" />
                 <span class="text-gray-700">บทคัดย่อ (Abstract)</span>
               </div>
-              <UButton v-if="submission.abstractFileUrl" size="xs" color="gray" variant="soft" icon="i-heroicons-arrow-down-tray" :to="submission.abstractFileUrl" target="_blank">
+              <a v-if="submission.abstractFileUrl" :href="fileLink(submission.abstractFileUrl)" target="_blank"
+                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
+                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
                 ดาวน์โหลด
-              </UButton>
+              </a>
               <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
             </div>
             <div class="flex items-center justify-between text-sm">
@@ -202,13 +244,98 @@ watch(() => props.modelValue, (open) => {
                 <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-gray-400" />
                 <span class="text-gray-700">บทความฉบับสมบูรณ์ (Full Paper)</span>
               </div>
-              <UButton v-if="submission.fullPaperFileUrl" size="xs" color="gray" variant="soft" icon="i-heroicons-arrow-down-tray" :to="submission.fullPaperFileUrl" target="_blank">
+              <a v-if="submission.fullPaperFileUrl" :href="fileLink(submission.fullPaperFileUrl)" target="_blank"
+                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
+                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
                 ดาวน์โหลด
-              </UButton>
+              </a>
               <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
             </div>
           </div>
         </div>
+
+        <!-- Payment info (pending_payment) -->
+        <div v-if="submission.status === 'pending_payment'" class="border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-4">
+          <div class="flex items-center gap-2 mb-2">
+            <UIcon name="i-heroicons-credit-card" class="w-5 h-5 text-blue-600" />
+            <h3 class="text-sm font-semibold text-blue-700">ชำระค่าส่งผลงาน</h3>
+          </div>
+
+          <!-- QR Code placeholder -->
+          <div class="flex justify-center">
+            <div class="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+              <span class="text-xs text-gray-400">QR Code</span>
+            </div>
+          </div>
+
+          <!-- Bank transfer details -->
+          <div class="bg-white rounded-lg p-3 text-sm space-y-1.5">
+            <p class="font-semibold text-gray-700">รายละเอียดการโอน</p>
+            <div class="flex justify-between">
+              <span class="text-gray-500">ธนาคาร</span>
+              <span>กสิกรไทย (KBANK)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">เลขบัญชี</span>
+              <span class="font-mono">XXX-X-XXXXX-X</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">ชื่อบัญชี</span>
+              <span>สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">จำนวนเงิน</span>
+              <span class="font-semibold text-primary-700">
+                {{ submission.submitterType === 'student' ? fees.student.toLocaleString() : fees.general.toLocaleString() }} บาท
+              </span>
+            </div>
+          </div>
+
+          <!-- Upload slip -->
+          <div>
+            <p class="text-xs text-gray-500 mb-2">อัปโหลดหลักฐานการชำระเงิน (สลิปโอนเงิน)</p>
+            <CommonFileUpload :loading="uploadingSlip" :max-size-mb="10" accept=".pdf,.png,.jpg,.jpeg" @change="onSlipSelected" />
+            <div class="flex justify-end mt-3">
+              <UButton v-if="selectedSlipFile" color="primary" :loading="uploadingSlip" @click="uploadSlip">
+                บันทึก
+                <UIcon name="i-heroicons-check" class="w-4 h-4 ml-1" />
+              </UButton>
+              <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึก</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment verifying -->
+        <div v-if="submission.status === 'payment_verifying'" class="border border-yellow-200 rounded-lg p-4 bg-yellow-50/50 space-y-3">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-clock" class="w-5 h-5 text-yellow-600" />
+            <h3 class="text-sm font-semibold text-yellow-700">รอตรวจสอบการชำระเงิน</h3>
+          </div>
+          <p class="text-sm text-gray-600">ได้รับหลักฐานการชำระเงินเรียบร้อย กำลังรอเจ้าหน้าที่ตรวจสอบ</p>
+          <div v-if="submission.paymentSlipUrl">
+            <p class="text-xs text-gray-500 mb-1.5">หลักฐานการชำระเงิน</p>
+            <img
+              :src="fileLink(submission.paymentSlipUrl)"
+              class="w-32 h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity object-cover"
+              @click="slipPreviewOpen = true"
+            />
+          </div>
+        </div>
+
+        <!-- Slip preview modal -->
+        <UModal v-model="slipPreviewOpen" :ui="{ width: 'sm:max-w-3xl' }">
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-sm">หลักฐานการชำระเงิน</h3>
+                <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" size="sm" @click="slipPreviewOpen = false" />
+              </div>
+            </template>
+            <div class="flex justify-center">
+              <img v-if="submission?.paymentSlipUrl" :src="fileLink(submission.paymentSlipUrl)" class="max-w-full max-h-[70vh] rounded-lg" />
+            </div>
+          </UCard>
+        </UModal>
 
         <!-- Upload full paper (accepted, no file yet) -->
         <div v-if="submission.status === 'accepted' && !submission.fullPaperFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
