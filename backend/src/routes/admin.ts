@@ -3,7 +3,7 @@ import { db } from "../db";
 import { registrations, users, submissions, reviews } from "../db/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { requireAdmin } from "../middleware/roles";
-import { ok, fail } from "../utils/response";
+import { ok, fail, paginated } from "../utils/response";
 import { calculateFee } from "../utils/fees";
 
 export const adminRoutes = new Elysia({ prefix: "/admin" })
@@ -46,36 +46,53 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   })
   .get("/submissions", async ({ query }) => {
     const conditions = [];
-    if (query.status) conditions.push(eq(submissions.status, query.status));
+    if (query.status) conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
     if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
 
-    const rows = await db
-      .select({
-        id: submissions.id,
-        title: submissions.title,
-        titleEn: submissions.titleEn,
-        track: submissions.track,
-        submitterType: submissions.submitterType,
-        status: submissions.status,
-        abstractFileUrl: submissions.abstractFileUrl,
-        fullPaperFileUrl: submissions.fullPaperFileUrl,
-        paymentSlipUrl: submissions.paymentSlipUrl,
-        submittedAt: submissions.submittedAt,
-        updatedAt: submissions.updatedAt,
-        authorName: users.name,
-        authorEmail: users.email,
-        authorAffiliation: users.affiliation,
-      })
-      .from(submissions)
-      .leftJoin(users, eq(submissions.authorId, users.id))
-      .where(conditions.length ? and(...conditions) : undefined)
-      .orderBy(desc(submissions.updatedAt));
+    const where = conditions.length ? and(...conditions) : undefined;
 
-    return ok(rows);
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    const [rows, countResult] = await Promise.all([
+      db
+        .select({
+          id: submissions.id,
+          title: submissions.title,
+          titleEn: submissions.titleEn,
+          track: submissions.track,
+          submitterType: submissions.submitterType,
+          status: submissions.status,
+          abstractFileUrl: submissions.abstractFileUrl,
+          fullPaperFileUrl: submissions.fullPaperFileUrl,
+          paymentSlipUrl: submissions.paymentSlipUrl,
+          submittedAt: submissions.submittedAt,
+          updatedAt: submissions.updatedAt,
+          authorName: users.name,
+          authorEmail: users.email,
+          authorAffiliation: users.affiliation,
+        })
+        .from(submissions)
+        .leftJoin(users, eq(submissions.authorId, users.id))
+        .where(where)
+        .orderBy(desc(submissions.updatedAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(submissions)
+        .leftJoin(users, eq(submissions.authorId, users.id))
+        .where(where),
+    ]);
+
+    return paginated(rows, page, limit, Number(countResult[0]?.count ?? 0));
   }, {
     query: t.Object({
       status: t.Optional(t.String()),
       track: t.Optional(t.String()),
+      page: t.Optional(t.String()),
+      limit: t.Optional(t.String()),
     }),
   })
   .get("/reviewers", () => ({ message: "TODO" }))
