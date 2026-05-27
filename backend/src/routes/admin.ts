@@ -166,11 +166,16 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         return fail("NOT_FOUND", "ไม่พบข้อมูลการส่งบทความ");
       }
 
-      const [updated] = await db
+      await db
         .update(submissions)
         .set({ status: body.status })
+        .where(eq(submissions.id, params.id));
+
+      const [updated] = await db
+        .select()
+        .from(submissions)
         .where(eq(submissions.id, params.id))
-        .returning();
+        .limit(1);
 
       return ok(updated);
     },

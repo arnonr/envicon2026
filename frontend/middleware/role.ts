@@ -4,6 +4,10 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const path = to.path;
 
+  if (path === "/dashboard" && authStore.isAdmin) {
+    return navigateTo("/admin");
+  }
+
   if (path.startsWith("/admin") && !authStore.isAdmin) {
     return navigateTo("/");
   }

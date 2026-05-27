@@ -41,7 +41,7 @@ const mobileMenuOpen = ref(false);
             ลงทะเบียนส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
-            <UButton to="/dashboard" color="primary" variant="ghost" size="sm">
+            <UButton :to="user?.role === 'admin' ? '/admin' : '/dashboard'" color="primary" variant="ghost" size="sm">
               {{ user?.name }}
             </UButton>
             <UButton color="gray" variant="ghost" size="sm" @click="logout">
@@ -72,8 +72,8 @@ const mobileMenuOpen = ref(false);
             ลงทะเบียนส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
-            <UButton to="/dashboard" color="primary" variant="ghost" size="sm" block>
-              แดชบอร์ด
+            <UButton :to="user?.role === 'admin' ? '/admin' : '/dashboard'" color="primary" variant="ghost" size="sm" block>
+              {{ user?.role === 'admin' ? 'แผงผู้ดูแล' : 'แดชบอร์ด' }}
             </UButton>
           </template>
           <UButton v-else color="primary" variant="outline" size="sm" block to="/auth/login">

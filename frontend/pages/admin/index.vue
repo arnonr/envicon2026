@@ -90,6 +90,15 @@ const STATUS_COLORS: Record<string, string> = {
   revision_requested: "orange",
 };
 
+function formatDate(iso: string | null) {
+  if (!iso) return "-";
+  return new Date(iso).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 async function fetchSubmissions() {
   loading.value = true;
   const params = new URLSearchParams();
@@ -237,6 +246,7 @@ onMounted(() => {
           <tr class="border-b text-left">
             <th class="py-3 px-3">ผลงาน</th>
             <th class="py-3 px-3">ผู้ส่ง</th>
+            <th class="py-3 px-3 text-center">วันที่ส่ง</th>
             <th class="py-3 px-3 text-center">หัวข้อ</th>
             <th class="py-3 px-3 text-center">ประเภท</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
@@ -257,6 +267,9 @@ onMounted(() => {
             <td class="py-3 px-3">
               <p class="text-gray-700">{{ sub.authorName || "-" }}</p>
               <p class="text-xs text-gray-400">{{ sub.authorEmail || "-" }}</p>
+            </td>
+            <td class="py-3 px-3 text-center text-gray-500">
+              {{ formatDate(sub.submittedAt) }}
             </td>
             <td class="py-3 px-3 text-center text-gray-500">
               {{ TRACK_NAMES[sub.track] || sub.track }}

@@ -125,7 +125,9 @@ async function handleSubmit() {
     }
   }
 
-  const redirect = (route.query.redirect as string) || "/dashboard";
+  const authStore = useAuthStore();
+  const defaultRedirect = authStore.isAdmin ? "/admin" : "/dashboard";
+  const redirect = (route.query.redirect as string) || defaultRedirect;
   router.push(redirect);
 }
 </script>

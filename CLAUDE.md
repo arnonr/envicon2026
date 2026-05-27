@@ -1,7 +1,6 @@
-# ENVICON 2026 — Conference Website
+# CLAUDE.md
 
-เว็บไซต์การประชุมวิชาการระดับชาติ ครั้งที่ 5 สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย  
-Theme: "Innovative Environmental Technologies for a Sustainable and Low-Carbon Future"
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Rules
 
@@ -12,7 +11,7 @@ Theme: "Innovative Environmental Technologies for a Sustainable and Low-Carbon F
 
 ## Architecture
 
-Monorepo with two apps + shared infra:
+Monorepo — two apps + shared infra:
 
 ```
 frontend/   — Nuxt 3 + Vue 3 + Tailwind CSS + @nuxt/ui + Pinia
@@ -21,9 +20,27 @@ nginx.conf  — Reverse proxy (all under /envicon2026/)
 docker-compose.yml — MySQL, Backend, Frontend, Nginx
 ```
 
-**API prefix**: `/envicon2026/api`  
-**Frontend base URL**: `/envicon2026`  
-**Type-safe client**: Eden Treaty (`frontend/composables/useApi.ts` imports `App` type from backend)
+**API prefix**: `/envicon2026/api`
+**Frontend base URL**: `/envicon2026`
+
+## Commands
+
+```bash
+# Backend (uses Bun, NOT Node)
+cd backend && bun install
+cd backend && bun run dev          # Dev server :3001 (hot reload)
+cd backend && bun run db:generate  # Generate Drizzle migrations
+cd backend && bun run db:push      # Push schema to MySQL
+
+# Frontend (uses Node/npm, NOT Bun)
+cd frontend && npm install
+cd frontend && npm run dev         # Dev server :3000
+
+# Docker (full stack)
+docker compose up --build
+```
+
+No test framework is configured in either app. No `*.test.*` or `*.spec.*` files exist.
 
 ## Tech Stack
 
@@ -38,88 +55,122 @@ docker-compose.yml — MySQL, Backend, Frontend, Nginx
 | State       | Pinia (@pinia/nuxt)                              |
 | Auth        | JWT (Elysia JWT plugin), role-based (author/reviewer/admin) |
 
-## Commands
+## Backend Patterns
 
-```bash
-# Backend
-cd backend && bun install          # Install deps
-cd backend && bun run dev          # Dev server (hot reload) on :3001
-cd backend && bun run db:generate  # Generate Drizzle migrations
-cd backend && bun run db:push      # Push schema to MySQL
+### Route Structure
 
-# Frontend
-cd frontend && npm install         # Install deps
-cd frontend && npm run dev         # Dev server on :3000
+Routes are Elysia plugin functions in `backend/src/routes/`. Each uses `Elysia({ prefix })` and is composed via `.use()` in `backend/src/index.ts`, which exports `App` type.
 
-# Docker (full stack)
-docker compose up                  # Start all services
-docker compose up --build          # Rebuild and start
+**6 route plugins**: `authRoutes` (`/auth`), `submissionRoutes` (`/submissions`), `reviewRoutes` (`/reviews`), `adminRoutes` (`/admin`), `registrationRoutes` (`/registrations`), `publicRoutes` (`/public`)
+
+### Type-Safe API Client
+
+Eden Treaty provides end-to-end type safety. `frontend/composables/useApi.ts` imports `App` type from `backend/src/index.ts`. Frontend gets full autocomplete on all API routes.
+
+### Response Helpers (`backend/src/utils/response.ts`)
+
+All API responses use standardized shapes via `ok(data)`, `fail(error, message?)`, `paginated(data, page, limit, total)`. Always `{ success: true/false }` as discriminant.
+
+### Auth Middleware (`backend/src/middleware/`)
+
+- `requireAuth` — scoped derive + onBeforeHandle, returns 401 if invalid/missing JWT
+- `requireRole(roles[])` — composes `requireAuth` + role check, returns 403
+- `requireAdmin`, `requireReviewer`, `requireAuthor` — convenience aliases
+- JWT_SECRET defaults to `"envicon2026-dev-secret"` in dev
+- `Bun.password.verify` for bcrypt verification (no external bcrypt lib)
+
+### Submission Status Lifecycle
+
+```
+draft → pending_payment → payment_verifying → submitted → under_review → accepted
+                                                               ├→ rejected
+                                                               └→ revision_requested → (back to pending_payment via revise)
 ```
 
-## Key Conventions
+Transitions:
+- `draft` → `pending_payment`: author uploads abstract PDF
+- `pending_payment` → `payment_verifying`: author uploads payment slip
+- `payment_verifying` → `submitted`: admin confirms payment
+- `submitted` → `under_review`: admin assigns reviewers
+- `under_review` → `accepted`/`rejected`/`revision_requested`: admin decision
+- `revision_requested` → `pending_payment`: author uploads revised paper
 
-### Backend (Elysia.js + Bun)
+**One submission per author** — enforced at creation and checked on `/submit` page mount.
 
-- Use **Bun** for everything: `bun install`, `bun run`, `bun test`, `bunx`
-- Bun auto-loads `.env` — do NOT use `dotenv`
-- Routes go in `backend/src/routes/` as Elysia plugin functions
-- DB schema in `backend/src/db/schema.ts` (Drizzle ORM)
-- DB connection in `backend/src/db/index.ts`
-- Middleware in `backend/src/middleware/` (auth.ts, roles.ts)
-- Services (business logic) in `backend/src/services/`
-- Use Elysia's `t.` (TypeBox) for request validation
-- Export `App` type from `backend/src/index.ts` for Eden Treaty
+### Dual Registration Systems
 
-### Frontend (Nuxt 3)
+1. **Conference registration** (`registrations` table) — authenticated, linked to user, has fee calculation
+2. **Public event registration** (`event_registrations` table) — unauthenticated, no login required, no fee
 
-- Pages in `frontend/pages/` — file-based routing
-- Components in `frontend/components/` — organized by feature folder (home/, layout/, submission/, review/, common/)
-- Composables in `frontend/composables/` — useApi, useAuth
-- Stores in `frontend/stores/` — Pinia stores
-- Middleware in `frontend/middleware/` — route guards (auth, role)
-- Layouts in `frontend/layouts/`
-- Use `<script setup lang="ts">` for all Vue components
-- Use `$fetch` or Eden Treaty for API calls (not axios)
-- Use Nuxt auto-imports (no manual import for Vue/Nuxt composables)
+### Fee Calculation (`backend/src/utils/fees.ts`)
+
+Early bird deadline: `2026-10-14T23:59:59+07:00`. Student: 500/700, General: 2000/2500 (early/regular).
+
+## Frontend Patterns
+
+### Auth Flow
+
+- `useAuth()` composable wraps `$fetch` calls (not Eden) for auth endpoints
+- `stores/auth.ts` (Pinia) stores token + user in localStorage
+- `plugins/auth.client.ts` restores session on app load
+- `middleware/auth.ts` protects routes, redirects to `/auth/login`
+- `middleware/role.ts` guards admin/reviewer routes by role
+
+### API Error Handling (`composables/useApiError.ts`)
+
+`handleApiCall<T>(apiCall)` — try/catch wrapper that auto-logs out on 401, standardizes errors. `showError(error)` / `showSuccess(message)` for toast notifications.
 
 ### Styling
 
-- **Color palette**: primary (green #059669), accent (blue #0284c7), white
-- Custom color scales defined in `frontend/tailwind.config.ts`
+- **Color palette**: primary (emerald #059669), accent (sky #0284c7), meadow (#22c55e) — each with 50-950 shades in `tailwind.config.ts`
+- Font: Sarabun (Thai + English)
 - Use @nuxt/ui components first, then Tailwind utilities
 - Thai language UI with English academic terminology
 
-### Database Schema
+## Database
 
-6 tables: `users`, `submissions`, `reviews`, `reviewer_assignments`, `registrations`, `revisions`
+7 tables in `backend/src/db/schema.ts`: `users`, `submissions`, `reviews`, `reviewer_assignments`, `registrations`, `revisions`, `event_registrations`
 
-- UUIDs as primary keys (varchar 36)
+- UUIDs as primary keys (varchar 36), except `reviewer_assignments` (auto-increment int)
 - Roles: author, reviewer, admin
-- Submission statuses: draft → submitted → under_review → accepted/rejected/revision_requested
-- Review statuses: pending → completed
 - Double-blind review (reviewer cannot see author info)
+- `submissions.creators` stored as JSON text (array of `{firstName, lastName}`, max 20)
 
-## API Routes Structure
+## API Routes
 
 ```
 /envicon2026/api/health              — Health check
-/envicon2026/api/auth/*              — Register, login, me, logout
+/envicon2026/api/auth/*              — Register, login, me
 /envicon2026/api/submissions/*       — CRUD, file uploads, revisions
-/envicon2026/api/reviews/*           — Reviewer assigned reviews
-/envicon2026/api/admin/*             — Admin management
-/envicon2026/api/registrations/*     — Conference registration
+/envicon2026/api/reviews/*           — STUBS ONLY (returns TODO)
+/envicon2026/api/admin/*             — Stats, submissions mgmt, registrations mgmt, reviewers (STUB)
+/envicon2026/api/registrations/*     — Conference registration (authenticated)
+/envicon2026/api/public/*            — Public event registration (no auth)
 ```
 
 ## File Upload
 
-- Stored in `backend/uploads/`
-- PDF only, max 50MB (nginx client_max_body_size)
-- Storage service in `backend/src/services/storage.ts`
+- Stored in `backend/uploads/`, served via `Bun.file()` at `/envicon2026/api/files/:filename`
+- Abstract/paper: PDF only, max 50MB
+- Payment slip: PDF/PNG/JPEG, max 10MB
+- Storage service: `backend/src/services/storage.ts`
 
-## Development Notes
+## Implementation Status
 
-- Implementation plan at `docs/implementation-plan.md`
-- Event info at `event-info.md`
-- Backend has its own `CLAUDE.md` with Bun-specific guidance — follow it
-- When modifying DB schema, run `bun run db:push` to sync
-- Eden Treaty provides end-to-end type safety between frontend and backend
+**Complete**: Auth, submissions (full lifecycle), admin dashboard, conference registration, public registration, landing page
+
+**Not implemented**: Review system (all `/reviews` endpoints are stubs), email notifications, admin reviewer management, rate limiting
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (`arnonr/envicon2026`). Uses `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default label vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context layout. `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
