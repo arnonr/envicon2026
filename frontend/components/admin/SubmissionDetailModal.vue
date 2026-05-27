@@ -5,6 +5,7 @@ interface Revision {
   fileUrl: string;
   changelog: string | null;
   submittedAt: string;
+  fileAvailable: boolean;
 }
 
 interface Submission {
@@ -38,6 +39,36 @@ interface WorkflowAssignment {
   commentsToEditor: string | null;
 }
 
+interface SubmissionVersion {
+  id: string;
+  version: number;
+  kind: "initial" | "revision";
+  title: string;
+  titleEn: string | null;
+  abstract: string | null;
+  keywords: string | null;
+  creators: string | null;
+  track: number;
+  submitterType: string;
+  fileUrl: string | null;
+  changelog: string | null;
+  submittedAt: string;
+  fileAvailable: boolean;
+}
+
+interface WorkflowRound {
+  id: string;
+  roundNumber: number;
+  status: string;
+  decision: "accept" | "reject" | "revise" | null;
+  adminNote: string | null;
+  releasedAt: string | null;
+  dispatchedCount: number;
+  completedCount: number;
+  assignments: WorkflowAssignment[];
+  submissionVersion: SubmissionVersion | null;
+}
+
 interface WorkflowReviewer {
   id: string;
   name: string;
@@ -51,16 +82,9 @@ interface WorkflowReviewer {
 }
 
 interface ReviewWorkflow {
-  currentRound: null | {
-    id: string;
-    roundNumber: number;
-    status: string;
-    decision: "accept" | "reject" | "revise" | null;
-    adminNote: string | null;
-    dispatchedCount: number;
-    completedCount: number;
-    assignments: WorkflowAssignment[];
-  };
+  currentRound: WorkflowRound | null;
+  rounds: WorkflowRound[];
+  versions: SubmissionVersion[];
   reviewers: WorkflowReviewer[];
 }
 
@@ -145,6 +169,38 @@ const parsedKeywords = computed(() => {
   return kw.split(',').map(k => k.trim()).filter(Boolean);
 });
 
+const decisionLabel = (decision: WorkflowRound["decision"]) =>
+  ({ accept: "ผ่านการพิจารณา", reject: "ไม่ผ่าน", revise: "ขอแก้ไข" }[decision ?? ""] ?? "ยังไม่มีผลตัดสิน");
+
+const versionLabel = (version: SubmissionVersion) =>
+  version.kind === "initial" ? "ฉบับเริ่มต้น" : `ฉบับแก้ไข ครั้งที่ ${version.version - 1}`;
+
+const creatorsLabel = (raw: string | null) => {
+  if (!raw) return "-";
+  try {
+    const values = JSON.parse(raw) as Creator[];
+    return values.map(value => `${value.firstName} ${value.lastName}`.trim()).filter(Boolean).join(", ") || "-";
+  } catch {
+    return raw;
+  }
+};
+
+const comparisonRows = (version: SubmissionVersion, index: number) => {
+  const previous = workflow.value?.versions[index - 1];
+  if (!previous) return [];
+  const fields = [
+    { label: "ชื่อเรื่องภาษาไทย", before: previous.title, after: version.title },
+    { label: "ชื่อเรื่องภาษาอังกฤษ", before: previous.titleEn, after: version.titleEn },
+    { label: "บทคัดย่อ", before: previous.abstract, after: version.abstract },
+    { label: "คำสำคัญ", before: previous.keywords, after: version.keywords },
+    { label: "ผู้สร้างสรรค์", before: creatorsLabel(previous.creators), after: creatorsLabel(version.creators) },
+    { label: "สาขา", before: TRACK_NAMES[previous.track] ?? String(previous.track), after: TRACK_NAMES[version.track] ?? String(version.track) },
+    { label: "ประเภทผู้ส่ง", before: submitterLabel(previous.submitterType), after: submitterLabel(version.submitterType) },
+    { label: "ไฟล์", before: previous.fileUrl, after: version.fileUrl },
+  ];
+  return fields.filter(field => (field.before ?? "") !== (field.after ?? ""));
+};
+
 const fetchSubmission = async () => {
   if (!props.submissionId) return;
   loading.value = true;
@@ -177,7 +233,7 @@ const updateStatus = async (newStatus: string, successMsg: string) => {
 };
 
 const fetchWorkflow = async () => {
-  if (!props.submissionId || !submission.value || !["submitted", "under_review"].includes(submission.value.status)) {
+  if (!props.submissionId || !submission.value) {
     workflow.value = null;
     return;
   }
@@ -429,10 +485,75 @@ watch(() => props.modelValue, (open) => {
                 <span class="font-medium">ครั้งที่ {{ rev.version }}</span>
                 <span class="text-gray-400 ml-2">{{ formatDate(rev.submittedAt) }}</span>
                 <p v-if="rev.changelog" class="text-gray-500 text-xs mt-0.5">{{ rev.changelog }}</p>
+                <p v-if="!rev.fileAvailable" class="text-red-600 text-xs mt-0.5">ไม่พบไฟล์</p>
               </div>
-              <UButton size="xs" color="gray" variant="ghost" icon="i-heroicons-arrow-down-tray" :to="fileLink(rev.fileUrl)" target="_blank" />
+              <UButton v-if="rev.fileAvailable" size="xs" color="gray" variant="ghost" icon="i-heroicons-arrow-down-tray" :to="fileLink(rev.fileUrl)" target="_blank" />
             </li>
           </ul>
+        </div>
+
+        <UDivider />
+
+        <!-- Review history -->
+        <div>
+          <h3 class="text-sm font-semibold text-gray-800 mb-3">ประวัติการพิจารณา</h3>
+          <div v-if="workflowLoading" class="flex justify-center py-4">
+            <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 text-gray-400 animate-spin" />
+          </div>
+          <p v-else-if="!workflow?.rounds.length" class="text-sm text-gray-400">ยังไม่มีรอบพิจารณา</p>
+          <div v-else class="space-y-3">
+            <div v-for="round in workflow.rounds" :key="round.id" class="border rounded-lg p-3 space-y-3">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-medium text-sm">รอบที่ {{ round.roundNumber }}</p>
+                <UBadge :color="round.status === 'released' ? 'green' : 'yellow'" variant="soft" size="xs">
+                  {{ round.status === 'released' ? decisionLabel(round.decision) : 'กำลังดำเนินการ' }}
+                </UBadge>
+              </div>
+              <p v-if="round.releasedAt" class="text-xs text-gray-500">แจ้งผลเมื่อ {{ formatDate(round.releasedAt) }}</p>
+              <p v-if="round.adminNote" class="text-sm whitespace-pre-line">
+                <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span> {{ round.adminNote }}
+              </p>
+              <div v-if="!round.submissionVersion" class="rounded bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+                ไม่มี snapshot ข้อมูลผลงานสำหรับรอบนี้
+              </div>
+              <div v-for="assignment in round.assignments" :key="assignment.id" class="bg-gray-50 rounded p-3 text-sm space-y-1">
+                <p class="font-medium">{{ assignment.reviewerName }}</p>
+                <p><span class="text-gray-500">สถานะ:</span> {{ assignmentLabel(assignment.status) }}</p>
+                <template v-if="assignment.status === 'completed'">
+                  <p><span class="text-gray-500">คะแนน:</span> {{ assignment.score }}/5</p>
+                  <p><span class="text-gray-500">ข้อเสนอ:</span> {{ assignment.recommendation }}</p>
+                  <p class="whitespace-pre-line"><span class="text-gray-500">ถึงผู้เขียน:</span> {{ assignment.commentsToAuthor }}</p>
+                  <p v-if="assignment.commentsToEditor" class="whitespace-pre-line"><span class="text-gray-500">ถึงเจ้าหน้าที่:</span> {{ assignment.commentsToEditor }}</p>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Version history -->
+        <div v-if="workflow?.versions.length" class="border border-sky-200 rounded-lg p-4 bg-sky-50/30 space-y-3">
+          <h3 class="font-semibold text-sm text-sky-800">ประวัติฉบับผลงานและการเปรียบเทียบ</h3>
+          <div v-for="(version, index) in workflow.versions" :key="version.id" class="bg-white border rounded-lg p-3 space-y-2">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <p class="font-medium text-sm">{{ versionLabel(version) }}</p>
+                <p class="text-xs text-gray-500">{{ formatDate(version.submittedAt) }}</p>
+              </div>
+              <a v-if="version.fileUrl && version.fileAvailable" :href="fileLink(version.fileUrl)" target="_blank" class="text-xs text-primary-600 hover:underline">
+                ดาวน์โหลด PDF
+              </a>
+              <span v-else-if="version.fileUrl" class="text-xs text-red-600">ไม่พบไฟล์ PDF</span>
+            </div>
+            <p v-if="version.changelog" class="text-xs text-gray-600 whitespace-pre-line">{{ version.changelog }}</p>
+            <div v-if="comparisonRows(version, index).length" class="border-t pt-2 space-y-2">
+              <p class="text-xs font-medium text-gray-600">เปลี่ยนจากฉบับก่อนหน้า</p>
+              <div v-for="change in comparisonRows(version, index)" :key="change.label" class="text-xs">
+                <p class="font-medium text-gray-600">{{ change.label }}</p>
+                <p class="text-red-600 line-through whitespace-pre-line">{{ change.before || '-' }}</p>
+                <p class="text-green-700 whitespace-pre-line">{{ change.after || '-' }}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Review workflow -->

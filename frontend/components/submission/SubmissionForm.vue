@@ -15,6 +15,7 @@ export interface Creator {
 
 const props = defineProps<{
   modelValue: SubmissionFormData;
+  initialCreators?: Creator[];
 }>();
 
 const emit = defineEmits<{
@@ -33,7 +34,11 @@ const TRACK_OPTIONS = [
 
 const { studentLabel, generalLabel } = useFees();
 
-const creators = ref<Creator[]>([{ firstName: '', lastName: '' }]);
+const creators = ref<Creator[]>(
+  props.initialCreators?.length
+    ? props.initialCreators.map(creator => ({ ...creator }))
+    : [{ firstName: '', lastName: '' }]
+);
 
 const update = (field: keyof SubmissionFormData, value: string) => {
   emit('update:modelValue', { ...props.modelValue, [field]: value });

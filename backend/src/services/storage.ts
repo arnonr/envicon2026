@@ -11,3 +11,9 @@ export const saveFile = async (file: File, prefix: string): Promise<string> => {
   await Bun.write(filepath, file);
   return `/envicon2026/api/files/${filename}`;
 };
+
+export const storedFileExists = async (url: string | null): Promise<boolean> => {
+  if (!url) return false;
+  const filename = path.basename(url);
+  return Bun.file(path.join(UPLOADS_DIR, filename)).exists();
+};

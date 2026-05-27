@@ -7,6 +7,7 @@ import {
   reviewerExpertiseTracks,
   reviewerProfiles,
   reviews,
+  submissionVersions,
   submissions,
   users,
 } from "../db/schema";
@@ -15,6 +16,7 @@ import { requireAdmin } from "../middleware/roles";
 import { appUrl, escapeHtml, retryTrackedEmail, sendTrackedEmail } from "../services/email";
 import { issuePasswordSetupToken } from "../services/password-setup";
 import { fail, ok } from "../utils/response";
+import { storedFileExists } from "../services/storage";
 
 async function sendInvitation(user: { id: string; email: string; name: string }) {
   const token = await issuePasswordSetupToken(user.id);
@@ -76,6 +78,35 @@ async function reviewerDirectory(submissionTrack?: number) {
       overCapacity: activeReviewCount >= profile.maxConcurrentReviews,
     };
   });
+}
+
+async function ensureCurrentSubmissionVersion(submission: typeof submissions.$inferSelect) {
+  const [latestVersion] = await db
+    .select()
+    .from(submissionVersions)
+    .where(eq(submissionVersions.submissionId, submission.id))
+    .orderBy(desc(submissionVersions.version))
+    .limit(1);
+  if (latestVersion) return latestVersion;
+
+  const version = {
+    id: crypto.randomUUID(),
+    submissionId: submission.id,
+    version: 1,
+    kind: "initial" as const,
+    title: submission.title,
+    titleEn: submission.titleEn,
+    abstract: submission.abstract,
+    keywords: submission.keywords,
+    creators: submission.creators,
+    track: submission.track,
+    submitterType: submission.submitterType,
+    fileUrl: submission.fullPaperFileUrl ?? submission.abstractFileUrl,
+    changelog: null,
+    submittedAt: submission.submittedAt ?? new Date(),
+  };
+  await db.insert(submissionVersions).values(version);
+  return version;
 }
 
 export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
@@ -187,14 +218,38 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         return fail("NOT_FOUND", "ไม่พบผลงาน");
       }
 
-      const [round] = await db
-        .select()
+      const roundRows = await db
+        .select({
+          id: reviewRounds.id,
+          submissionId: reviewRounds.submissionId,
+          submissionVersionId: reviewRounds.submissionVersionId,
+          roundNumber: reviewRounds.roundNumber,
+          status: reviewRounds.status,
+          decision: reviewRounds.decision,
+          adminNote: reviewRounds.adminNote,
+          decidedAt: reviewRounds.decidedAt,
+          releasedAt: reviewRounds.releasedAt,
+          createdAt: reviewRounds.createdAt,
+          versionId: submissionVersions.id,
+          version: submissionVersions.version,
+          versionKind: submissionVersions.kind,
+          versionTitle: submissionVersions.title,
+          versionTitleEn: submissionVersions.titleEn,
+          versionAbstract: submissionVersions.abstract,
+          versionKeywords: submissionVersions.keywords,
+          versionCreators: submissionVersions.creators,
+          versionTrack: submissionVersions.track,
+          versionSubmitterType: submissionVersions.submitterType,
+          versionFileUrl: submissionVersions.fileUrl,
+          versionChangelog: submissionVersions.changelog,
+          versionSubmittedAt: submissionVersions.submittedAt,
+        })
         .from(reviewRounds)
-        .where(and(eq(reviewRounds.submissionId, submission.id), ne(reviewRounds.status, "released")))
-        .orderBy(desc(reviewRounds.roundNumber))
-        .limit(1);
-      const assignments = round
-        ? await db
+        .leftJoin(submissionVersions, eq(reviewRounds.submissionVersionId, submissionVersions.id))
+        .where(eq(reviewRounds.submissionId, submission.id))
+        .orderBy(reviewRounds.roundNumber);
+      const rounds = await Promise.all(roundRows.map(async (round) => {
+        const assignments = await db
           .select({
             id: reviews.id,
             reviewerId: reviews.reviewerId,
@@ -212,12 +267,56 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           .from(reviews)
           .innerJoin(users, eq(reviews.reviewerId, users.id))
           .where(eq(reviews.roundId, round.id))
-          .orderBy(reviews.assignedAt)
-        : [];
-      const dispatched = assignments.filter((assignment) => assignment.status !== "assigned");
+          .orderBy(reviews.assignedAt);
+        const dispatched = assignments.filter((assignment) => assignment.status !== "assigned");
+        return {
+          id: round.id,
+          submissionId: round.submissionId,
+          submissionVersionId: round.submissionVersionId,
+          roundNumber: round.roundNumber,
+          status: round.status,
+          decision: round.decision,
+          adminNote: round.adminNote,
+          decidedAt: round.decidedAt,
+          releasedAt: round.releasedAt,
+          createdAt: round.createdAt,
+          assignments,
+          dispatchedCount: dispatched.length,
+          completedCount: dispatched.filter((assignment) => assignment.status === "completed").length,
+          submissionVersion: round.versionId
+            ? {
+              id: round.versionId,
+              version: round.version,
+              kind: round.versionKind,
+              title: round.versionTitle,
+              titleEn: round.versionTitleEn,
+              abstract: round.versionAbstract,
+              keywords: round.versionKeywords,
+              creators: round.versionCreators,
+              track: round.versionTrack,
+              submitterType: round.versionSubmitterType,
+              fileUrl: round.versionFileUrl,
+              changelog: round.versionChangelog,
+              submittedAt: round.versionSubmittedAt,
+            }
+            : null,
+        };
+      }));
+      const currentRound = [...rounds].reverse().find((round) => round.status !== "released") ?? null;
+      const versionRows = await db
+        .select()
+        .from(submissionVersions)
+        .where(eq(submissionVersions.submissionId, submission.id))
+        .orderBy(submissionVersions.version);
+      const versions = await Promise.all(versionRows.map(async (version) => ({
+        ...version,
+        fileAvailable: await storedFileExists(version.fileUrl),
+      })));
       return ok({
         submission,
-        currentRound: round ? { ...round, assignments, dispatchedCount: dispatched.length, completedCount: dispatched.filter((assignment) => assignment.status === "completed").length } : null,
+        rounds,
+        versions,
+        currentRound,
         reviewers: await reviewerDirectory(submission.track),
       });
     },
@@ -246,8 +345,14 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .where(eq(reviewRounds.submissionId, params.id))
         .orderBy(desc(reviewRounds.roundNumber))
         .limit(1);
+      const version = await ensureCurrentSubmissionVersion(submission);
       const id = crypto.randomUUID();
-      await db.insert(reviewRounds).values({ id, submissionId: params.id, roundNumber: (latest?.roundNumber ?? 0) + 1 });
+      await db.insert(reviewRounds).values({
+        id,
+        submissionId: params.id,
+        submissionVersionId: version.id,
+        roundNumber: (latest?.roundNumber ?? 0) + 1,
+      });
       return ok({ id });
     },
     { params: t.Object({ id: t.String() }) },
@@ -316,6 +421,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           roundId: reviews.roundId,
           submissionId: reviews.submissionId,
           title: submissions.title,
+          abstractFileUrl: submissions.abstractFileUrl,
+          fullPaperFileUrl: submissions.fullPaperFileUrl,
+          versionFileUrl: submissionVersions.fileUrl,
           reviewerId: users.id,
           reviewerName: users.name,
           reviewerEmail: users.email,
@@ -324,11 +432,18 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .from(reviews)
         .innerJoin(submissions, eq(reviews.submissionId, submissions.id))
         .innerJoin(users, eq(reviews.reviewerId, users.id))
+        .leftJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
+        .leftJoin(submissionVersions, eq(reviewRounds.submissionVersionId, submissionVersions.id))
         .where(eq(reviews.id, params.id))
         .limit(1);
       if (!assignment || assignment.status !== "assigned") {
         set.status = 400;
         return fail("VALIDATION_ERROR", "งานนี้ถูกส่งไปแล้วหรือไม่พบการมอบหมาย");
+      }
+      const reviewFileUrl = assignment.versionFileUrl ?? assignment.fullPaperFileUrl ?? assignment.abstractFileUrl;
+      if (!await storedFileExists(reviewFileUrl)) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ไม่พบไฟล์ผลงานสำหรับรอบพิจารณานี้ กรุณาให้เจ้าของผลงานแนบไฟล์ใหม่ก่อนส่งพิจารณา");
       }
 
       const reviewLink = appUrl(`/reviewer/reviews/${assignment.id}`);

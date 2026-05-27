@@ -345,25 +345,6 @@ watch(() => props.modelValue, (open) => {
           </UCard>
         </UModal>
 
-        <!-- Released review result -->
-        <div v-if="submission.releasedResult" class="border border-primary-200 rounded-lg p-4 bg-primary-50/30 space-y-3">
-          <h3 class="text-sm font-semibold text-primary-700">ผลการพิจารณาและข้อเสนอแนะ</h3>
-          <p v-if="submission.releasedResult.adminNote" class="text-sm text-gray-700 whitespace-pre-line">
-            <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span><br />
-            {{ submission.releasedResult.adminNote }}
-          </p>
-          <div v-if="submission.releasedResult.commentsToAuthor.length">
-            <p class="text-xs text-gray-500 mb-2">ความคิดเห็นจากผู้รีวิว</p>
-            <p
-              v-for="(comment, index) in submission.releasedResult.commentsToAuthor"
-              :key="index"
-              class="text-sm bg-white rounded p-3 mb-2 whitespace-pre-line"
-            >
-              ผู้รีวิวคนที่ {{ index + 1 }}: {{ comment }}
-            </p>
-          </div>
-        </div>
-
         <!-- Upload full paper (accepted, no file yet) -->
         <div v-if="submission.status === 'accepted' && !submission.fullPaperFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
           <div class="flex items-center gap-2 mb-3">
@@ -381,9 +362,28 @@ watch(() => props.modelValue, (open) => {
           </div>
           <p class="text-sm text-gray-600 mb-4">กรุณาตรวจสอบข้อเสนอแนะจากคณะกรรมการและส่งผลงานที่แก้ไขแล้ว</p>
           <UButton color="orange" variant="soft" @click="navigateTo(`/submissions/${submission.id}/revise`)">
-            ส่งผลงานที่แก้ไข
+            แก้ไขและส่งผลงาน
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
           </UButton>
+        </div>
+
+        <!-- Released review result -->
+        <div v-if="submission.releasedResult" class="border border-primary-200 rounded-lg p-4 bg-primary-50/30 space-y-3">
+          <h3 class="text-sm font-semibold text-primary-700">ผลการพิจารณาและข้อเสนอแนะ</h3>
+          <p v-if="submission.releasedResult.adminNote" class="text-sm text-gray-700 whitespace-pre-line">
+            <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span><br />
+            {{ submission.releasedResult.adminNote }}
+          </p>
+          <div v-if="submission.releasedResult.commentsToAuthor.length">
+            <p class="text-xs text-gray-500 mb-2">ความคิดเห็นจากผู้รีวิว</p>
+            <p
+              v-for="(comment, index) in submission.releasedResult.commentsToAuthor"
+              :key="index"
+              class="text-sm bg-white rounded p-3 mb-2 whitespace-pre-line"
+            >
+              ผู้รีวิวคนที่ {{ index + 1 }}: {{ comment }}
+            </p>
+          </div>
         </div>
 
         <!-- Revision history -->

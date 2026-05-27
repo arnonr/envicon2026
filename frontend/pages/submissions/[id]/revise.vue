@@ -1,5 +1,18 @@
 <script setup lang="ts">
+import type { Creator, SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
+
 definePageMeta({ middleware: ['auth'] });
+
+interface Submission {
+  title: string;
+  titleEn: string | null;
+  abstract: string | null;
+  keywords: string | null;
+  creators: string | null;
+  track: number;
+  submitterType: string;
+  status: string;
+}
 
 const route = useRoute();
 const config = useRuntimeConfig();
@@ -7,7 +20,19 @@ const apiBase = config.public.apiBase as string;
 const authStore = useAuthStore();
 const { handleApiCall, showError, showSuccess } = useApiError();
 
-const submissionTitle = ref('');
+const loading = ref(true);
+const loadFailed = ref(false);
+const saving = ref(false);
+const initialCreators = ref<Creator[]>([]);
+const submissionFormRef = ref<{ creators: Creator[] } | null>(null);
+const form = ref<SubmissionFormData>({
+  title: '',
+  title_en: '',
+  abstract: '',
+  keywords: '',
+  track: '',
+  submitterType: 'student',
+});
 const changelog = ref('');
 const selectedFile = ref<File | null>(null);
 const uploading = ref(false);
@@ -17,24 +42,85 @@ const headers = computed(() => ({
   Authorization: `Bearer ${authStore.token}`,
 }));
 
-// Load submission title
+const parseCreators = (raw: string | null): Creator[] => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const isFormValid = computed(() => {
+  const values = form.value;
+  if (!values.title.trim() || !values.title_en.trim() || !values.abstract.trim() || !values.track || !values.submitterType) {
+    return false;
+  }
+  return (submissionFormRef.value?.creators ?? initialCreators.value)
+    .some(creator => creator.firstName.trim() && creator.lastName.trim());
+});
+
 onMounted(async () => {
-  const { data } = await handleApiCall(() =>
-    $fetch<{ success: true; data: { title: string; status: string } }>(
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: Submission }>(
       `${apiBase}/submissions/${route.params.id}`,
       { headers: headers.value }
     )
   );
-  if (data?.data.status !== 'revision_requested') {
+  if (error) {
+    loading.value = false;
+    loadFailed.value = true;
+    showError(error);
+    return;
+  }
+  if (data!.data.status !== 'revision_requested') {
     await navigateTo(`/submissions/${route.params.id}`);
     return;
   }
-  submissionTitle.value = data.data.title;
+
+  const submission = data!.data;
+  form.value = {
+    title: submission.title,
+    title_en: submission.titleEn ?? '',
+    abstract: submission.abstract ?? '',
+    keywords: submission.keywords ?? '',
+    track: String(submission.track),
+    submitterType: submission.submitterType,
+  };
+  initialCreators.value = parseCreators(submission.creators);
+  loading.value = false;
 });
 
 const submitRevision = async () => {
-  if (!selectedFile.value) return;
+  if (!selectedFile.value || !isFormValid.value) return;
   uploading.value = true;
+  saving.value = true;
+
+  const creators = (submissionFormRef.value?.creators ?? [])
+    .filter(creator => creator.firstName.trim() && creator.lastName.trim());
+  const { error: updateError } = await handleApiCall(() =>
+    $fetch(`${apiBase}/submissions/${route.params.id}`, {
+      method: 'PUT',
+      headers: headers.value,
+      body: {
+        title: form.value.title.trim(),
+        titleEn: form.value.title_en.trim(),
+        abstract: form.value.abstract.trim(),
+        keywords: form.value.keywords.trim(),
+        creators: JSON.stringify(creators),
+        track: parseInt(form.value.track),
+        submitterType: form.value.submitterType,
+      },
+    })
+  );
+
+  saving.value = false;
+  if (updateError) {
+    uploading.value = false;
+    showError(updateError);
+    return;
+  }
 
   const formData = new FormData();
   formData.append('file', selectedFile.value);
@@ -69,7 +155,18 @@ const submitRevision = async () => {
     </NuxtLink>
 
     <!-- Success state -->
-    <UCard v-if="done">
+    <div v-if="loading" class="flex justify-center py-20">
+      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 text-gray-400 animate-spin" />
+    </div>
+
+    <UCard v-else-if="loadFailed">
+      <div class="text-center py-8 space-y-4">
+        <p class="text-sm text-gray-500">ไม่สามารถโหลดข้อมูลผลงานสำหรับแก้ไขได้</p>
+        <UButton color="gray" variant="soft" to="/dashboard">กลับแดชบอร์ด</UButton>
+      </div>
+    </UCard>
+
+    <UCard v-else-if="done">
       <div class="flex flex-col items-center py-8 gap-4 text-center">
         <div class="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center">
           <UIcon name="i-heroicons-check-circle" class="w-10 h-10 text-primary-600" />
@@ -87,12 +184,16 @@ const submitRevision = async () => {
     <UCard v-else>
       <template #header>
         <div>
-          <h1 class="font-bold text-gray-900">ส่งผลงานที่แก้ไข</h1>
-          <p v-if="submissionTitle" class="text-sm text-gray-500 mt-0.5 line-clamp-1">{{ submissionTitle }}</p>
+          <h1 class="font-bold text-gray-900">แก้ไขและส่งผลงาน</h1>
+          <p class="text-sm text-gray-500 mt-0.5">ปรับปรุงข้อมูลตามข้อเสนอแนะ แล้วแนบไฟล์ PDF ฉบับแก้ไข</p>
         </div>
       </template>
 
       <div class="space-y-6">
+        <SubmissionForm ref="submissionFormRef" v-model="form" :initial-creators="initialCreators" />
+
+        <UDivider />
+
         <div>
           <p class="text-sm font-medium text-gray-700 mb-2">ไฟล์ผลงานที่แก้ไข (PDF) <span class="text-red-500">*</span></p>
           <CommonFileUpload
@@ -119,10 +220,10 @@ const submitRevision = async () => {
           <UButton
             color="primary"
             :loading="uploading"
-            :disabled="!selectedFile"
+            :disabled="!selectedFile || !isFormValid || saving"
             @click="submitRevision"
           >
-            ส่งผลงานที่แก้ไข
+            บันทึกและส่งผลงานที่แก้ไข
           </UButton>
         </div>
       </template>

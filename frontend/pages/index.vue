@@ -275,9 +275,10 @@ const getCountdown = () => {
   ]
 }
 
-const countdown = ref(getCountdown())
+const countdown = useState("home-countdown", () => getCountdown())
 
 onMounted(() => {
+  countdown.value = getCountdown()
   const timer = setInterval(() => { countdown.value = getCountdown() }, 1000)
   onUnmounted(() => clearInterval(timer))
 })
@@ -354,14 +355,18 @@ const timeline = [
   { title: "วันจัดงานประชุม", date: "12 — 13 พฤศจิกายน 2569", highlight: true, icon: "i-heroicons-academic-cap" },
 ];
 
-// ── Random helpers ──
-const rand = (min: number, max: number) => Math.random() * (max - min) + min;
+// Stable decoration positions keep SSR and hydration output identical.
+const seededRange = (index: number, salt: number, min: number, max: number) => {
+  const value = Math.sin(index * 73.13 + salt * 19.37) * 10000;
+  const fraction = value - Math.floor(value);
+  return min + fraction * (max - min);
+};
 
-const bubbleStyle = (_i: number) => {
-  const size = rand(12, 55);
-  const left = rand(-5, 100);
-  const delay = rand(0, 20);
-  const duration = rand(12, 28);
+const bubbleStyle = (i: number) => {
+  const size = seededRange(i, 1, 12, 55);
+  const left = seededRange(i, 2, -5, 100);
+  const delay = seededRange(i, 3, 0, 20);
+  const duration = seededRange(i, 4, 12, 28);
   return {
     width: `${size}px`,
     height: `${size}px`,
@@ -373,10 +378,10 @@ const bubbleStyle = (_i: number) => {
 };
 
 const grassStyle = (i: number) => {
-  const left = (i / 60) * 100 + rand(-1, 1);
-  const height = rand(30, 80);
-  const delay = rand(0, 4);
-  const hue = rand(100, 150);
+  const left = (i / 60) * 100 + seededRange(i, 5, -1, 1);
+  const height = seededRange(i, 6, 30, 80);
+  const delay = seededRange(i, 7, 0, 4);
+  const hue = seededRange(i, 8, 100, 150);
   return {
     left: `${left}%`,
     height: `${height}px`,
@@ -386,10 +391,10 @@ const grassStyle = (i: number) => {
 };
 
 const flowerStyle = (i: number) => {
-  const left = rand(2, 95);
-  const bottom = rand(0, 12);
-  const delay = rand(0, 5);
-  const size = rand(14, 22);
+  const left = seededRange(i, 9, 2, 95);
+  const bottom = seededRange(i, 10, 0, 12);
+  const delay = seededRange(i, 11, 0, 5);
+  const size = seededRange(i, 12, 14, 22);
   return {
     left: `${left}%`,
     bottom: `${bottom}%`,
@@ -398,10 +403,10 @@ const flowerStyle = (i: number) => {
   };
 };
 
-const ctaBubbleStyle = (_i: number) => {
-  const size = rand(20, 80);
-  const top = rand(-20, 80);
-  const left = rand(-10, 100);
+const ctaBubbleStyle = (i: number) => {
+  const size = seededRange(i, 13, 20, 80);
+  const top = seededRange(i, 14, -20, 80);
+  const left = seededRange(i, 15, -10, 100);
   return {
     width: `${size}px`,
     height: `${size}px`,
@@ -410,10 +415,10 @@ const ctaBubbleStyle = (_i: number) => {
   };
 };
 
-const sectionBubbleStyle = (_i: number) => {
-  const size = rand(40, 120);
-  const left = rand(-5, 95);
-  const delay = rand(0, 15);
+const sectionBubbleStyle = (i: number) => {
+  const size = seededRange(i, 16, 40, 120);
+  const left = seededRange(i, 17, -5, 95);
+  const delay = seededRange(i, 18, 0, 15);
   return {
     width: `${size}px`,
     height: `${size}px`,
@@ -423,10 +428,10 @@ const sectionBubbleStyle = (_i: number) => {
   };
 };
 
-const timelineBubbleStyle = (_i: number) => {
-  const size = rand(15, 50);
-  const left = rand(-5, 100);
-  const delay = rand(0, 18);
+const timelineBubbleStyle = (i: number) => {
+  const size = seededRange(i, 19, 15, 50);
+  const left = seededRange(i, 20, -5, 100);
+  const delay = seededRange(i, 21, 0, 18);
   return {
     width: `${size}px`,
     height: `${size}px`,

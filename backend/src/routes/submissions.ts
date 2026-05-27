@@ -1,10 +1,10 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { reviewRounds, reviews, submissions, revisions } from "../db/schema";
-import { and, eq, desc } from "drizzle-orm";
+import { reviewRounds, reviews, submissions, revisions, submissionVersions } from "../db/schema";
+import { and, eq, desc, ne } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
-import { saveFile } from "../services/storage";
+import { saveFile, storedFileExists } from "../services/storage";
 
 const MAX_CREATORS = 20;
 
@@ -60,11 +60,15 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       return fail("FORBIDDEN", "Access denied");
     }
 
-    const revisionList = await db
+    const revisionRows = await db
       .select()
       .from(revisions)
       .where(eq(revisions.submissionId, params.id))
       .orderBy(desc(revisions.version));
+    const revisionList = await Promise.all(revisionRows.map(async (revision) => ({
+      ...revision,
+      fileAvailable: await storedFileExists(revision.fileUrl),
+    })));
 
     const [releasedRound] = await db
       .select({
@@ -84,9 +88,28 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         .where(eq(reviews.roundId, releasedRound.id))
       : [];
 
+    const latestRevision = revisionList[0] ?? null;
+    const dispatchedInOpenRound = latestRevision && sub.status === "submitted"
+      ? await db
+        .select({ id: reviews.id })
+        .from(reviews)
+        .innerJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
+        .where(and(
+          eq(reviews.submissionId, params.id),
+          ne(reviews.status, "assigned"),
+          ne(reviewRounds.status, "released"),
+        ))
+        .limit(1)
+      : [];
+
     return ok({
       ...sub,
       revisions: revisionList,
+      canReplaceLatestRevisionFile: user!.role === "author"
+        && sub.authorId === user!.id
+        && sub.status === "submitted"
+        && Boolean(latestRevision && !latestRevision.fileAvailable)
+        && dispatchedInOpenRound.length === 0,
       releasedResult: releasedRound?.releasedAt
         ? {
           decision: releasedRound.decision,
@@ -146,6 +169,70 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         creators: t.Optional(t.String()),
         track: t.Number({ minimum: 1, maximum: 7 }),
         submitterType: t.Union([t.Literal("student"), t.Literal("general")]),
+      }),
+    }
+  )
+
+  // Replace a missing revised PDF before review has started.
+  .post(
+    "/:id/revisions/latest/replace-file",
+    async ({ params, body, user, set }) => {
+      const [sub] = await db.select().from(submissions).where(eq(submissions.id, params.id)).limit(1);
+      if (!sub) {
+        set.status = 404;
+        return fail("NOT_FOUND", "Submission not found");
+      }
+      if (sub.authorId !== user!.id) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Access denied");
+      }
+      if (sub.status !== "submitted") {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "Submission is not awaiting review");
+      }
+
+      const [latestRevision] = await db
+        .select()
+        .from(revisions)
+        .where(eq(revisions.submissionId, params.id))
+        .orderBy(desc(revisions.version))
+        .limit(1);
+      if (!latestRevision || await storedFileExists(latestRevision.fileUrl)) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "Latest revision file does not require replacement");
+      }
+      const dispatched = await db
+        .select({ id: reviews.id })
+        .from(reviews)
+        .innerJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
+        .where(and(
+          eq(reviews.submissionId, params.id),
+          ne(reviews.status, "assigned"),
+          ne(reviewRounds.status, "released"),
+        ))
+        .limit(1);
+      if (dispatched.length) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "Cannot replace the file after review has started");
+      }
+
+      const fileUrl = await saveFile(body.file, `revision-${params.id}-v${latestRevision.version}`);
+      await db.update(revisions).set({ fileUrl }).where(eq(revisions.id, latestRevision.id));
+      await db.update(submissions).set({ fullPaperFileUrl: fileUrl }).where(eq(submissions.id, params.id));
+      const [latestVersion] = await db
+        .select({ id: submissionVersions.id })
+        .from(submissionVersions)
+        .where(eq(submissionVersions.submissionId, params.id))
+        .orderBy(desc(submissionVersions.version))
+        .limit(1);
+      if (latestVersion) {
+        await db.update(submissionVersions).set({ fileUrl }).where(eq(submissionVersions.id, latestVersion.id));
+      }
+      return ok({ replaced: true, fileUrl });
+    },
+    {
+      body: t.Object({
+        file: t.File({ type: "application/pdf", maxSize: 50 * 1024 * 1024 }),
       }),
     }
   )
@@ -380,6 +467,30 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         version: nextVersion,
         fileUrl,
         changelog: body.changelog ?? null,
+      });
+
+      const [latestSnapshot] = await db
+        .select({ version: submissionVersions.version })
+        .from(submissionVersions)
+        .where(eq(submissionVersions.submissionId, params.id))
+        .orderBy(desc(submissionVersions.version))
+        .limit(1);
+      const snapshotVersion = Math.max(latestSnapshot?.version ?? 1, nextVersion + 1);
+      await db.insert(submissionVersions).values({
+        id: crypto.randomUUID(),
+        submissionId: params.id,
+        version: snapshotVersion,
+        kind: "revision",
+        title: sub.title,
+        titleEn: sub.titleEn,
+        abstract: sub.abstract,
+        keywords: sub.keywords,
+        creators: sub.creators,
+        track: sub.track,
+        submitterType: sub.submitterType,
+        fileUrl,
+        changelog: body.changelog ?? null,
+        submittedAt: new Date(),
       });
 
       await db

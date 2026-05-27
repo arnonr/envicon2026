@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "../db";
-import { reviewRounds, reviews, revisions, submissions, users } from "../db/schema";
+import { reviewRounds, reviews, revisions, submissionVersions, submissions, users } from "../db/schema";
 import { getUserFromHeaders } from "../middleware/auth";
 import { requireReviewer } from "../middleware/roles";
 import { fail, ok } from "../utils/response";
@@ -63,11 +63,21 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           authorName: users.name,
           authorEmail: users.email,
           authorAffiliation: users.affiliation,
+          versionTitle: submissionVersions.title,
+          versionTitleEn: submissionVersions.titleEn,
+          versionAbstract: submissionVersions.abstract,
+          versionKeywords: submissionVersions.keywords,
+          versionCreators: submissionVersions.creators,
+          versionTrack: submissionVersions.track,
+          versionSubmitterType: submissionVersions.submitterType,
+          versionFileUrl: submissionVersions.fileUrl,
+          versionSubmittedAt: submissionVersions.submittedAt,
         })
         .from(reviews)
         .innerJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
         .innerJoin(submissions, eq(reviews.submissionId, submissions.id))
         .innerJoin(users, eq(submissions.authorId, users.id))
+        .leftJoin(submissionVersions, eq(reviewRounds.submissionVersionId, submissionVersions.id))
         .where(eq(reviews.id, params.id))
         .limit(1);
       if (!assignment || assignment.status === "assigned") {
@@ -82,7 +92,20 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         .select()
         .from(revisions)
         .where(eq(revisions.submissionId, assignment.submissionId));
-      return ok({ ...assignment, revisions: revisionList });
+      const hasSnapshot = assignment.versionTitle !== null;
+      return ok({
+        ...assignment,
+        title: hasSnapshot ? assignment.versionTitle : assignment.title,
+        titleEn: hasSnapshot ? assignment.versionTitleEn : assignment.titleEn,
+        abstract: hasSnapshot ? assignment.versionAbstract : assignment.abstract,
+        keywords: hasSnapshot ? assignment.versionKeywords : assignment.keywords,
+        creators: hasSnapshot ? assignment.versionCreators : assignment.creators,
+        track: hasSnapshot ? assignment.versionTrack : assignment.track,
+        submitterType: hasSnapshot ? assignment.versionSubmitterType : assignment.submitterType,
+        fullPaperFileUrl: hasSnapshot ? assignment.versionFileUrl : assignment.fullPaperFileUrl,
+        submittedAt: hasSnapshot ? assignment.versionSubmittedAt : assignment.submittedAt,
+        revisions: revisionList,
+      });
     },
     { params: t.Object({ id: t.String() }) },
   )

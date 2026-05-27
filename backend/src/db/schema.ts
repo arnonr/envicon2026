@@ -49,9 +49,30 @@ export const submissions = mysqlTable("submissions", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
+export const submissionVersions = mysqlTable("submission_versions", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  submissionId: varchar("submission_id", { length: 36 }).notNull().references(() => submissions.id),
+  version: int("version").notNull(),
+  kind: mysqlEnum("kind", ["initial", "revision"]).notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  titleEn: varchar("title_en", { length: 500 }),
+  abstract: text("abstract"),
+  keywords: varchar("keywords", { length: 500 }),
+  creators: text("creators"),
+  track: int("track").notNull(),
+  submitterType: mysqlEnum("submitter_type", ["student", "general"]).notNull().default("student"),
+  fileUrl: varchar("file_url", { length: 500 }),
+  changelog: text("changelog"),
+  submittedAt: timestamp("submitted_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("submission_versions_submission_version_unique").on(table.submissionId, table.version),
+]);
+
 export const reviewRounds = mysqlTable("review_rounds", {
   id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
   submissionId: varchar("submission_id", { length: 36 }).notNull().references(() => submissions.id),
+  submissionVersionId: varchar("submission_version_id", { length: 36 }).references(() => submissionVersions.id),
   roundNumber: int("round_number").notNull(),
   status: mysqlEnum("status", ["assigning", "in_review", "ready_for_decision", "released"]).notNull().default("assigning"),
   decision: mysqlEnum("decision", ["accept", "reject", "revise"]),

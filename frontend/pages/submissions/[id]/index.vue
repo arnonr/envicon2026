@@ -7,6 +7,7 @@ interface Revision {
   fileUrl: string;
   changelog: string | null;
   submittedAt: string;
+  fileAvailable: boolean;
 }
 
 interface ReleasedResult {
@@ -29,6 +30,7 @@ interface Submission {
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
+  canReplaceLatestRevisionFile: boolean;
   releasedResult: ReleasedResult | null;
 }
 
@@ -41,6 +43,7 @@ const { handleApiCall, showError, showSuccess } = useApiError();
 const submission = ref<Submission | null>(null);
 const loading = ref(true);
 const uploadingPaper = ref(false);
+const replacingRevisionFile = ref(false);
 
 const TRACK_NAMES: Record<number, string> = {
   1: 'วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ',
@@ -86,6 +89,23 @@ const uploadFullPaper = async (file: File) => {
   await fetchSubmission();
 };
 
+const replaceMissingRevisionFile = async (file: File) => {
+  replacingRevisionFile.value = true;
+  const formData = new FormData();
+  formData.append('file', file);
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/submissions/${route.params.id}/revisions/latest/replace-file`, {
+      method: 'POST',
+      headers: headers.value,
+      body: formData,
+    })
+  );
+  replacingRevisionFile.value = false;
+  if (error) { showError(error); return; }
+  showSuccess('แนบไฟล์ผลงานฉบับแก้ไขใหม่เรียบร้อยแล้ว');
+  await fetchSubmission();
+};
+
 const formatDate = (iso: string | null) => {
   if (!iso) return '-';
   return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -96,7 +116,7 @@ onMounted(fetchSubmission);
 
 <template>
   <div class="max-w-3xl mx-auto px-4 py-12">
-    <!-- Back -->
+    <!-- Back to dashboard -->
     <NuxtLink to="/dashboard" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mb-6">
       <UIcon name="i-heroicons-arrow-left" class="w-4 h-4" />
       กลับแดชบอร์ด
@@ -185,24 +205,6 @@ onMounted(fetchSubmission);
         </div>
       </UCard>
 
-      <UCard v-if="submission.releasedResult" class="mb-6 border-primary-200">
-        <template #header>
-          <h3 class="font-semibold text-sm">ผลการพิจารณาและข้อเสนอแนะ</h3>
-        </template>
-        <div class="space-y-3 text-sm">
-          <p v-if="submission.releasedResult.adminNote" class="whitespace-pre-line">
-            <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span><br />
-            {{ submission.releasedResult.adminNote }}
-          </p>
-          <div v-if="submission.releasedResult.commentsToAuthor.length">
-            <p class="text-gray-500 mb-2">ความคิดเห็นจากผู้รีวิว</p>
-            <div v-for="(comment, index) in submission.releasedResult.commentsToAuthor" :key="index" class="bg-gray-50 rounded-lg p-3 mb-2 whitespace-pre-line">
-              ผู้รีวิวคนที่ {{ index + 1 }}: {{ comment }}
-            </div>
-          </div>
-        </div>
-      </UCard>
-
       <!-- Upload Full Paper (when accepted) -->
       <UCard v-if="submission.status === 'accepted' && !submission.fullPaperFileUrl" class="mb-6">
         <template #header>
@@ -230,9 +232,44 @@ onMounted(fetchSubmission);
           กรุณาตรวจสอบข้อเสนอแนะจากคณะกรรมการและส่งผลงานที่แก้ไขแล้ว
         </p>
         <UButton color="orange" variant="soft" :to="`/submissions/${submission.id}/revise`">
-          ส่งผลงานที่แก้ไข
+          แก้ไขและส่งผลงาน
           <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
         </UButton>
+      </UCard>
+
+      <UCard v-if="submission.releasedResult" class="mb-6 border-primary-200">
+        <template #header>
+          <h3 class="font-semibold text-sm">ผลการพิจารณาและข้อเสนอแนะ</h3>
+        </template>
+        <div class="space-y-3 text-sm">
+          <p v-if="submission.releasedResult.adminNote" class="whitespace-pre-line">
+            <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span><br />
+            {{ submission.releasedResult.adminNote }}
+          </p>
+          <div v-if="submission.releasedResult.commentsToAuthor.length">
+            <p class="text-gray-500 mb-2">ความคิดเห็นจากผู้รีวิว</p>
+            <div v-for="(comment, index) in submission.releasedResult.commentsToAuthor" :key="index" class="bg-gray-50 rounded-lg p-3 mb-2 whitespace-pre-line">
+              ผู้รีวิวคนที่ {{ index + 1 }}: {{ comment }}
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard v-if="submission.canReplaceLatestRevisionFile" class="mb-6 border-red-200">
+        <template #header>
+          <div class="flex items-center gap-2 text-red-700">
+            <UIcon name="i-heroicons-exclamation-circle" class="w-5 h-5" />
+            <h3 class="font-semibold text-sm">ไม่พบไฟล์ผลงานฉบับแก้ไขล่าสุด</h3>
+          </div>
+        </template>
+        <p class="text-sm text-gray-600 mb-4">
+          กรุณาแนบไฟล์ PDF ฉบับแก้ไขอีกครั้งก่อนเริ่มการพิจารณารอบถัดไป
+        </p>
+        <CommonFileUpload
+          :loading="replacingRevisionFile"
+          :max-size-mb="50"
+          @change="replaceMissingRevisionFile"
+        />
       </UCard>
 
       <!-- Revision history -->
@@ -250,8 +287,10 @@ onMounted(fetchSubmission);
               <span class="font-medium">ครั้งที่ {{ rev.version }}</span>
               <span class="text-gray-400 ml-2">{{ formatDate(rev.submittedAt) }}</span>
               <p v-if="rev.changelog" class="text-gray-500 text-xs mt-0.5">{{ rev.changelog }}</p>
+              <p v-if="!rev.fileAvailable" class="text-red-600 text-xs mt-0.5">ไม่พบไฟล์ กรุณาแนบใหม่ก่อนส่งพิจารณา</p>
             </div>
             <UButton
+              v-if="rev.fileAvailable"
               size="xs"
               color="gray"
               variant="ghost"

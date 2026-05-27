@@ -27,8 +27,13 @@ const loading = ref(true);
 const selectedSubmissionId = ref<string | null>(null);
 const modalOpen = ref(false);
 
-const openSubmissionModal = (id: string) => {
-  selectedSubmissionId.value = id;
+const openSubmission = (submission: Submission) => {
+  if (submission.status === 'revision_requested') {
+    navigateTo(`/submissions/${submission.id}/revise`);
+    return;
+  }
+
+  selectedSubmissionId.value = submission.id;
   modalOpen.value = true;
 };
 
@@ -84,21 +89,21 @@ onMounted(async () => {
         <template #header>
           <h3 class="font-semibold text-sm">ข้อมูลบัญชี</h3>
         </template>
-        <dl class="space-y-2 text-sm">
-          <div class="flex justify-between">
-            <dt class="text-gray-500">อีเมล</dt>
-            <dd class="truncate ml-2">{{ user?.email }}</dd>
+        <dl class="space-y-3 text-sm">
+          <div>
+            <dt class="text-[11px] text-gray-400 uppercase tracking-wider mb-0.5">อีเมล</dt>
+            <dd class="break-all">{{ user?.email }}</dd>
           </div>
-          <div class="flex justify-between">
-            <dt class="text-gray-500">เบอร์โทร</dt>
+          <div>
+            <dt class="text-[11px] text-gray-400 uppercase tracking-wider mb-0.5">เบอร์โทร</dt>
             <dd>{{ user?.phone || '-' }}</dd>
           </div>
-          <div class="flex justify-between">
-            <dt class="text-gray-500">สังกัด</dt>
-            <dd>{{ user?.affiliation || '-' }}</dd>
+          <div>
+            <dt class="text-[11px] text-gray-400 uppercase tracking-wider mb-0.5">สังกัด</dt>
+            <dd class="break-words">{{ user?.affiliation || '-' }}</dd>
           </div>
-          <div class="flex justify-between items-center">
-            <dt class="text-gray-500">บทบาท</dt>
+          <div>
+            <dt class="text-[11px] text-gray-400 uppercase tracking-wider mb-0.5">บทบาท</dt>
             <dd>
               <UBadge :color="user?.role === 'admin' ? 'red' : user?.role === 'reviewer' ? 'blue' : 'green'"
                 variant="soft" size="xs">
@@ -141,7 +146,7 @@ onMounted(async () => {
         <div v-else class="space-y-2">
           <div v-for="sub in submissions" :key="sub.id"
             class="border border-gray-200 rounded-lg p-3 cursor-pointer transition-all hover:border-primary-300 hover:shadow-sm hover:bg-primary-50/50"
-            @click="openSubmissionModal(sub.id)">
+            @click="openSubmission(sub)">
             <div class="flex items-start justify-between gap-3">
               <div class="min-w-0">
                 <p class="text-sm font-medium text-gray-900 line-clamp-1">
@@ -156,6 +161,16 @@ onMounted(async () => {
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <SubmissionStatusBadge :status="sub.status" />
+                <UButton
+                  v-if="sub.status === 'revision_requested'"
+                  size="xs"
+                  color="orange"
+                  variant="soft"
+                  :to="`/submissions/${sub.id}/revise`"
+                  @click.stop
+                >
+                  แก้ไขและส่งผลงาน
+                </UButton>
                 <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-gray-300" />
               </div>
             </div>

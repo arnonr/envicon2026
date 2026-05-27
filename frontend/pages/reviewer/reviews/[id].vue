@@ -81,7 +81,14 @@ async function submitReview() {
     showError({ status: 400, error: "กรุณากรอกคะแนน ผลแนะนำ และข้อเสนอแนะถึงผู้เขียน" });
     return;
   }
-  if (!confirm("ยืนยันการส่งผลประเมิน? หลังส่งแล้วจะไม่สามารถแก้ไขได้")) return;
+  const confirmed = await useModalConfirm({
+    title: "ยืนยันการส่งผลประเมิน",
+    message: "หลังส่งแล้วจะไม่สามารถแก้ไขได้",
+    confirmText: "ส่งผลประเมิน",
+    cancelText: "ยกเลิก",
+    type: "warning",
+  });
+  if (!confirmed) return;
   saving.value = true;
   const { error } = await handleApiCall(() =>
     $fetch(`${apiBase}/reviews/${route.params.id}/submit`, {
@@ -98,7 +105,7 @@ async function submitReview() {
   saving.value = false;
   if (error) return showError(error);
   showSuccess("ส่งผลประเมินเรียบร้อย");
-  await fetchReview();
+  await navigateTo("/reviewer");
 }
 
 function fileLink(url: string | null) {
