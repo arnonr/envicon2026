@@ -313,7 +313,7 @@ onMounted(() => {
       </div>
     </div>
     <!-- Submission detail modal -->
-    <AdminAdminSubmissionDetailModal
+    <AdminSubmissionDetailModal
       v-model="detailModalOpen"
       :submission-id="detailSubmissionId"
       @status-changed="onDetailStatusChanged"
