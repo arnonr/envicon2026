@@ -25,6 +25,45 @@ interface Submission {
   revisions: Revision[];
 }
 
+interface WorkflowAssignment {
+  id: string;
+  reviewerId: string;
+  reviewerName: string;
+  reviewerEmail: string;
+  status: "assigned" | "sent" | "in_progress" | "completed";
+  dueAt: string | null;
+  score: number | null;
+  recommendation: string | null;
+  commentsToAuthor: string | null;
+  commentsToEditor: string | null;
+}
+
+interface WorkflowReviewer {
+  id: string;
+  name: string;
+  email: string;
+  expertiseTracks: number[];
+  active: boolean;
+  activeReviewCount: number;
+  maxConcurrentReviews: number;
+  matchesTrack: boolean;
+  overCapacity: boolean;
+}
+
+interface ReviewWorkflow {
+  currentRound: null | {
+    id: string;
+    roundNumber: number;
+    status: string;
+    decision: "accept" | "reject" | "revise" | null;
+    adminNote: string | null;
+    dispatchedCount: number;
+    completedCount: number;
+    assignments: WorkflowAssignment[];
+  };
+  reviewers: WorkflowReviewer[];
+}
+
 const props = defineProps<{
   modelValue: boolean;
   submissionId: string | null;
@@ -60,6 +99,12 @@ const submission = ref<Submission | null>(null);
 const loading = ref(false);
 const updating = ref(false);
 const slipPreviewOpen = ref(false);
+const workflow = ref<ReviewWorkflow | null>(null);
+const workflowLoading = ref(false);
+const selectedReviewerIds = ref<string[]>([]);
+const dueDates = reactive<Record<string, string>>({});
+const decision = ref<"" | "accept" | "reject" | "revise">("");
+const adminNote = ref("");
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -128,18 +173,135 @@ const updateStatus = async (newStatus: string, successMsg: string) => {
   showSuccess(successMsg);
   emit('status-changed');
   await fetchSubmission();
+  await fetchWorkflow();
 };
+
+const fetchWorkflow = async () => {
+  if (!props.submissionId || !submission.value || !["submitted", "under_review"].includes(submission.value.status)) {
+    workflow.value = null;
+    return;
+  }
+  workflowLoading.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: ReviewWorkflow }>(`${apiBase}/admin/submissions/${props.submissionId}/review-workflow`, {
+      headers: headers.value,
+    })
+  );
+  workflowLoading.value = false;
+  if (error) { showError(error); return; }
+  workflow.value = data!.data;
+  decision.value = workflow.value.currentRound?.decision ?? "";
+  adminNote.value = workflow.value.currentRound?.adminNote ?? "";
+  for (const assignment of workflow.value.currentRound?.assignments ?? []) {
+    dueDates[assignment.id] = assignment.dueAt?.slice(0, 10) ?? new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  }
+};
+
+const createRound = async () => {
+  if (!props.submissionId) return;
+  updating.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/review-rounds`, { method: "POST", headers: headers.value })
+  );
+  updating.value = false;
+  if (error) { showError(error); return; }
+  showSuccess("เริ่มรอบพิจารณาเรียบร้อย");
+  await fetchWorkflow();
+};
+
+const assignReviewers = async () => {
+  if (!workflow.value?.currentRound || selectedReviewerIds.value.length === 0) return;
+  updating.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/review-rounds/${workflow.value!.currentRound!.id}/assignments`, {
+      method: "POST",
+      headers: headers.value,
+      body: { reviewerIds: selectedReviewerIds.value },
+    })
+  );
+  updating.value = false;
+  if (error) { showError(error); return; }
+  selectedReviewerIds.value = [];
+  showSuccess("กำหนดผู้รีวิวเรียบร้อย");
+  await fetchWorkflow();
+};
+
+const removeAssignment = async (id: string) => {
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/reviews/${id}`, { method: "DELETE", headers: headers.value })
+  );
+  if (error) { showError(error); return; }
+  await fetchWorkflow();
+};
+
+const sendAssignment = async (id: string) => {
+  updating.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/reviews/${id}/send`, {
+      method: "POST",
+      headers: headers.value,
+      body: { dueAt: dueDates[id] },
+    })
+  );
+  updating.value = false;
+  if (error) { showError(error); return; }
+  showSuccess("ส่งอีเมลงานประเมินเรียบร้อย");
+  emit("status-changed");
+  await fetchSubmission();
+  await fetchWorkflow();
+};
+
+const saveDecision = async () => {
+  if (!workflow.value?.currentRound || !decision.value) return;
+  updating.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/review-rounds/${workflow.value!.currentRound!.id}/decision`, {
+      method: "PATCH",
+      headers: headers.value,
+      body: { decision: decision.value, adminNote: adminNote.value || undefined },
+    })
+  );
+  updating.value = false;
+  if (error) { showError(error); return; }
+  showSuccess("บันทึกผลตัดสินเรียบร้อย");
+  await fetchWorkflow();
+};
+
+const releaseDecision = async () => {
+  if (!workflow.value?.currentRound) return;
+  updating.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: { notificationStatus: "sent" | "failed" } }>(
+      `${apiBase}/admin/review-rounds/${workflow.value!.currentRound!.id}/release`,
+      { method: "POST", headers: headers.value },
+    )
+  );
+  updating.value = false;
+  if (error) { showError(error); return; }
+  showSuccess(data!.data.notificationStatus === "sent" ? "แจ้งผลเจ้าของผลงานเรียบร้อย" : "บันทึกผลแล้ว แต่อีเมลส่งไม่สำเร็จ");
+  emit("status-changed");
+  await fetchSubmission();
+  await fetchWorkflow();
+};
+
+const assignmentLabel = (status: WorkflowAssignment["status"]) =>
+  ({ assigned: "ยังไม่ส่ง", sent: "ส่งแล้ว", in_progress: "กำลังกรอก", completed: "ประเมินแล้ว" })[status];
+
+const availableReviewers = computed(() => (workflow.value?.reviewers ?? []).filter(
+  (reviewer) => reviewer.active && !workflow.value?.currentRound?.assignments.some((assignment) => assignment.reviewerId === reviewer.id),
+));
 
 watch(() => props.modelValue, (open) => {
   if (open) {
     submission.value = null;
-    fetchSubmission();
+    workflow.value = null;
+    fetchSubmission().then(fetchWorkflow);
   }
 });
 </script>
 
 <template>
-  <UModal v-model="isOpen" :ui="{ width: 'sm:max-w-2xl' }">
+  <UModal v-model="isOpen" :ui="{ width: 'sm:max-w-4xl' }">
     <UCard>
       <template #header>
         <div v-if="loading" class="flex justify-center py-4">
@@ -272,6 +434,89 @@ watch(() => props.modelValue, (open) => {
             </li>
           </ul>
         </div>
+
+        <!-- Review workflow -->
+        <div v-if="['submitted', 'under_review'].includes(submission.status)" class="border border-emerald-200 rounded-lg p-4 bg-emerald-50/30 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold text-sm text-emerald-800">ผู้รีวิวและรอบพิจารณา</h3>
+            <UButton v-if="!workflow?.currentRound && !workflowLoading" size="xs" color="primary" :loading="updating" @click="createRound">
+              เริ่มรอบพิจารณา
+            </UButton>
+          </div>
+          <div v-if="workflowLoading" class="flex justify-center py-4">
+            <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 text-gray-400 animate-spin" />
+          </div>
+          <template v-else-if="workflow?.currentRound">
+            <p class="text-xs text-gray-500">
+              รอบที่ {{ workflow.currentRound.roundNumber }} | ส่งงาน {{ workflow.currentRound.dispatchedCount }} คน | ประเมินแล้ว {{ workflow.currentRound.completedCount }} คน
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <USelectMenu
+                v-model="selectedReviewerIds"
+                multiple
+                :options="availableReviewers.map((reviewer) => ({
+                  value: reviewer.id,
+                  label: `${reviewer.name}${reviewer.matchesTrack ? '' : ' (ต่างสาขา)'}${reviewer.overCapacity ? ' (เกินภาระงาน)' : ''}`,
+                }))"
+                value-attribute="value"
+                option-attribute="label"
+                placeholder="เลือกผู้รีวิว (เลือกได้หลายคน)"
+                class="flex-1"
+              />
+              <UButton color="primary" variant="soft" :disabled="selectedReviewerIds.length === 0" :loading="updating" @click="assignReviewers">
+                เพิ่มผู้รีวิว
+              </UButton>
+            </div>
+            <div v-if="workflow.currentRound.assignments.length === 0" class="text-sm text-gray-400 text-center py-4">
+              กรุณาเลือกผู้รีวิวก่อนส่งพิจารณา
+            </div>
+            <div v-for="assignment in workflow.currentRound.assignments" :key="assignment.id" class="bg-white border rounded-lg p-3 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="font-medium text-sm">{{ assignment.reviewerName }}</span>
+                  <span class="text-xs text-gray-400 ml-2">{{ assignment.reviewerEmail }}</span>
+                </div>
+                <UBadge :color="assignment.status === 'completed' ? 'green' : assignment.status === 'assigned' ? 'gray' : 'yellow'" variant="soft" size="xs">
+                  {{ assignmentLabel(assignment.status) }}
+                </UBadge>
+              </div>
+              <div v-if="assignment.status === 'assigned'" class="flex flex-wrap items-center gap-2">
+                <UInput v-model="dueDates[assignment.id]" type="date" size="sm" />
+                <UButton color="primary" size="xs" :loading="updating" @click="sendAssignment(assignment.id)">ส่งพิจารณา</UButton>
+                <UButton color="gray" variant="ghost" size="xs" @click="removeAssignment(assignment.id)">ถอดออก</UButton>
+              </div>
+              <p v-else-if="assignment.dueAt" class="text-xs text-gray-500">กำหนดส่ง {{ formatDate(assignment.dueAt) }}</p>
+              <div v-if="assignment.status === 'completed'" class="bg-gray-50 rounded p-3 text-sm space-y-1">
+                <p><span class="text-gray-500">คะแนน:</span> {{ assignment.score }}/5</p>
+                <p><span class="text-gray-500">ข้อเสนอ:</span> {{ assignment.recommendation }}</p>
+                <p><span class="text-gray-500">ถึงผู้เขียน:</span> {{ assignment.commentsToAuthor }}</p>
+                <p v-if="assignment.commentsToEditor"><span class="text-gray-500">ถึงเจ้าหน้าที่:</span> {{ assignment.commentsToEditor }}</p>
+              </div>
+            </div>
+            <div
+              v-if="workflow.currentRound.dispatchedCount > 0 && workflow.currentRound.completedCount === workflow.currentRound.dispatchedCount"
+              class="border-t pt-4 space-y-3"
+            >
+              <h4 class="font-medium text-sm">สรุปผลและแจ้งเจ้าของผลงาน</h4>
+              <USelectMenu
+                v-model="decision"
+                :options="[
+                  { value: 'accept', label: 'ผ่านการพิจารณา' },
+                  { value: 'reject', label: 'ไม่ผ่าน' },
+                  { value: 'revise', label: 'ขอแก้ไข' },
+                ]"
+                value-attribute="value"
+                option-attribute="label"
+                placeholder="เลือกผลตัดสิน"
+              />
+              <UTextarea v-model="adminNote" :rows="3" placeholder="หมายเหตุถึงเจ้าของผลงาน (ถ้ามี)" />
+              <div class="flex gap-2">
+                <UButton color="gray" variant="soft" :loading="updating" :disabled="!decision" @click="saveDecision">บันทึกผล</UButton>
+                <UButton color="primary" :loading="updating" :disabled="!workflow.currentRound.decision" @click="releaseDecision">แจ้งผลเจ้าของผลงาน</UButton>
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
 
       <template #footer>
@@ -287,26 +532,6 @@ watch(() => props.modelValue, (open) => {
               อนุมัติการชำระเงิน
             </UButton>
 
-            <UButton
-              v-if="submission?.status === 'submitted'"
-              color="yellow"
-              :loading="updating"
-              @click="updateStatus('under_review', 'ส่งพิจารณาเรียบร้อย')"
-            >
-              ส่งพิจารณา
-            </UButton>
-
-            <template v-if="submission?.status === 'under_review'">
-              <UButton color="green" :loading="updating" @click="updateStatus('accepted', 'อนุมัติผลงานเรียบร้อย')">
-                ผ่าน
-              </UButton>
-              <UButton color="red" :loading="updating" @click="updateStatus('rejected', 'ปฏิเสธผลงานเรียบร้อย')">
-                ไม่ผ่าน
-              </UButton>
-              <UButton color="orange" :loading="updating" @click="updateStatus('revision_requested', 'ขอแก้ไขเรียบร้อย')">
-                ขอแก้ไข
-              </UButton>
-            </template>
           </div>
 
           <UButton color="gray" variant="soft" @click="isOpen = false">ปิด</UButton>

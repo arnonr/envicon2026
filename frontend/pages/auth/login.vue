@@ -6,7 +6,8 @@ const router = useRouter();
 const { register, login, isLoggedIn } = useAuth();
 
 if (isLoggedIn.value) {
-  router.replace("/dashboard");
+  const authStore = useAuthStore();
+  router.replace(authStore.isAdmin ? "/admin" : authStore.user?.role === "reviewer" ? "/reviewer" : "/dashboard");
 }
 const { handleApiCall, showError, showSuccess } = useApiError();
 
@@ -126,7 +127,7 @@ async function handleSubmit() {
   }
 
   const authStore = useAuthStore();
-  const defaultRedirect = authStore.isAdmin ? "/admin" : "/dashboard";
+  const defaultRedirect = authStore.isAdmin ? "/admin" : authStore.user?.role === "reviewer" ? "/reviewer" : "/dashboard";
   const redirect = (route.query.redirect as string) || defaultRedirect;
   router.push(redirect);
 }

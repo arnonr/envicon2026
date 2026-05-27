@@ -61,7 +61,7 @@ No test framework is configured in either app. No `*.test.*` or `*.spec.*` files
 
 Routes are Elysia plugin functions in `backend/src/routes/`. Each uses `Elysia({ prefix })` and is composed via `.use()` in `backend/src/index.ts`, which exports `App` type.
 
-**6 route plugins**: `authRoutes` (`/auth`), `submissionRoutes` (`/submissions`), `reviewRoutes` (`/reviews`), `adminRoutes` (`/admin`), `registrationRoutes` (`/registrations`), `publicRoutes` (`/public`)
+**7 route plugins**: `authRoutes` (`/auth`), `submissionRoutes` (`/submissions`), `reviewRoutes` (`/reviews`), `adminRoutes` and `adminReviewRoutes` (`/admin`), `registrationRoutes` (`/registrations`), `publicRoutes` (`/public`)
 
 ### Type-Safe API Client
 
@@ -84,16 +84,16 @@ All API responses use standardized shapes via `ok(data)`, `fail(error, message?)
 ```
 draft → pending_payment → payment_verifying → submitted → under_review → accepted
                                                                ├→ rejected
-                                                               └→ revision_requested → (back to pending_payment via revise)
+                                                               └→ revision_requested → submitted → (new review round)
 ```
 
 Transitions:
 - `draft` → `pending_payment`: author uploads abstract PDF
 - `pending_payment` → `payment_verifying`: author uploads payment slip
 - `payment_verifying` → `submitted`: admin confirms payment
-- `submitted` → `under_review`: admin assigns reviewers
-- `under_review` → `accepted`/`rejected`/`revision_requested`: admin decision
-- `revision_requested` → `pending_payment`: author uploads revised paper
+- `submitted` → `under_review`: admin sends an assigned review to the first reviewer
+- `under_review` → `accepted`/`rejected`/`revision_requested`: admin releases a recorded decision after all sent reviews complete
+- `revision_requested` → `submitted`: author uploads revised paper for a new review round without paying again
 
 **One submission per author** — enforced at creation and checked on `/submit` page mount.
 
@@ -129,21 +129,21 @@ Early bird deadline: `2026-10-14T23:59:59+07:00`. Student: 500/700, General: 200
 
 ## Database
 
-7 tables in `backend/src/db/schema.ts`: `users`, `submissions`, `reviews`, `reviewer_assignments`, `registrations`, `revisions`, `event_registrations`
+Review workflow tables in `backend/src/db/schema.ts` include `review_rounds`, expanded `reviews`, `reviewer_profiles`, `reviewer_expertise_tracks`, `password_setup_tokens`, and `email_notifications`, in addition to submissions, users, registrations, and revisions.
 
-- UUIDs as primary keys (varchar 36), except `reviewer_assignments` (auto-increment int)
+- UUIDs as primary keys (varchar 36) for review rounds/reviews and most domain records
 - Roles: author, reviewer, admin
-- Double-blind review (reviewer cannot see author info)
+- Single-blind review: reviewers can see author information; authors receive released comments anonymously
 - `submissions.creators` stored as JSON text (array of `{firstName, lastName}`, max 20)
 
 ## API Routes
 
 ```
 /envicon2026/api/health              — Health check
-/envicon2026/api/auth/*              — Register, login, me
-/envicon2026/api/submissions/*       — CRUD, file uploads, revisions
-/envicon2026/api/reviews/*           — STUBS ONLY (returns TODO)
-/envicon2026/api/admin/*             — Stats, submissions mgmt, registrations mgmt, reviewers (STUB)
+/envicon2026/api/auth/*              — Register, login, setup password, me
+/envicon2026/api/submissions/*       — CRUD, file uploads, revisions, released result visibility
+/envicon2026/api/reviews/*           — Reviewer assignment list, draft and final evaluation
+/envicon2026/api/admin/*             — Stats, submissions, registrations, reviewer and review-round workflow
 /envicon2026/api/registrations/*     — Conference registration (authenticated)
 /envicon2026/api/public/*            — Public event registration (no auth)
 ```
@@ -157,9 +157,9 @@ Early bird deadline: `2026-10-14T23:59:59+07:00`. Student: 500/700, General: 200
 
 ## Implementation Status
 
-**Complete**: Auth, submissions (full lifecycle), admin dashboard, conference registration, public registration, landing page
+**Complete**: Auth, submissions lifecycle, admin dashboard, reviewer management and round-based review workflow, reviewer portal, SMTP notification audit, conference registration, public registration, landing page
 
-**Not implemented**: Review system (all `/reviews` endpoints are stubs), email notifications, admin reviewer management, rate limiting
+**Not implemented**: Automatic due-date reminders, conflict-of-interest declarations, configurable rubrics, rate limiting
 
 ## Agent skills
 

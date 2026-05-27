@@ -7,6 +7,13 @@ interface Revision {
   submittedAt: string;
 }
 
+interface ReleasedResult {
+  decision: "accept" | "reject" | "revise";
+  adminNote: string | null;
+  releasedAt: string;
+  commentsToAuthor: string[];
+}
+
 interface Submission {
   id: string;
   title: string;
@@ -23,6 +30,7 @@ interface Submission {
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
+  releasedResult: ReleasedResult | null;
 }
 
 const props = defineProps<{
@@ -336,6 +344,25 @@ watch(() => props.modelValue, (open) => {
             </div>
           </UCard>
         </UModal>
+
+        <!-- Released review result -->
+        <div v-if="submission.releasedResult" class="border border-primary-200 rounded-lg p-4 bg-primary-50/30 space-y-3">
+          <h3 class="text-sm font-semibold text-primary-700">ผลการพิจารณาและข้อเสนอแนะ</h3>
+          <p v-if="submission.releasedResult.adminNote" class="text-sm text-gray-700 whitespace-pre-line">
+            <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span><br />
+            {{ submission.releasedResult.adminNote }}
+          </p>
+          <div v-if="submission.releasedResult.commentsToAuthor.length">
+            <p class="text-xs text-gray-500 mb-2">ความคิดเห็นจากผู้รีวิว</p>
+            <p
+              v-for="(comment, index) in submission.releasedResult.commentsToAuthor"
+              :key="index"
+              class="text-sm bg-white rounded p-3 mb-2 whitespace-pre-line"
+            >
+              ผู้รีวิวคนที่ {{ index + 1 }}: {{ comment }}
+            </p>
+          </div>
+        </div>
 
         <!-- Upload full paper (accepted, no file yet) -->
         <div v-if="submission.status === 'accepted' && !submission.fullPaperFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">

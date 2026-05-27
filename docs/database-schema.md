@@ -6,10 +6,13 @@
 erDiagram
     users ||--o{ submissions : "author_id"
     users ||--o{ reviews : "reviewer_id"
-    users ||--o{ reviewer_assignments : "reviewer_id"
+    users ||--|| reviewer_profiles : "user_id"
+    users ||--o{ reviewer_expertise_tracks : "reviewer_id"
+    users ||--o{ password_setup_tokens : "user_id"
     users ||--o{ registrations : "user_id"
     users ||--o{ registrations : "confirmed_by"
-    submissions ||--o{ reviews : "submission_id"
+    submissions ||--o{ review_rounds : "submission_id"
+    review_rounds ||--o{ reviews : "round_id"
     submissions ||--o{ revisions : "submission_id"
 
     users {
@@ -42,21 +45,40 @@ erDiagram
     reviews {
         varchar(36) id PK
         varchar(36) submission_id FK
+        varchar(36) round_id FK
         varchar(36) reviewer_id FK
         int score
         enum recommendation "accept | reject | revise"
         text comments_to_author
         text comments_to_editor
-        enum status "pending | completed"
+        enum status "assigned | sent | in_progress | completed"
+        timestamp due_at
+        timestamp sent_at
         timestamp assigned_at
         timestamp completed_at
     }
 
-    reviewer_assignments {
-        int id PK "auto_increment"
+    review_rounds {
+        varchar(36) id PK
+        varchar(36) submission_id FK
+        int round_number
+        enum status "assigning | in_review | ready_for_decision | released"
+        enum decision "accept | reject | revise"
+        text admin_note
+        timestamp decided_at
+        timestamp released_at
+    }
+
+    reviewer_profiles {
+        varchar(36) user_id PK
+        int max_concurrent_reviews
+        int active
+    }
+
+    reviewer_expertise_tracks {
+        int id PK
         varchar(36) reviewer_id FK
         int track
-        int max_papers "default: 5"
     }
 
     registrations {
@@ -84,8 +106,12 @@ erDiagram
 |---|---|---|
 | `users` | UUID (varchar 36) | ผู้ใช้ทุก role (author, reviewer, admin) |
 | `submissions` | UUID | บทความที่ส่ง — มี lifecycle: draft -> submitted -> under_review -> accepted/rejected/revision_requested |
-| `reviews` | UUID | ผลการ review แต่ละครั้ง (double-blind) |
-| `reviewer_assignments` | auto_increment int | กำหนด track และจำนวน paper สูงสุดต่อ reviewer |
+| `review_rounds` | UUID | รอบพิจารณาและผลตัดสินที่ admin เผยแพร่แก่ผู้ส่ง |
+| `reviews` | UUID | งานประเมินราย reviewer ในแต่ละรอบ (single-blind) |
+| `reviewer_profiles` | user UUID | สถานะ active และ capacity ของ reviewer |
+| `reviewer_expertise_tracks` | auto_increment int | สาขาความเชี่ยวชาญหลายค่าในแต่ละ reviewer |
+| `password_setup_tokens` | UUID | invitation token แบบ hash สำหรับตั้งรหัสผ่าน |
+| `email_notifications` | UUID | audit/retry ของ invitation, assignment และผลตัดสิน |
 | `registrations` | UUID | การลงทะเบียนเข้าร่วมงาน พร้อมสถานะชำระเงิน |
 | `revisions` | UUID | ประวัติเวอร์ชันไฟล์ของแต่ละ submission |
 
@@ -94,9 +120,11 @@ erDiagram
 | FK Column | From Table | To Table | ความหมาย |
 |---|---|---|---|
 | `author_id` | submissions | users | ผู้เขียนบทความ |
-| `submission_id` | reviews | submissions | บทความที่ถูก review |
+| `submission_id` | review_rounds | submissions | บทความในรอบพิจารณา |
+| `round_id` | reviews | review_rounds | รอบของ assignment/result |
 | `reviewer_id` | reviews | users | ผู้ review |
-| `reviewer_id` | reviewer_assignments | users | ผู้ review ที่ถูกมอบหมาย track |
+| `user_id` | reviewer_profiles | users | profile ของ reviewer |
+| `reviewer_id` | reviewer_expertise_tracks | users | สาขาความเชี่ยวชาญของ reviewer |
 | `user_id` | registrations | users | ผู้ลงทะเบียน |
 | `confirmed_by` | registrations | users | admin ที่ยืนยันการชำระเงิน |
 | `submission_id` | revisions | submissions | บทความที่มีการแก้ไข |

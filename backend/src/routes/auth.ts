@@ -1,9 +1,10 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { users } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { passwordSetupTokens, users } from "../db/schema";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import { jwtPlugin, authPlugin, requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
+import { hashSetupToken } from "../services/password-setup";
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(jwtPlugin)
@@ -98,6 +99,66 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         password: t.String(),
       }),
     }
+  )
+  .get(
+    "/setup-password/:token",
+    async ({ params, set }) => {
+      const [setup] = await db
+        .select({ id: passwordSetupTokens.id, userId: passwordSetupTokens.userId })
+        .from(passwordSetupTokens)
+        .where(and(
+          eq(passwordSetupTokens.tokenHash, await hashSetupToken(params.token)),
+          isNull(passwordSetupTokens.usedAt),
+          gt(passwordSetupTokens.expiresAt, new Date()),
+        ))
+        .limit(1);
+
+      if (!setup) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ลิงก์ตั้งรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว");
+      }
+
+      const [user] = await db
+        .select({ name: users.name, email: users.email })
+        .from(users)
+        .where(eq(users.id, setup.userId))
+        .limit(1);
+      return ok(user);
+    },
+    { params: t.Object({ token: t.String() }) },
+  )
+  .post(
+    "/setup-password",
+    async ({ body, set }) => {
+      const [setup] = await db
+        .select({ id: passwordSetupTokens.id, userId: passwordSetupTokens.userId })
+        .from(passwordSetupTokens)
+        .where(and(
+          eq(passwordSetupTokens.tokenHash, await hashSetupToken(body.token)),
+          isNull(passwordSetupTokens.usedAt),
+          gt(passwordSetupTokens.expiresAt, new Date()),
+        ))
+        .limit(1);
+
+      if (!setup) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ลิงก์ตั้งรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว");
+      }
+
+      const passwordHash = await Bun.password.hash(body.password, {
+        algorithm: "bcrypt",
+        cost: 10,
+      });
+      await db.update(users).set({ passwordHash }).where(eq(users.id, setup.userId));
+      await db.update(passwordSetupTokens).set({ usedAt: new Date() }).where(eq(passwordSetupTokens.id, setup.id));
+      return ok({ ready: true }, "ตั้งรหัสผ่านสำเร็จ");
+    },
+    {
+      body: t.Object({
+        token: t.String(),
+        password: t.String({ minLength: 8 }),
+      }),
+    },
   )
   .use(requireAuth)
   .get("/me", ({ user }) => {

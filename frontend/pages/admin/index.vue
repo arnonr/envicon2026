@@ -16,6 +16,8 @@ interface Submission {
   authorName: string | null;
   authorEmail: string | null;
   authorAffiliation: string | null;
+  completedReviewCount: number;
+  assignedReviewerCount: number;
 }
 
 const config = useRuntimeConfig();
@@ -41,6 +43,7 @@ const PER_PAGE = 50;
 
 const submissions = ref<Submission[]>([]);
 const loading = ref(true);
+const exporting = ref(false);
 const filterStatus = ref("");
 const filterTrack = ref("");
 
@@ -99,6 +102,11 @@ function formatDate(iso: string | null) {
   });
 }
 
+function reviewProgressLabel(submission: Submission) {
+  if (submission.assignedReviewerCount === 0) return "0";
+  return `${submission.completedReviewCount}/${submission.assignedReviewerCount}`;
+}
+
 async function fetchSubmissions() {
   loading.value = true;
   const params = new URLSearchParams();
@@ -135,6 +143,36 @@ async function fetchStats() {
   }
 }
 
+async function exportSubmissions() {
+  exporting.value = true;
+  const params = new URLSearchParams();
+  if (filterStatus.value) params.set("status", filterStatus.value);
+  if (filterTrack.value) params.set("track", filterTrack.value);
+  const qs = params.toString();
+  const { data, error } = await handleApiCall(() =>
+    $fetch<Blob>(`${apiBase}/admin/submissions/export${qs ? `?${qs}` : ""}`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      responseType: "blob",
+    }),
+  );
+  exporting.value = false;
+  if (error) {
+    showError(error);
+    return;
+  }
+  if (!data) return;
+
+  const objectUrl = URL.createObjectURL(data);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = `envicon-submissions-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+  showSuccess("ดาวน์โหลดไฟล์ Excel สำเร็จ");
+}
+
 function goToPage(page: number) {
   if (page < 1 || page > totalPages.value) return;
   currentPage.value = page;
@@ -162,32 +200,48 @@ onMounted(() => {
     </div>
 
     <!-- Admin nav cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
       <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/admin/registrations')">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
             <UIcon name="i-heroicons-clipboard-document-check" class="w-5 h-5 text-red-600" />
           </div>
           <div>
-            <p class="font-medium text-sm">จัดการการลงทะเบียน</p>
-            <p class="text-xs text-gray-400">ตรวจสอบการชำระเงิน</p>
+            <p class="font-medium text-sm">จัดการข้อมูลผู้ลงทะเบียนเข้าร่วมงาน</p>
+            <p class="text-xs text-gray-400">ตรวจสอบข้อมูลผู้เข้าร่วมงาน</p>
+          </div>
+        </div>
+      </UCard>
+      <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/admin')">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center">
+            <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-sky-600" />
+          </div>
+          <div>
+            <p class="font-medium text-sm">จัดการผลงาน</p>
+            <p class="text-xs text-gray-400">ดูและจัดการสถานะผลงาน</p>
+          </div>
+        </div>
+      </UCard>
+      <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/admin/reviewers')">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+            <UIcon name="i-heroicons-user-group" class="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <p class="font-medium text-sm">จัดการผู้รีวิว</p>
+            <p class="text-xs text-gray-400">กำหนดผู้ประเมินและความเชี่ยวชาญ</p>
           </div>
         </div>
       </UCard>
     </div>
 
     <!-- Summary Stats -->
-    <div v-if="stats" class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div v-if="stats" class="grid grid-cols-3 sm:grid-cols-3 gap-4 mb-8">
       <UCard>
         <div class="text-center">
           <p class="text-3xl font-bold text-emerald-600">{{ stats.totalSubmissions }}</p>
           <p class="text-xs text-gray-500 mt-1">ผลงานที่ส่ง</p>
-        </div>
-      </UCard>
-      <UCard>
-        <div class="text-center">
-          <p class="text-3xl font-bold text-blue-600">{{ stats.totalRegistrations }}</p>
-          <p class="text-xs text-gray-500 mt-1">การลงทะเบียน</p>
         </div>
       </UCard>
       <UCard>
@@ -205,28 +259,46 @@ onMounted(() => {
     </div>
 
     <!-- Filters -->
-    <div class="flex flex-wrap gap-3 mb-6">
-      <USelectMenu
-        v-model="filterStatus"
-        :options="STATUS_OPTIONS"
-        value-attribute="value"
-        option-attribute="label"
-        placeholder="สถานะ"
-        size="sm"
-        class="w-48"
-      />
-      <USelectMenu
-        v-model="filterTrack"
-        :options="[
-          { value: '', label: 'ทุกหัวข้อ' },
-          ...Object.entries(TRACK_NAMES).map(([k, v]) => ({ value: k, label: v })),
-        ]"
-        value-attribute="value"
-        option-attribute="label"
-        placeholder="หัวข้อ"
-        size="sm"
-        class="w-56"
-      />
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <div class="flex flex-wrap gap-3">
+        <USelectMenu
+          v-model="filterStatus"
+          :options="STATUS_OPTIONS"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="สถานะ"
+          size="sm"
+          class="w-48"
+        />
+        <USelectMenu
+          v-model="filterTrack"
+          :options="[
+            { value: '', label: 'ทุกหัวข้อ' },
+            ...Object.entries(TRACK_NAMES).map(([k, v]) => ({ value: k, label: v })),
+          ]"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="หัวข้อ"
+          size="sm"
+          class="w-56"
+        />
+      </div>
+      <div class="flex items-center gap-3">
+        <p v-if="!loading" class="text-sm text-gray-500">
+          พบผลงาน <span class="font-semibold text-gray-700">{{ totalItems.toLocaleString() }}</span> รายการ
+        </p>
+        <UButton
+          color="green"
+          variant="soft"
+          size="sm"
+          icon="i-heroicons-arrow-down-tray"
+          :loading="exporting"
+          :disabled="loading || exporting || totalItems === 0"
+          @click="exportSubmissions"
+        >
+          Export Excel
+        </UButton>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -249,6 +321,7 @@ onMounted(() => {
             <th class="py-3 px-3 text-center">วันที่ส่ง</th>
             <th class="py-3 px-3 text-center">หัวข้อ</th>
             <th class="py-3 px-3 text-center">ประเภท</th>
+            <th class="py-3 px-3 text-center">การรีวิวของกรรมการ</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
           </tr>
         </thead>
@@ -276,6 +349,9 @@ onMounted(() => {
             </td>
             <td class="py-3 px-3 text-center text-gray-500">
               {{ sub.submitterType === "student" ? "นิสิต/นักศึกษา" : "ทั่วไป" }}
+            </td>
+            <td class="py-3 px-3 text-center text-gray-700 font-medium">
+              {{ reviewProgressLabel(sub) }}
             </td>
             <td class="py-3 px-3 text-center">
               <UBadge :color="(STATUS_COLORS[sub.status] || 'gray') as any" variant="soft" size="xs">

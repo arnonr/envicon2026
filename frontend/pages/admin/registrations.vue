@@ -8,29 +8,21 @@ const { handleApiCall, showError, showSuccess } = useApiError();
 
 interface Registration {
   id: string;
-  userId: string;
-  type: "student" | "general";
-  fee: number;
-  paymentStatus: "pending" | "confirmed";
-  confirmedBy: string | null;
-  registeredAt: string;
-  userName: string | null;
-  userEmail: string | null;
-  userAffiliation: string | null;
-  userPhone: string | null;
+  fullName: string;
+  affiliation: string | null;
+  phone: string | null;
+  email: string;
+  createdAt: string;
 }
 
 const registrations = ref<Registration[]>([]);
 const loading = ref(true);
-const filterStatus = ref<string>("");
-const confirming = ref<string | null>(null);
 
 async function fetchRegistrations() {
   loading.value = true;
-  const query = filterStatus.value ? `?paymentStatus=${filterStatus.value}` : "";
   const { data, error } = await handleApiCall(() =>
     $fetch<{ success: true; data: Registration[] }>(
-      `${apiBase}/admin/registrations${query}`,
+      `${apiBase}/admin/registrations`,
       { headers: { Authorization: `Bearer ${authStore.token}` } },
     ),
   );
@@ -42,60 +34,47 @@ async function fetchRegistrations() {
   if (data) registrations.value = data.data;
 }
 
-async function confirmPayment(id: string) {
-  confirming.value = id;
-  const { error } = await handleApiCall(() =>
-    $fetch<{ success: true }>(`${apiBase}/admin/registrations/${id}/confirm`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${authStore.token}` },
-    }),
-  );
-  confirming.value = null;
-  if (error) {
-    showError(error);
-    return;
-  }
-  showSuccess("ยืนยันการชำระเงินสำเร็จ");
-  fetchRegistrations();
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-watch(filterStatus, fetchRegistrations);
 onMounted(fetchRegistrations);
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto px-4 py-12">
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">จัดการการลงทะเบียน</h1>
-      <UButton color="gray" variant="ghost" to="/dashboard">กลับ</UButton>
+      <h1 class="text-2xl font-bold text-gray-900">ข้อมูลผู้ลงทะเบียนเข้าร่วมงาน</h1>
+      <UButton color="gray" variant="ghost" to="/">กลับหน้าแรก</UButton>
     </div>
 
-    <!-- Filter -->
-    <div class="flex gap-2 mb-6">
-      <UButton
-        :color="filterStatus === '' ? 'primary' : 'gray'"
-        :variant="filterStatus === '' ? 'solid' : 'soft'"
-        size="sm"
-        @click="filterStatus = ''"
-      >
-        ทั้งหมด
-      </UButton>
-      <UButton
-        :color="filterStatus === 'pending' ? 'yellow' : 'gray'"
-        :variant="filterStatus === 'pending' ? 'solid' : 'soft'"
-        size="sm"
-        @click="filterStatus = 'pending'"
-      >
-        รอตรวจสอบ
-      </UButton>
-      <UButton
-        :color="filterStatus === 'confirmed' ? 'green' : 'gray'"
-        :variant="filterStatus === 'confirmed' ? 'solid' : 'soft'"
-        size="sm"
-        @click="filterStatus = 'confirmed'"
-      >
-        ยืนยันแล้ว
-      </UButton>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/admin/registrations')">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center">
+            <UIcon name="i-heroicons-clipboard-document-check" class="w-5 h-5 text-red-600" />
+          </div>
+          <div>
+            <p class="font-medium text-sm">จัดการข้อมูลผู้ลงทะเบียนเข้าร่วมงาน</p>
+            <p class="text-xs text-gray-400">ตรวจสอบข้อมูลผู้เข้าร่วมงาน</p>
+          </div>
+        </div>
+      </UCard>
+      <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/admin')">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-sky-100 flex items-center justify-center">
+            <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-sky-600" />
+          </div>
+          <div>
+            <p class="font-medium text-sm">จัดการผลงาน</p>
+            <p class="text-xs text-gray-400">ดูและจัดการสถานะผลงาน</p>
+          </div>
+        </div>
+      </UCard>
     </div>
 
     <!-- Loading -->
@@ -117,10 +96,7 @@ onMounted(fetchRegistrations);
             <th class="py-3 px-3">อีเมล</th>
             <th class="py-3 px-3">สังกัด</th>
             <th class="py-3 px-3">เบอร์โทร</th>
-            <th class="py-3 px-3 text-center">ประเภท</th>
-            <th class="py-3 px-3 text-right">ค่าธรรมเนียม</th>
-            <th class="py-3 px-3 text-center">สถานะ</th>
-            <th class="py-3 px-3 text-center">จัดการ</th>
+            <th class="py-3 px-3 text-center">วันที่ลงทะเบียน</th>
           </tr>
         </thead>
         <tbody>
@@ -129,35 +105,11 @@ onMounted(fetchRegistrations);
             :key="reg.id"
             class="border-b last:border-0 hover:bg-gray-50"
           >
-            <td class="py-3 px-3 font-medium">{{ reg.userName || "-" }}</td>
-            <td class="py-3 px-3 text-gray-500">{{ reg.userEmail || "-" }}</td>
-            <td class="py-3 px-3 text-gray-500">{{ reg.userAffiliation || "-" }}</td>
-            <td class="py-3 px-3 text-gray-500">{{ reg.userPhone || "-" }}</td>
-            <td class="py-3 px-3 text-center">
-              {{ reg.type === "student" ? "นิสิต/นักศึกษา" : "ทั่วไป" }}
-            </td>
-            <td class="py-3 px-3 text-right font-semibold">{{ reg.fee.toLocaleString() }} บาท</td>
-            <td class="py-3 px-3 text-center">
-              <UBadge
-                :color="reg.paymentStatus === 'confirmed' ? 'green' : 'yellow'"
-                variant="soft"
-                size="xs"
-              >
-                {{ reg.paymentStatus === "confirmed" ? "ยืนยันแล้ว" : "รอตรวจสอบ" }}
-              </UBadge>
-            </td>
-            <td class="py-3 px-3 text-center">
-              <UButton
-                v-if="reg.paymentStatus === 'pending'"
-                color="green"
-                size="xs"
-                :loading="confirming === reg.id"
-                @click="confirmPayment(reg.id)"
-              >
-                ยืนยัน
-              </UButton>
-              <span v-else class="text-gray-300 text-xs">-</span>
-            </td>
+            <td class="py-3 px-3 font-medium">{{ reg.fullName }}</td>
+            <td class="py-3 px-3 text-gray-500">{{ reg.email }}</td>
+            <td class="py-3 px-3 text-gray-500">{{ reg.affiliation || "-" }}</td>
+            <td class="py-3 px-3 text-gray-500">{{ reg.phone || "-" }}</td>
+            <td class="py-3 px-3 text-center text-gray-500">{{ formatDate(reg.createdAt) }}</td>
           </tr>
         </tbody>
       </table>

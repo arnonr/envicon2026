@@ -9,6 +9,13 @@ interface Revision {
   submittedAt: string;
 }
 
+interface ReleasedResult {
+  decision: "accept" | "reject" | "revise";
+  adminNote: string | null;
+  releasedAt: string;
+  commentsToAuthor: string[];
+}
+
 interface Submission {
   id: string;
   title: string;
@@ -22,6 +29,7 @@ interface Submission {
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
+  releasedResult: ReleasedResult | null;
 }
 
 const route = useRoute();
@@ -173,6 +181,24 @@ onMounted(fetchSubmission);
               ดาวน์โหลด
             </UButton>
             <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard v-if="submission.releasedResult" class="mb-6 border-primary-200">
+        <template #header>
+          <h3 class="font-semibold text-sm">ผลการพิจารณาและข้อเสนอแนะ</h3>
+        </template>
+        <div class="space-y-3 text-sm">
+          <p v-if="submission.releasedResult.adminNote" class="whitespace-pre-line">
+            <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span><br />
+            {{ submission.releasedResult.adminNote }}
+          </p>
+          <div v-if="submission.releasedResult.commentsToAuthor.length">
+            <p class="text-gray-500 mb-2">ความคิดเห็นจากผู้รีวิว</p>
+            <div v-for="(comment, index) in submission.releasedResult.commentsToAuthor" :key="index" class="bg-gray-50 rounded-lg p-3 mb-2 whitespace-pre-line">
+              ผู้รีวิวคนที่ {{ index + 1 }}: {{ comment }}
+            </div>
           </div>
         </div>
       </UCard>

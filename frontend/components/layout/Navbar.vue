@@ -14,6 +14,9 @@ const links = [
 
 const { isLoggedIn, user, logout } = useAuth();
 const mobileMenuOpen = ref(false);
+const accountPath = computed(() =>
+  user.value?.role === "admin" ? "/admin" : user.value?.role === "reviewer" ? "/reviewer" : "/dashboard",
+);
 </script>
 
 <template>
@@ -41,7 +44,7 @@ const mobileMenuOpen = ref(false);
             ลงทะเบียนส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
-            <UButton :to="user?.role === 'admin' ? '/admin' : '/dashboard'" color="primary" variant="ghost" size="sm">
+            <UButton :to="accountPath" color="primary" variant="ghost" size="sm">
               {{ user?.name }}
             </UButton>
             <UButton color="gray" variant="ghost" size="sm" @click="logout">
@@ -72,8 +75,8 @@ const mobileMenuOpen = ref(false);
             ลงทะเบียนส่งผลงาน
           </UButton>
           <template v-if="isLoggedIn">
-            <UButton :to="user?.role === 'admin' ? '/admin' : '/dashboard'" color="primary" variant="ghost" size="sm" block>
-              {{ user?.role === 'admin' ? 'แผงผู้ดูแล' : 'แดชบอร์ด' }}
+            <UButton :to="accountPath" color="primary" variant="ghost" size="sm" block>
+              {{ user?.role === 'admin' ? 'แผงผู้ดูแล' : user?.role === 'reviewer' ? 'งานประเมิน' : 'แดชบอร์ด' }}
             </UButton>
           </template>
           <UButton v-else color="primary" variant="outline" size="sm" block to="/auth/login">

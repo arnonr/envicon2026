@@ -5,6 +5,7 @@ import { authRoutes } from "./routes/auth";
 import { submissionRoutes } from "./routes/submissions";
 import { reviewRoutes } from "./routes/reviews";
 import { adminRoutes } from "./routes/admin";
+import { adminReviewRoutes } from "./routes/admin-reviews";
 import { registrationRoutes } from "./routes/registrations";
 import { publicRoutes } from "./routes/public";
 import { ok, fail } from "./utils/response";
@@ -16,7 +17,7 @@ const app = new Elysia({ prefix: "/envicon2026/api" })
 
     if (code === "VALIDATION" || code === "INVALID_FILE_TYPE" as any) {
       set.status = 422;
-      return fail("VALIDATION_ERROR", error.message);
+      return fail("VALIDATION_ERROR", "message" in error ? String(error.message) : "Validation failed");
     }
 
     if (code === "NOT_FOUND") {
@@ -41,6 +42,7 @@ const app = new Elysia({ prefix: "/envicon2026/api" })
   .use(submissionRoutes)
   .use(reviewRoutes)
   .use(adminRoutes)
+  .use(adminReviewRoutes)
   .use(registrationRoutes)
   .use(publicRoutes)
   .listen(3001);

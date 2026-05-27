@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { submissions, revisions } from "../db/schema";
-import { eq, desc } from "drizzle-orm";
+import { reviewRounds, reviews, submissions, revisions } from "../db/schema";
+import { and, eq, desc } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
 import { saveFile } from "../services/storage";
@@ -66,7 +66,36 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       .where(eq(revisions.submissionId, params.id))
       .orderBy(desc(revisions.version));
 
-    return ok({ ...sub, revisions: revisionList });
+    const [releasedRound] = await db
+      .select({
+        id: reviewRounds.id,
+        decision: reviewRounds.decision,
+        adminNote: reviewRounds.adminNote,
+        releasedAt: reviewRounds.releasedAt,
+      })
+      .from(reviewRounds)
+      .where(and(eq(reviewRounds.submissionId, params.id), eq(reviewRounds.status, "released")))
+      .orderBy(desc(reviewRounds.roundNumber))
+      .limit(1);
+    const releasedComments = releasedRound?.releasedAt
+      ? await db
+        .select({ commentsToAuthor: reviews.commentsToAuthor })
+        .from(reviews)
+        .where(eq(reviews.roundId, releasedRound.id))
+      : [];
+
+    return ok({
+      ...sub,
+      revisions: revisionList,
+      releasedResult: releasedRound?.releasedAt
+        ? {
+          decision: releasedRound.decision,
+          adminNote: releasedRound.adminNote,
+          releasedAt: releasedRound.releasedAt,
+          commentsToAuthor: releasedComments.map((review) => review.commentsToAuthor).filter(Boolean),
+        }
+        : null,
+    });
   })
 
   // Create draft submission
@@ -218,7 +247,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     },
     {
       body: t.Object({
-        file: t.File({ type: "application/pdf", maxSize: "50mb" }),
+        file: t.File({ type: "application/pdf", maxSize: 50 * 1024 * 1024 }),
       }),
     }
   )
@@ -259,7 +288,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     },
     {
       body: t.Object({
-        file: t.File({ type: "application/pdf", maxSize: "50mb" }),
+        file: t.File({ type: "application/pdf", maxSize: 50 * 1024 * 1024 }),
       }),
     }
   )
@@ -304,7 +333,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     },
     {
       body: t.Object({
-        file: t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: "10mb" }),
+        file: t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: 10 * 1024 * 1024 }),
       }),
     }
   )
@@ -355,14 +384,14 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       await db
         .update(submissions)
-        .set({ status: "pending_payment", fullPaperFileUrl: fileUrl })
+        .set({ status: "submitted", fullPaperFileUrl: fileUrl })
         .where(eq(submissions.id, params.id));
 
       return ok({ message: "Revision submitted successfully", version: nextVersion });
     },
     {
       body: t.Object({
-        file: t.File({ type: "application/pdf", maxSize: "50mb" }),
+        file: t.File({ type: "application/pdf", maxSize: 50 * 1024 * 1024 }),
         changelog: t.Optional(t.String()),
       }),
     }

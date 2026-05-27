@@ -12,6 +12,8 @@
 |---|---|---|---|---|---|
 | POST | `/auth/register` | - | `{ email, password, name, affiliation? }` | `{ token, user }` | สมัครสมาชิก (default role: author) |
 | POST | `/auth/login` | - | `{ email, password }` | `{ token, user }` | เข้าสู่ระบบ |
+| GET | `/auth/setup-password/:token` | - | - | `{ reviewer }` | ตรวจ invitation token ของ reviewer |
+| POST | `/auth/setup-password` | - | `{ token, password }` | `{ message }` | ตั้งรหัสผ่านครั้งแรกจาก invitation |
 | GET | `/auth/me` | Required | - | `{ user }` | ดึงข้อมูลผู้ใช้ปัจจุบัน |
 
 ### Validation
@@ -49,14 +51,17 @@
 | Method | Path | Auth | Role | Body / Params | Response | คำอธิบาย |
 |---|---|---|---|---|---|---|
 | GET | `/reviews` | Required | reviewer | - | `{ reviews[] }` | รายการ review ที่ได้รับมอบหมาย |
-| GET | `/reviews/:id` | Required | reviewer | - | `{ review, submission (no author info) }` | รายละเอียด review (double-blind) |
-| PUT | `/reviews/:id` | Required | reviewer | `{ score, recommendation, commentsToAuthor, commentsToEditor? }` | `{ review }` | ส่งผล review (pending -> completed) |
+| GET | `/reviews/:id` | Required | reviewer/admin | - | `{ review, submission, author }` | รายละเอียด review แบบ single-blind; ไม่คืนหลักฐานชำระเงิน |
+| PUT | `/reviews/:id/draft` | Required | reviewer | `{ score?, recommendation?, commentsToAuthor?, commentsToEditor? }` | `{ review }` | บันทึกร่าง (`sent` -> `in_progress`) |
+| POST | `/reviews/:id/submit` | Required | reviewer | `{ score, recommendation, commentsToAuthor, commentsToEditor? }` | `{ review }` | ส่งผลสุดท้ายและล็อกการแก้ไข |
 
 ### Review Fields
-- `score`: int (1-10)
+- `score`: int (1-5)
 - `recommendation`: "accept" | "reject" | "revise"
 - `commentsToAuthor`: text (ผู้เขียนเห็น)
 - `commentsToEditor`: text (เฉพาะ admin เห็น)
+
+Reviewer เห็นข้อมูลผู้ส่งตามนโยบาย single-blind ส่วนเจ้าของผลงานเห็น `commentsToAuthor` แบบไม่ระบุชื่อหลัง admin กด release เท่านั้น
 
 ---
 
@@ -67,9 +72,17 @@
 | GET | `/admin/stats` | Required | admin | - | `{ totalSubmissions, byStatus, totalUsers, totalRegistrations }` | สถิติรวม |
 | GET | `/admin/submissions` | Required | admin | query: `?status=&track=` | `{ submissions[] }` | รายการบทความทั้งหมด |
 | PUT | `/admin/submissions/:id/status` | Required | admin | `{ status }` | `{ submission }` | เปลี่ยนสถานะบทความ |
-| POST | `/admin/submissions/:id/assign-reviewer` | Required | admin | `{ reviewerId }` | `{ review }` | มอบหมาย reviewer |
+| GET | `/admin/submissions/:id/review-workflow` | Required | admin | - | `{ round, assignments, reviewers }` | สถานะรอบพิจารณาและ reviewer ที่เลือกได้ |
+| POST | `/admin/submissions/:id/review-rounds` | Required | admin | - | `{ round }` | เริ่มรอบพิจารณาใหม่ |
+| POST | `/admin/review-rounds/:id/assignments` | Required | admin | `{ reviewerIds[] }` | `{ reviews[] }` | เพิ่ม reviewer ในรอบ |
+| DELETE | `/admin/reviews/:id` | Required | admin | - | `{ message }` | ถอด assignment ที่ยังไม่ส่ง |
+| POST | `/admin/reviews/:id/send` | Required | admin | `{ dueAt }` | `{ review }` | ส่งอีเมลมอบหมายรายบุคคล |
+| PATCH | `/admin/review-rounds/:roundId/decision` | Required | admin | `{ decision, adminNote? }` | `{ round }` | บันทึกผลเมื่อ review ที่ส่งครบแล้ว |
+| POST | `/admin/review-rounds/:roundId/release` | Required | admin | - | `{ round, notificationStatus }` | แจ้งผลแก่เจ้าของและเปลี่ยนสถานะผลงาน |
 | GET | `/admin/reviewers` | Required | admin | - | `{ reviewers[] }` | รายชื่อ reviewer ทั้งหมด |
-| POST | `/admin/reviewers/assignments` | Required | admin | `{ reviewerId, track, maxPapers? }` | `{ assignment }` | กำหนด track ให้ reviewer |
+| POST | `/admin/reviewers` | Required | admin | `{ name, email, affiliation?, tracks[], maxConcurrentReviews }` | `{ reviewer }` | สร้าง reviewer และส่ง invitation |
+| PATCH | `/admin/reviewers/:id` | Required | admin | `{ name?, affiliation?, tracks?, maxConcurrentReviews?, active? }` | `{ reviewer }` | แก้ reviewer profile |
+| POST | `/admin/reviewers/:id/resend-invitation` | Required | admin | - | `{ notificationStatus }` | ออก invitation token ใหม่ |
 | GET | `/admin/registrations` | Required | admin | query: `?paymentStatus=` | `{ registrations[] }` | รายการลงทะเบียนทั้งหมด |
 | PUT | `/admin/registrations/:id/confirm` | Required | admin | - | `{ registration }` | ยืนยันการชำระเงิน |
 
