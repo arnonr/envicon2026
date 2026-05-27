@@ -45,6 +45,19 @@ const filterStatus = ref("");
 const filterTrack = ref("");
 const updating = ref<Set<string>>(new Set());
 
+const detailModalOpen = ref(false);
+const detailSubmissionId = ref<string | null>(null);
+
+function openDetail(id: string) {
+  detailSubmissionId.value = id;
+  detailModalOpen.value = true;
+}
+
+function onDetailStatusChanged() {
+  fetchSubmissions();
+  fetchStats();
+}
+
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมฯ",
   2: "การจัดการระบบนิเวศฯ",
@@ -249,7 +262,6 @@ onMounted(() => {
             <th class="py-3 px-3 text-center">หัวข้อ</th>
             <th class="py-3 px-3 text-center">ประเภท</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
-            <th class="py-3 px-3 text-center">จัดการ</th>
           </tr>
         </thead>
         <tbody>
@@ -259,8 +271,10 @@ onMounted(() => {
             class="border-b last:border-0 hover:bg-gray-50"
           >
             <td class="py-3 px-3">
-              <p class="font-medium line-clamp-1">{{ sub.title }}</p>
-              <p v-if="sub.titleEn" class="text-xs text-gray-400 line-clamp-1">{{ sub.titleEn }}</p>
+              <button class="text-left" @click="openDetail(sub.id)">
+                <p class="font-medium line-clamp-1 text-primary-600 hover:text-primary-700 hover:underline">{{ sub.title }}</p>
+                <p v-if="sub.titleEn" class="text-xs text-gray-400 line-clamp-1">{{ sub.titleEn }}</p>
+              </button>
             </td>
             <td class="py-3 px-3">
               <p class="text-gray-700">{{ sub.authorName || "-" }}</p>
@@ -276,53 +290,6 @@ onMounted(() => {
               <UBadge :color="(STATUS_COLORS[sub.status] || 'gray') as any" variant="soft" size="xs">
                 {{ STATUS_OPTIONS.find((s) => s.value === sub.status)?.label || sub.status }}
               </UBadge>
-            </td>
-            <td class="py-3 px-3 text-center">
-              <UButton
-                v-if="sub.status === 'payment_verifying'"
-                color="green"
-                size="xs"
-                :loading="updating.has(sub.id)"
-                @click="updateStatus(sub.id, 'submitted')"
-              >
-                อนุมัติ
-              </UButton>
-              <UButton
-                v-else-if="sub.status === 'submitted'"
-                color="yellow"
-                size="xs"
-                :loading="updating.has(sub.id)"
-                @click="updateStatus(sub.id, 'under_review')"
-              >
-                ส่งพิจารณา
-              </UButton>
-              <div v-else-if="sub.status === 'under_review'" class="flex gap-1 justify-center">
-                <UButton
-                  color="green"
-                  size="xs"
-                  :loading="updating.has(sub.id)"
-                  @click="updateStatus(sub.id, 'accepted')"
-                >
-                  ผ่าน
-                </UButton>
-                <UButton
-                  color="red"
-                  size="xs"
-                  :loading="updating.has(sub.id)"
-                  @click="updateStatus(sub.id, 'rejected')"
-                >
-                  ไม่ผ่าน
-                </UButton>
-                <UButton
-                  color="orange"
-                  size="xs"
-                  :loading="updating.has(sub.id)"
-                  @click="updateStatus(sub.id, 'revision_requested')"
-                >
-                  แก้ไข
-                </UButton>
-              </div>
-              <span v-else class="text-gray-300 text-xs">-</span>
             </td>
           </tr>
         </tbody>
@@ -367,5 +334,11 @@ onMounted(() => {
         </UButton>
       </div>
     </div>
+    <!-- Submission detail modal -->
+    <AdminAdminSubmissionDetailModal
+      v-model="detailModalOpen"
+      :submission-id="detailSubmissionId"
+      @status-changed="onDetailStatusChanged"
+    />
   </div>
 </template>
