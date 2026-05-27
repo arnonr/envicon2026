@@ -43,7 +43,6 @@ const submissions = ref<Submission[]>([]);
 const loading = ref(true);
 const filterStatus = ref("");
 const filterTrack = ref("");
-const updating = ref<Set<string>>(new Set());
 
 const detailModalOpen = ref(false);
 const detailSubmissionId = ref<string | null>(null);
@@ -113,27 +112,6 @@ async function fetchSubmissions() {
   submissions.value = data?.data ?? [];
   totalPages.value = data?.meta?.totalPages ?? 1;
   totalItems.value = data?.meta?.total ?? 0;
-}
-
-async function updateStatus(id: string, status: string) {
-  updating.value.add(id);
-  const { error } = await handleApiCall(() =>
-    $fetch<{ success: true }>(
-      `${apiBase}/admin/submissions/${id}/status`,
-      {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${authStore.token}` },
-        body: { status },
-      },
-    ),
-  );
-  updating.value.delete(id);
-  if (error) {
-    showError(error);
-    return;
-  }
-  showSuccess("อัปเดตสถานะสำเร็จ");
-  fetchSubmissions();
 }
 
 async function fetchStats() {
