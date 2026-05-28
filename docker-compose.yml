@@ -7,7 +7,7 @@ services:
       MYSQL_USER: envicon
       MYSQL_PASSWORD: envicon2026
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -49,7 +49,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NUXT_PUBLIC_API_BASE: http://backend:3001/envicon2026/api
+      NUXT_PUBLIC_API_BASE: http://localhost/envicon2026/api
     depends_on:
       - backend
 
