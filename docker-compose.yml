@@ -31,7 +31,7 @@ services:
       DB_PASSWORD: envicon2026
       DB_NAME: envicon2026
       JWT_SECRET: change-this-in-production
-      APP_BASE_URL: http://localhost/envicon2026
+      APP_BASE_URL: https://technopark.kmutnb.ac.th/envicon2026
     depends_on:
       mysql:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NUXT_PUBLIC_API_BASE: http://localhost/envicon2026/api
+      NUXT_PUBLIC_API_BASE: https://technopark.kmutnb.ac.th/envicon2026/api
     depends_on:
       - backend
 
