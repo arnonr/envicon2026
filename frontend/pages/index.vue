@@ -69,7 +69,7 @@
         </div>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center hero-fade hero-fade--6">
-          <button @click="showComingSoon"
+          <button @click="goToAuthorDashboard"
             class="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-meadow-500 to-meadow-600 font-bold text-white text-lg shadow-lg shadow-meadow-300/40 hover:shadow-meadow-400/60 hover:scale-[1.04] hover:-translate-y-0.5 transition-all duration-300">
             ส่งบทคัดย่อ
             <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
@@ -132,7 +132,7 @@
               เปิดรับบทคัดย่อถึง <span class="text-amber-100 drop-shadow-sm">30 กันยายน 2569</span>
             </h2>
             <p class="text-white/75 mb-6 max-w-lg mx-auto">ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอในการประชุมวิชาการ</p>
-            <button @click="showComingSoon"
+            <button @click="goToAuthorDashboard"
               class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-meadow-700 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-lg transition-all duration-300">
               ส่งบทคัดย่อเลย →
             </button>
@@ -253,8 +253,16 @@
 </template>
 
 <script setup lang="ts">
-const { show: showComingSoon } = useComingSoon();
+const authStore = useAuthStore();
 const showRegModal = ref(false);
+
+const goToAuthorDashboard = async () => {
+  if (!authStore.initialized) {
+    authStore.loadFromStorage();
+  }
+
+  await navigateTo(authStore.isLoggedIn ? "/dashboard" : "/auth/login?redirect=/dashboard");
+};
 
 // ── Countdown ──
 const EVENT_DATE = new Date('2026-11-12T08:00:00+07:00').getTime()
