@@ -14,6 +14,7 @@ import {
 import { getUserFromHeaders } from "../middleware/auth";
 import { requireAdmin } from "../middleware/roles";
 import { appUrl, escapeHtml, retryTrackedEmail, sendTrackedEmail } from "../services/email";
+import { buildAuthorResultEmail, buildReviewerInvitationEmail, buildReviewAssignmentEmail } from "../services/email-templates";
 import { issuePasswordSetupToken } from "../services/password-setup";
 import { fail, ok } from "../utils/response";
 import { storedFileExists } from "../services/storage";
@@ -21,12 +22,13 @@ import { storedFileExists } from "../services/storage";
 async function sendInvitation(user: { id: string; email: string; name: string }) {
   const token = await issuePasswordSetupToken(user.id);
   const link = appUrl(`/auth/setup-password?token=${encodeURIComponent(token)}`);
+  const { subject, htmlBody } = buildReviewerInvitationEmail({ reviewerName: user.name, setupLink: link });
   return sendTrackedEmail({
     type: "reviewer_invitation",
     recipientEmail: user.email,
     relatedId: user.id,
-    subject: "คำเชิญเป็นผู้ประเมินผลงาน ENVICON 2026",
-    htmlBody: `<p>เรียน ${escapeHtml(user.name)}</p><p>ท่านได้รับเชิญเป็นผู้ประเมินผลงาน ENVICON 2026</p><p><a href="${link}">ตั้งรหัสผ่านเพื่อเข้าสู่ระบบ</a> (ลิงก์มีอายุ 72 ชั่วโมง)</p>`,
+    subject,
+    htmlBody,
   });
 }
 
@@ -447,15 +449,22 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       }
 
       const reviewLink = appUrl(`/reviewer/reviews/${assignment.id}`);
-      const setupLine = assignment.passwordHash
-        ? ""
-        : `<p>ก่อนเริ่มประเมิน กรุณา <a href="${appUrl(`/auth/setup-password?token=${encodeURIComponent(await issuePasswordSetupToken(assignment.reviewerId))}`)}">ตั้งรหัสผ่าน</a></p>`;
+      const setupLink = assignment.passwordHash
+        ? undefined
+        : appUrl(`/auth/setup-password?token=${encodeURIComponent(await issuePasswordSetupToken(assignment.reviewerId))}`);
+      const { subject, htmlBody } = buildReviewAssignmentEmail({
+        reviewerName: assignment.reviewerName,
+        title: assignment.title,
+        dueDate: new Date(body.dueAt).toLocaleDateString("th-TH"),
+        reviewLink,
+        setupLink,
+      });
       const email = await sendTrackedEmail({
         type: "review_assignment",
         recipientEmail: assignment.reviewerEmail,
         relatedId: assignment.id,
-        subject: `มอบหมายประเมินผลงาน: ${assignment.title}`,
-        htmlBody: `<p>เรียน ${escapeHtml(assignment.reviewerName)}</p><p>ท่านได้รับมอบหมายให้ประเมินผลงาน "${escapeHtml(assignment.title)}"</p><p>ครบกำหนด: ${escapeHtml(new Date(body.dueAt).toLocaleDateString("th-TH"))}</p>${setupLine}<p><a href="${reviewLink}">เปิดแบบประเมิน</a></p>`,
+        subject,
+        htmlBody,
       });
       if (email.status === "failed") {
         set.status = 502;
@@ -531,16 +540,34 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         return fail("VALIDATION_ERROR", "ยังไม่มีผลตัดสินที่พร้อมแจ้ง");
       }
       const status = round.decision === "accept" ? "accepted" : round.decision === "reject" ? "rejected" : "revision_requested";
-      const decisionLabel = round.decision === "accept" ? "ผ่านการพิจารณา" : round.decision === "reject" ? "ไม่ผ่านการพิจารณา" : "ขอแก้ไขผลงาน";
       await db.update(reviewRounds).set({ status: "released", releasedAt: new Date() }).where(eq(reviewRounds.id, round.id));
       await db.update(submissions).set({ status }).where(eq(submissions.id, round.submissionId));
+
+      const completedReviews = await db
+        .select({ commentsToAuthor: reviews.commentsToAuthor })
+        .from(reviews)
+        .where(and(eq(reviews.roundId, round.id), eq(reviews.status, "completed")))
+        .orderBy(reviews.completedAt);
+
+      const reviewerComments = completedReviews
+        .map((r, i) => ({ reviewerIndex: i + 1, comment: r.commentsToAuthor ?? "" }))
+        .filter((r) => r.comment.trim() !== "");
+
+      const { subject, htmlBody } = buildAuthorResultEmail({
+        authorName: round.authorName,
+        title: round.title,
+        submissionId: round.submissionId,
+        decision: round.decision,
+        adminNote: round.adminNote,
+        reviewerComments,
+      });
 
       const notification = await sendTrackedEmail({
         type: "author_result",
         recipientEmail: round.authorEmail,
         relatedId: round.id,
-        subject: `ผลการพิจารณาผลงาน: ${round.title}`,
-        htmlBody: `<p>เรียน ${escapeHtml(round.authorName)}</p><p>ผลการพิจารณาผลงาน "${escapeHtml(round.title)}": ${decisionLabel}</p><p>${escapeHtml(round.adminNote)}</p><p><a href="${appUrl(`/submissions/${round.submissionId}`)}">ดูรายละเอียดและข้อเสนอแนะ</a></p>`,
+        subject,
+        htmlBody,
       });
       return ok({ released: true, notificationStatus: notification.status });
     },

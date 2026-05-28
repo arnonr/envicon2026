@@ -27,7 +27,7 @@ const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
 const authStore = useAuthStore();
 const { handleApiCall, showError, showSuccess } = useApiError();
-const headers = computed(() => ({ Authorization: `Bearer ${authStore.token}` }));
+const headers = computed(() => authStore.token ? { Authorization: `Bearer ${authStore.token}` } : undefined);
 const review = ref<ReviewDetail | null>(null);
 const loading = ref(true);
 const saving = ref(false);
@@ -44,6 +44,15 @@ const recommendationOptions = [
 ];
 
 async function fetchReview() {
+  if (!authStore.initialized) {
+    authStore.loadFromStorage();
+  }
+  if (!authStore.token) {
+    loading.value = false;
+    await navigateTo(`/auth/login?redirect=${encodeURIComponent(route.fullPath)}`);
+    return;
+  }
+
   const { data, error } = await handleApiCall(() =>
     $fetch<{ success: true; data: ReviewDetail }>(`${apiBase}/reviews/${route.params.id}`, { headers: headers.value }),
   );

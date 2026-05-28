@@ -4,10 +4,8 @@ const { show: showComingSoon } = useComingSoon();
 const links = [
   { label: "หน้าแรก", to: "/" },
   { label: "เกี่ยวกับ", to: "/about" },
-  { label: "หัวข้อ", to: "/tracks" },
   { label: "กำหนดการ", to: "/important-dates" },
   { label: "ลงทะเบียน", to: "/registration" },
-  { label: "สถานที่", to: "/venue" },
   { label: "แนวทาง", to: "/guidelines" },
   { label: "ติดต่อ", to: "/contact" },
 ];

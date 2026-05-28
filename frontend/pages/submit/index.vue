@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
 
-definePageMeta({ middleware: ['auth'] });
+definePageMeta({ middleware: ['auth', 'role'] });
 
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;

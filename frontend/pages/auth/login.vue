@@ -193,6 +193,12 @@ async function handleSubmit() {
             </UInput>
           </UFormGroup>
 
+          <div v-if="!isRegisterMode" class="flex justify-end -mt-2">
+            <NuxtLink to="/auth/forgot-password" class="text-sm font-medium text-primary-600 hover:underline">
+              ลืมรหัสผ่าน?
+            </NuxtLink>
+          </div>
+
           <UButton type="submit" color="primary" block size="lg" :loading="loading">
             {{ isRegisterMode ? "ลงทะเบียน" : "เข้าสู่ระบบ" }}
           </UButton>

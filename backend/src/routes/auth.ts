@@ -4,7 +4,46 @@ import { passwordSetupTokens, users } from "../db/schema";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { jwtPlugin, authPlugin, requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
-import { hashSetupToken } from "../services/password-setup";
+import { hashSetupToken, issuePasswordSetupToken } from "../services/password-setup";
+import { appUrl, escapeHtml, sendTrackedEmail } from "../services/email";
+
+const PASSWORD_RESET_RESPONSE = "หากอีเมลนี้อยู่ในระบบ เราจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้";
+
+function passwordResetEmailHtml(user: { name: string }, link: string) {
+  return `
+    <div style="margin:0;padding:0;background:#f6f8fb;font-family:Sarabun,Arial,sans-serif;color:#172033;">
+      <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
+        <div style="background:#ffffff;border:1px solid #e6ebf2;border-radius:12px;overflow:hidden;">
+          <div style="background:#0f766e;padding:24px 28px;color:#ffffff;">
+            <div style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.9;">ENVICON 2026</div>
+            <h1 style="margin:8px 0 0;font-size:24px;line-height:1.35;font-weight:700;">ตั้งรหัสผ่านใหม่</h1>
+          </div>
+          <div style="padding:28px;">
+            <p style="margin:0 0 16px;font-size:16px;line-height:1.75;">เรียน ${escapeHtml(user.name)}</p>
+            <p style="margin:0 0 20px;font-size:16px;line-height:1.75;">
+              เราได้รับคำขอตั้งรหัสผ่านใหม่สำหรับบัญชี ENVICON 2026 ของท่าน
+              กรุณากดปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่
+            </p>
+            <p style="margin:28px 0;text-align:center;">
+              <a href="${link}" style="display:inline-block;background:#0f766e;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;padding:13px 24px;border-radius:8px;">
+                ตั้งรหัสผ่านใหม่
+              </a>
+            </p>
+            <p style="margin:0 0 14px;font-size:14px;line-height:1.7;color:#526173;">
+              ลิงก์นี้มีอายุ 72 ชั่วโมง และใช้ได้ครั้งเดียวเท่านั้น
+            </p>
+            <p style="margin:0;font-size:14px;line-height:1.7;color:#526173;">
+              หากท่านไม่ได้ร้องขอ สามารถละเว้นอีเมลนี้ได้ รหัสผ่านเดิมจะยังไม่ถูกเปลี่ยนจนกว่าจะมีการตั้งรหัสผ่านใหม่สำเร็จ
+            </p>
+          </div>
+          <div style="border-top:1px solid #e6ebf2;padding:18px 28px;background:#fbfcfe;color:#738095;font-size:12px;line-height:1.6;">
+            อีเมลนี้ส่งจากระบบ ENVICON 2026 กรุณาอย่าตอบกลับอีเมลฉบับนี้
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(jwtPlugin)
@@ -97,6 +136,36 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       body: t.Object({
         email: t.String({ format: "email" }),
         password: t.String(),
+      }),
+    }
+  )
+  .post(
+    "/forgot-password",
+    async ({ body }) => {
+      const email = body.email.trim().toLowerCase();
+      const [user] = await db
+        .select({ id: users.id, email: users.email, name: users.name })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+
+      if (user) {
+        const token = await issuePasswordSetupToken(user.id);
+        const link = appUrl(`/auth/reset-password?token=${encodeURIComponent(token)}`);
+        await sendTrackedEmail({
+          type: "password_reset",
+          recipientEmail: user.email,
+          relatedId: user.id,
+          subject: "ตั้งรหัสผ่านใหม่ ENVICON 2026",
+          htmlBody: passwordResetEmailHtml(user, link),
+        });
+      }
+
+      return ok({ sent: true }, PASSWORD_RESET_RESPONSE);
+    },
+    {
+      body: t.Object({
+        email: t.String({ format: "email" }),
       }),
     }
   )

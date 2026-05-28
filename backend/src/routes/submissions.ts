@@ -25,15 +25,13 @@ function parseCreators(raw: string | undefined): string | null {
 export const submissionRoutes = new Elysia({ prefix: "/submissions" })
   .use(requireAuth)
 
-  // List: author sees own, admin sees all
-  .get("/", async ({ user }) => {
-    if (user!.role === "admin") {
-      const all = await db
-        .select()
-        .from(submissions)
-        .orderBy(desc(submissions.updatedAt));
-      return ok(all);
+  // List: authors see only their own submissions.
+  .get("/", async ({ user, set }) => {
+    if (user!.role !== "author") {
+      set.status = 403;
+      return fail("FORBIDDEN", "Submitter dashboard is only available to authors");
     }
+
     const own = await db
       .select()
       .from(submissions)
@@ -55,7 +53,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       return fail("NOT_FOUND", "Submission not found");
     }
 
-    if (user!.role === "author" && sub.authorId !== user!.id) {
+    if (user!.role !== "admin" && sub.authorId !== user!.id) {
       set.status = 403;
       return fail("FORBIDDEN", "Access denied");
     }
@@ -125,6 +123,11 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
   .post(
     "/",
     async ({ body, user, set }) => {
+      if (user!.role !== "author") {
+        set.status = 403;
+        return fail("FORBIDDEN", "Only authors can create submissions");
+      }
+
       // Limit to 1 submission per author
       const [existing] = await db
         .select({ id: submissions.id })
@@ -251,7 +254,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 404;
         return fail("NOT_FOUND", "Submission not found");
       }
-      if (sub.authorId !== user!.id && user!.role !== "admin") {
+      if (sub.authorId !== user!.id) {
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }

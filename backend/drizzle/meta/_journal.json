@@ -22,6 +22,13 @@
       "when": 1779888475253,
       "tag": "0002_friendly_satana",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779931760296,
+      "tag": "0003_lazy_manta",
+      "breakpoints": true
     }
   ]
 }

@@ -12,8 +12,9 @@
 |---|---|---|---|---|---|
 | POST | `/auth/register` | - | `{ email, password, name, affiliation? }` | `{ token, user }` | สมัครสมาชิก (default role: author) |
 | POST | `/auth/login` | - | `{ email, password }` | `{ token, user }` | เข้าสู่ระบบ |
-| GET | `/auth/setup-password/:token` | - | - | `{ reviewer }` | ตรวจ invitation token ของ reviewer |
-| POST | `/auth/setup-password` | - | `{ token, password }` | `{ message }` | ตั้งรหัสผ่านครั้งแรกจาก invitation |
+| POST | `/auth/forgot-password` | - | `{ email }` | `{ sent }` | ขออีเมลตั้งรหัสผ่านใหม่ โดยตอบข้อความกลางเสมอ |
+| GET | `/auth/setup-password/:token` | - | - | `{ name, email }` | ตรวจ token สำหรับ invitation/reset password |
+| POST | `/auth/setup-password` | - | `{ token, password }` | `{ ready }` | ตั้งรหัสผ่านครั้งแรกหรือตั้งรหัสผ่านใหม่ |
 | GET | `/auth/me` | Required | - | `{ user }` | ดึงข้อมูลผู้ใช้ปัจจุบัน |
 
 ### Validation

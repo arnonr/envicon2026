@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Creator, SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
 
-definePageMeta({ middleware: ['auth'] });
+definePageMeta({ middleware: ['auth', 'role'] });
 
 interface Submission {
   title: string;

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db";
 import { emailNotifications } from "../db/schema";
 
-type EmailType = "reviewer_invitation" | "review_assignment" | "author_result";
+type EmailType = "reviewer_invitation" | "review_assignment" | "author_result" | "password_reset";
 
 interface EmailMessage {
   type: EmailType;
@@ -21,8 +21,10 @@ function createTransport() {
   const pass = process.env.SMTP_PASS;
   return nodemailer.createTransport({
     host,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === "true",
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: process.env.SMTP_SECURE === "true" || Number(process.env.SMTP_PORT) === 465,
+    connectionTimeout: 10_000,
+    socketTimeout: 30_000,
     ...(user ? { auth: { user, pass: pass ?? "" } } : {}),
   });
 }

@@ -7,12 +7,30 @@ const apiBase = config.public.apiBase as string;
 const { handleApiCall, showError, showSuccess } = useApiError();
 
 const token = computed(() => String(route.query.token || ""));
-const reviewer = ref<{ name: string; email: string } | null>(null);
+const account = ref<{ name: string; email: string } | null>(null);
 const loading = ref(true);
 const saving = ref(false);
 const password = ref("");
 const confirmPassword = ref("");
 const completed = ref(false);
+const errors = reactive({
+  password: "",
+  confirmPassword: "",
+});
+
+function validatePasswordForm() {
+  errors.password = "";
+  errors.confirmPassword = "";
+  if (password.value.length < 8) {
+    errors.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+    return false;
+  }
+  if (password.value !== confirmPassword.value) {
+    errors.confirmPassword = "รหัสผ่านไม่ตรงกัน";
+    return false;
+  }
+  return true;
+}
 
 onMounted(async () => {
   if (!token.value) {
@@ -29,18 +47,11 @@ onMounted(async () => {
     showError(error);
     return;
   }
-  reviewer.value = data!.data;
+  account.value = data!.data;
 });
 
 async function submit() {
-  if (password.value.length < 8) {
-    showError({ status: 400, error: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร" });
-    return;
-  }
-  if (password.value !== confirmPassword.value) {
-    showError({ status: 400, error: "รหัสผ่านไม่ตรงกัน" });
-    return;
-  }
+  if (!validatePasswordForm()) return;
   saving.value = true;
   const { error } = await handleApiCall(() =>
     $fetch(`${apiBase}/auth/setup-password`, {
@@ -67,18 +78,29 @@ async function submit() {
       <div v-else-if="completed" class="text-center space-y-4 py-5">
         <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-500 mx-auto" />
         <h1 class="text-xl font-semibold">ตั้งรหัสผ่านเรียบร้อยแล้ว</h1>
-        <UButton to="/auth/login" color="primary">เข้าสู่ระบบผู้รีวิว</UButton>
+        <UButton to="/auth/login" color="primary">เข้าสู่ระบบ</UButton>
       </div>
-      <form v-else-if="reviewer" class="space-y-4" @submit.prevent="submit">
+      <form v-else-if="account" class="space-y-4" @submit.prevent="submit">
         <div>
           <h1 class="text-xl font-semibold">ตั้งรหัสผ่านผู้รีวิว</h1>
-          <p class="text-sm text-gray-500 mt-1">{{ reviewer.name }} ({{ reviewer.email }})</p>
+          <p class="text-sm text-gray-500 mt-1">{{ account.name }} ({{ account.email }})</p>
         </div>
-        <UFormGroup label="รหัสผ่านใหม่" required>
-          <UInput v-model="password" type="password" placeholder="อย่างน้อย 8 ตัวอักษร" />
+        <UFormGroup label="รหัสผ่านใหม่" required :error="errors.password">
+          <UInput
+            v-model="password"
+            type="password"
+            placeholder="อย่างน้อย 8 ตัวอักษร"
+            autocomplete="new-password"
+            @input="errors.password = ''"
+          />
         </UFormGroup>
-        <UFormGroup label="ยืนยันรหัสผ่าน" required>
-          <UInput v-model="confirmPassword" type="password" />
+        <UFormGroup label="ยืนยันรหัสผ่าน" required :error="errors.confirmPassword">
+          <UInput
+            v-model="confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            @input="errors.confirmPassword = ''"
+          />
         </UFormGroup>
         <UButton type="submit" block color="primary" :loading="saving">บันทึกรหัสผ่าน</UButton>
       </form>

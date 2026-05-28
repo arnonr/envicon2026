@@ -1,11 +1,23 @@
 export default defineNuxtRouteMiddleware((to) => {
+  if (import.meta.server) return;
+
   const authStore = useAuthStore();
   authStore.loadFromStorage();
 
-  const path = to.path;
+  const baseURL = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+  const path = baseURL && to.path.startsWith(baseURL)
+    ? to.path.slice(baseURL.length) || "/"
+    : to.path;
 
-  if (path === "/dashboard" && authStore.isAdmin) {
-    return navigateTo("/admin");
+  const isAuthorPage =
+    path === "/dashboard" ||
+    path === "/submit" ||
+    path.startsWith("/submissions");
+
+  if (isAuthorPage && !authStore.isAuthor) {
+    if (authStore.isAdmin) return navigateTo("/admin");
+    if (authStore.isReviewer) return navigateTo("/reviewer");
+    return navigateTo("/");
   }
 
   if (path.startsWith("/admin") && !authStore.isAdmin) {

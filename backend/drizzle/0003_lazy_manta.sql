@@ -1,0 +1,1 @@
+ALTER TABLE `email_notifications` MODIFY COLUMN `type` enum('reviewer_invitation','review_assignment','author_result','password_reset') NOT NULL;

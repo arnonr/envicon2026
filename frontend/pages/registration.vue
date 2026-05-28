@@ -82,14 +82,14 @@ onMounted(() => {
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16">
     <div class="text-center mb-12">
-      <h1 class="text-3xl font-bold text-gray-900 mb-3">ลงทะเบียน</h1>
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">ลงทะเบียนส่งผลงาน</h1>
       <p class="text-gray-500 text-lg">Registration</p>
     </div>
 
     <!-- Fee Table -->
     <UCard class="mb-8">
       <template #header>
-        <h2 class="font-semibold text-lg">อัตราค่าลงทะเบียน</h2>
+        <h2 class="font-semibold text-lg">อัตราค่าลงทะเบียนส่งผลงาน</h2>
       </template>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
@@ -121,38 +121,15 @@ onMounted(() => {
       </div>
     </UCard>
 
-    <!-- Registration Status (already registered) -->
-    <UCard v-if="registration" class="mb-8">
-      <template #header>
-        <h2 class="font-semibold text-lg">สถานะการลงทะเบียน</h2>
-      </template>
-      <div class="space-y-3 text-sm">
-        <div class="flex justify-between">
-          <span class="text-gray-500">ประเภท</span>
-          <span class="font-medium">
-            {{ registration.type === "student" ? "นิสิต/นักศึกษา" : "อาจารย์/นักวิจัย/บุคคลทั่วไป" }}
-          </span>
-        </div>
-        <div class="flex justify-between">
-          <span class="text-gray-500">ค่าลงทะเบียน</span>
-          <span class="font-semibold text-primary-600">{{ registration.fee.toLocaleString() }} บาท</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-gray-500">สถานะชำระเงิน</span>
-          <UBadge
-            :color="registration.paymentStatus === 'confirmed' ? 'green' : 'yellow'"
-            variant="soft"
-          >
-            {{ registration.paymentStatus === "confirmed" ? "ยืนยันแล้ว" : "รอตรวจสอบ" }}
-          </UBadge>
-        </div>
-      </div>
-    </UCard>
+    <!-- Loading -->
+    <div v-if="loading" class="flex justify-center py-8">
+      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-gray-400 animate-spin" />
+    </div>
 
     <!-- Registration Form (not logged in) -->
     <UCard v-else-if="!authStore.isLoggedIn" class="mb-8">
       <div class="text-center py-6 text-gray-500">
-        <p>กรุณาเข้าสู่ระบบเพื่อลงทะเบียน</p>
+        <p>กรุณาเข้าสู่ระบบเพื่อลงทะเบียนส่งผลงาน</p>
         <UButton color="primary" class="mt-4" to="/auth/login">เข้าสู่ระบบ</UButton>
       </div>
     </UCard>
@@ -160,7 +137,7 @@ onMounted(() => {
     <!-- Registration Form (logged in, not registered) -->
     <UCard v-else-if="notRegistered" class="mb-8">
       <template #header>
-        <h2 class="font-semibold text-lg">ลงทะเบียนเข้าร่วมงาน</h2>
+        <h2 class="font-semibold text-lg">ลงทะเบียนส่งผลงาน</h2>
       </template>
       <div class="space-y-4">
         <URadio
@@ -180,19 +157,6 @@ onMounted(() => {
       </div>
     </UCard>
 
-    <!-- Loading -->
-    <div v-else-if="loading" class="flex justify-center py-8">
-      <UIcon name="i-heroicons-arrow-path" class="w-6 h-6 text-gray-400 animate-spin" />
-    </div>
 
-    <!-- Payment Info -->
-    <UCard class="mb-8">
-      <template #header>
-        <h2 class="font-semibold text-lg">วิธีการชำระเงิน</h2>
-      </template>
-      <div class="space-y-3 text-sm text-gray-600">
-        <p>Coming Soon</p>
-      </div>
-    </UCard>
   </div>
 </template>

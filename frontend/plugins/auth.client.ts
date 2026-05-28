@@ -1,4 +1,6 @@
 export default defineNuxtPlugin(() => {
   const authStore = useAuthStore();
-  authStore.loadFromStorage();
+  if (!authStore.initialized) {
+    authStore.loadFromStorage();
+  }
 });

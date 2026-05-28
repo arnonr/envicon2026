@@ -139,7 +139,7 @@ export const passwordSetupTokens = mysqlTable("password_setup_tokens", {
 
 export const emailNotifications = mysqlTable("email_notifications", {
   id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
-  type: mysqlEnum("type", ["reviewer_invitation", "review_assignment", "author_result"]).notNull(),
+  type: mysqlEnum("type", ["reviewer_invitation", "review_assignment", "author_result", "password_reset"]).notNull(),
   recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
   relatedId: varchar("related_id", { length: 36 }),
   subject: varchar("subject", { length: 500 }).notNull(),

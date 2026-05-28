@@ -1,12 +1,16 @@
 import { Elysia } from "elysia";
-import { requireAuth } from "./auth";
+import { getUserFromHeaders } from "./auth";
 import { fail } from "../utils/response";
 
 export const requireRole = (roles: string[]) =>
   new Elysia({ name: `role:${roles.join(",")}` })
-    .use(requireAuth)
-    .onBeforeHandle(({ user, set }) => {
-      if (!user || !roles.includes(user.role)) {
+    .onBeforeHandle(async ({ headers, set }) => {
+      const user = await getUserFromHeaders(headers.authorization);
+      if (!user) {
+        set.status = 401;
+        return fail("UNAUTHORIZED", "Authentication required");
+      }
+      if (!roles.includes(user.role)) {
         set.status = 403;
         return fail("FORBIDDEN", "Insufficient permissions");
       }

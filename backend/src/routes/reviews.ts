@@ -8,8 +8,16 @@ import { fail, ok } from "../utils/response";
 
 export const reviewRoutes = new Elysia({ prefix: "/reviews" })
   .use(requireReviewer)
-  .get("/", async ({ headers }) => {
-    const currentUser = (await getUserFromHeaders(headers.authorization))!;
+  .get("/", async ({ headers, set }) => {
+    const currentUser = await getUserFromHeaders(headers.authorization);
+    if (!currentUser) {
+      set.status = 401;
+      return fail("UNAUTHORIZED", "Authentication required");
+    }
+    if (!["reviewer", "admin"].includes(currentUser.role)) {
+      set.status = 403;
+      return fail("FORBIDDEN", "Insufficient permissions");
+    }
     const where = currentUser.role === "admin"
       ? ne(reviews.status, "assigned")
       : and(eq(reviews.reviewerId, currentUser.id), ne(reviews.status, "assigned"));
@@ -36,7 +44,15 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
   .get(
     "/:id",
     async ({ params, headers, set }) => {
-      const currentUser = (await getUserFromHeaders(headers.authorization))!;
+      const currentUser = await getUserFromHeaders(headers.authorization);
+      if (!currentUser) {
+        set.status = 401;
+        return fail("UNAUTHORIZED", "Authentication required");
+      }
+      if (!["reviewer", "admin"].includes(currentUser.role)) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Insufficient permissions");
+      }
       const [assignment] = await db
         .select({
           id: reviews.id,
@@ -112,7 +128,15 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
   .put(
     "/:id/draft",
     async ({ params, body, headers, set }) => {
-      const currentUser = (await getUserFromHeaders(headers.authorization))!;
+      const currentUser = await getUserFromHeaders(headers.authorization);
+      if (!currentUser) {
+        set.status = 401;
+        return fail("UNAUTHORIZED", "Authentication required");
+      }
+      if (!["reviewer", "admin"].includes(currentUser.role)) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Insufficient permissions");
+      }
       const [review] = await db.select().from(reviews).where(eq(reviews.id, params.id)).limit(1);
       if (!review || review.reviewerId !== currentUser.id) {
         set.status = 404;
@@ -144,7 +168,15 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
   .post(
     "/:id/submit",
     async ({ params, body, headers, set }) => {
-      const currentUser = (await getUserFromHeaders(headers.authorization))!;
+      const currentUser = await getUserFromHeaders(headers.authorization);
+      if (!currentUser) {
+        set.status = 401;
+        return fail("UNAUTHORIZED", "Authentication required");
+      }
+      if (!["reviewer", "admin"].includes(currentUser.role)) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Insufficient permissions");
+      }
       const [review] = await db.select().from(reviews).where(eq(reviews.id, params.id)).limit(1);
       if (!review || review.reviewerId !== currentUser.id) {
         set.status = 404;

@@ -110,8 +110,8 @@ erDiagram
 | `reviews` | UUID | งานประเมินราย reviewer ในแต่ละรอบ (single-blind) |
 | `reviewer_profiles` | user UUID | สถานะ active และ capacity ของ reviewer |
 | `reviewer_expertise_tracks` | auto_increment int | สาขาความเชี่ยวชาญหลายค่าในแต่ละ reviewer |
-| `password_setup_tokens` | UUID | invitation token แบบ hash สำหรับตั้งรหัสผ่าน |
-| `email_notifications` | UUID | audit/retry ของ invitation, assignment และผลตัดสิน |
+| `password_setup_tokens` | UUID | token แบบ hash สำหรับตั้งรหัสผ่านครั้งแรกและลืมรหัสผ่าน |
+| `email_notifications` | UUID | audit/retry ของ invitation, assignment, reset password และผลตัดสิน |
 | `registrations` | UUID | การลงทะเบียนเข้าร่วมงาน พร้อมสถานะชำระเงิน |
 | `revisions` | UUID | ประวัติเวอร์ชันไฟล์ของแต่ละ submission |
 

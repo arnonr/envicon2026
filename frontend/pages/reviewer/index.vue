@@ -40,6 +40,15 @@ function dueLabel(dueAt: string | null) {
 }
 
 onMounted(async () => {
+  if (!authStore.initialized) {
+    authStore.loadFromStorage();
+  }
+  if (!authStore.token) {
+    loading.value = false;
+    await navigateTo(`/auth/login?redirect=${encodeURIComponent("/reviewer")}`);
+    return;
+  }
+
   const { data, error } = await handleApiCall(() =>
     $fetch<{ success: true; data: ReviewAssignment[] }>(`${apiBase}/reviews`, {
       headers: { Authorization: `Bearer ${authStore.token}` },
