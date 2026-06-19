@@ -10,6 +10,7 @@ interface Submission {
   educationLevel: string;
   presentationFormat: string;
   status: string;
+  paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
   paymentSlipUrl: string | null;
@@ -48,6 +49,7 @@ const loading = ref(true);
 const exporting = ref(false);
 const filterStatus = ref("");
 const filterTrack = ref("");
+const paymentStatusFilter = ref<string>('');
 
 const detailModalOpen = ref(false);
 const detailSubmissionId = ref<string | null>(null);
@@ -122,6 +124,7 @@ async function fetchSubmissions() {
   const params = new URLSearchParams();
   if (filterStatus.value) params.set("status", filterStatus.value);
   if (filterTrack.value) params.set("track", filterTrack.value);
+  if (paymentStatusFilter.value) params.set("paymentStatus", paymentStatusFilter.value);
   params.set("page", String(currentPage.value));
   params.set("limit", String(PER_PAGE));
   const qs = params.toString();
@@ -158,6 +161,7 @@ async function exportSubmissions() {
   const params = new URLSearchParams();
   if (filterStatus.value) params.set("status", filterStatus.value);
   if (filterTrack.value) params.set("track", filterTrack.value);
+  if (paymentStatusFilter.value) params.set("paymentStatus", paymentStatusFilter.value);
   const qs = params.toString();
   const { data, error } = await handleApiCall(() =>
     $fetch<Blob>(`${apiBase}/admin/submissions/export${qs ? `?${qs}` : ""}`, {
@@ -189,7 +193,7 @@ function goToPage(page: number) {
   fetchSubmissions();
 }
 
-watch([filterStatus, filterTrack], () => {
+watch([filterStatus, filterTrack, paymentStatusFilter], () => {
   currentPage.value = 1;
   fetchSubmissions();
 });
@@ -281,6 +285,21 @@ onMounted(() => {
           class="w-48"
         />
         <USelectMenu
+          v-model="paymentStatusFilter"
+          :options="[
+            { value: '', label: 'ทั้งหมด (การชำระเงิน)' },
+            { value: 'unpaid', label: 'ยังไม่ชำระ' },
+            { value: 'pending_verification', label: 'รอตรวจสอบ' },
+            { value: 'verified', label: 'ชำระแล้ว' },
+            { value: 'rejected', label: 'ปฏิเสธ' },
+          ]"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="การชำระเงิน"
+          size="sm"
+          class="w-48"
+        />
+        <USelectMenu
           v-model="filterTrack"
           :options="[
             { value: '', label: 'ทุกหัวข้อ' },
@@ -335,6 +354,7 @@ onMounted(() => {
             <th class="py-3 px-3 text-center">รูปแบบการนำเสนอ</th>
             <th class="py-3 px-3 text-center">การรีวิวของกรรมการ</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
+            <th class="py-3 px-3 text-center">การชำระเงิน</th>
           </tr>
         </thead>
         <tbody>
@@ -375,6 +395,9 @@ onMounted(() => {
               <UBadge :color="(STATUS_COLORS[sub.status] || 'gray') as any" variant="soft" size="xs">
                 {{ STATUS_OPTIONS.find((s) => s.value === sub.status)?.label || sub.status }}
               </UBadge>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <SubmissionPaymentStatusBadge :status="sub.paymentStatus" />
             </td>
           </tr>
         </tbody>
