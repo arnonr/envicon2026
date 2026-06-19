@@ -24,6 +24,7 @@ interface Submission {
   track: number;
   submitterType: string;
   educationLevel: string;
+  presentationFormat: string;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -144,6 +145,9 @@ const formatDate = (iso: string | null) => {
 const educationLabel = (v: string) =>
   ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
 
+const presentationFormatLabel = (v: string) =>
+  ({ oral: 'แบบบรรยาย', poster: 'โปสเตอร์' } as Record<string, string>)[v] ?? v;
+
 import type { Creator } from '~/components/submission/SubmissionForm.vue';
 
 const parsedCreators = computed<Creator[]>(() => {
@@ -207,6 +211,10 @@ watch(() => props.modelValue, (open) => {
           <div>
             <dt class="text-gray-500">ระดับการศึกษา</dt>
             <dd class="font-medium mt-0.5">{{ educationLabel(submission.educationLevel) }}</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">รูปแบบการนำเสนอ</dt>
+            <dd class="font-medium mt-0.5">{{ presentationFormatLabel(submission.presentationFormat) }}</dd>
           </div>
           <div>
             <dt class="text-gray-500">วันที่ส่ง</dt>
