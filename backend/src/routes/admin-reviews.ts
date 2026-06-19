@@ -102,6 +102,7 @@ async function ensureCurrentSubmissionVersion(submission: typeof submissions.$in
     keywords: submission.keywords,
     creators: submission.creators,
     track: submission.track,
+    educationLevel: submission.educationLevel,
     submitterType: submission.submitterType,
     fileUrl: submission.fullPaperFileUrl ?? submission.abstractFileUrl,
     changelog: null,
