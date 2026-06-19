@@ -7,6 +7,7 @@ const links = [
   { label: "คณะกรรมการ", to: "/committee" },
   { label: "กำหนดการ", to: "/important-dates" },
   { label: "ลงทะเบียน", to: "/registration" },
+  { label: "สนับสนุน", to: "/sponsorship" },
   { label: "แนวทาง", to: "/guidelines" },
   { label: "ติดต่อ", to: "/contact" },
 ];
