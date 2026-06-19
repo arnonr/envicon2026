@@ -17,6 +17,7 @@ interface Submission {
   creators: string | null;
   track: number;
   submitterType: string;
+  educationLevel: string;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -50,6 +51,7 @@ interface SubmissionVersion {
   creators: string | null;
   track: number;
   submitterType: string;
+  educationLevel: string;
   fileUrl: string | null;
   changelog: string | null;
   submittedAt: string;
@@ -147,6 +149,9 @@ const formatDate = (iso: string | null) => {
 const submitterLabel = (type: string) =>
   type === 'student' ? 'นิสิต/นักศึกษา' : 'อาจารย์/นักวิจัย/บุคคลทั่วไป';
 
+const educationLabel = (v: string) =>
+  ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
+
 interface Creator {
   firstName: string;
   lastName: string;
@@ -196,6 +201,7 @@ const comparisonRows = (version: SubmissionVersion, index: number) => {
     { label: "ผู้สร้างสรรค์", before: creatorsLabel(previous.creators), after: creatorsLabel(version.creators) },
     { label: "สาขา", before: TRACK_NAMES[previous.track] ?? String(previous.track), after: TRACK_NAMES[version.track] ?? String(version.track) },
     { label: "ประเภทผู้ส่ง", before: submitterLabel(previous.submitterType), after: submitterLabel(version.submitterType) },
+    { label: "ระดับการศึกษา", before: educationLabel(previous.educationLevel), after: educationLabel(version.educationLevel) },
     { label: "ไฟล์", before: previous.fileUrl, after: version.fileUrl },
   ];
   return fields.filter(field => (field.before ?? "") !== (field.after ?? ""));
@@ -388,6 +394,10 @@ watch(() => props.modelValue, (open) => {
           <div>
             <dt class="text-gray-500">ประเภทผู้ส่ง</dt>
             <dd class="font-medium mt-0.5">{{ submitterLabel(submission.submitterType) }}</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">ระดับการศึกษา</dt>
+            <dd class="font-medium mt-0.5">{{ educationLabel(submission.educationLevel) }}</dd>
           </div>
           <div>
             <dt class="text-gray-500">วันที่ส่ง</dt>

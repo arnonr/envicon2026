@@ -7,6 +7,7 @@ interface Submission {
   titleEn: string | null;
   track: number;
   submitterType: string;
+  educationLevel: string;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -100,6 +101,10 @@ function formatDate(iso: string | null) {
     month: "long",
     year: "numeric",
   });
+}
+
+function educationLabel(v: string): string {
+  return ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
 }
 
 function reviewProgressLabel(submission: Submission) {
@@ -321,6 +326,7 @@ onMounted(() => {
             <th class="py-3 px-3 text-center">วันที่ส่ง</th>
             <th class="py-3 px-3 text-center">หัวข้อ</th>
             <th class="py-3 px-3 text-center">ประเภท</th>
+            <th class="py-3 px-3 text-center">ระดับการศึกษา</th>
             <th class="py-3 px-3 text-center">การรีวิวของกรรมการ</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
           </tr>
@@ -349,6 +355,9 @@ onMounted(() => {
             </td>
             <td class="py-3 px-3 text-center text-gray-500">
               {{ sub.submitterType === "student" ? "นิสิต/นักศึกษา" : "ทั่วไป" }}
+            </td>
+            <td class="py-3 px-3 text-center text-gray-500">
+              {{ educationLabel(sub.educationLevel) }}
             </td>
             <td class="py-3 px-3 text-center text-gray-700 font-medium">
               {{ reviewProgressLabel(sub) }}
