@@ -323,7 +323,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }
-      if (!["draft", "pending_payment"].includes(sub.status)) {
+      if (sub.status !== "draft") {
         set.status = 400;
         return fail("VALIDATION_ERROR", "Cannot upload in current status");
       }
@@ -332,7 +332,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       await db
         .update(submissions)
-        .set({ abstractFileUrl: fileUrl, status: "pending_payment", submittedAt: new Date() })
+        .set({ abstractFileUrl: fileUrl, status: "submitted", submittedAt: new Date() })
         .where(eq(submissions.id, params.id));
 
       const [updated] = await db
@@ -409,16 +409,16 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }
-      if (sub.status !== "pending_payment") {
+      if (sub.paymentStatus === "verified") {
         set.status = 400;
-        return fail("VALIDATION_ERROR", "Cannot upload slip in current status");
+        return fail("VALIDATION_ERROR", "ชำระเงินเรียบร้อยแล้ว ไม่ต้องอัปโหลดเพิ่ม");
       }
 
       const fileUrl = await saveFile(body.file, `slip-${params.id}`);
 
       await db
         .update(submissions)
-        .set({ paymentSlipUrl: fileUrl, status: "payment_verifying" })
+        .set({ paymentSlipUrl: fileUrl, paymentStatus: "pending_verification" })
         .where(eq(submissions.id, params.id));
 
       const [updated] = await db
