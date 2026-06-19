@@ -11,6 +11,7 @@ interface Submission {
   creators: string | null;
   track: number;
   submitterType: string;
+  educationLevel: string;
   status: string;
 }
 
@@ -32,6 +33,7 @@ const form = ref<SubmissionFormData>({
   keywords: '',
   track: '',
   submitterType: 'student',
+  educationLevel: '',
 });
 const changelog = ref('');
 const selectedFile = ref<File | null>(null);
@@ -54,7 +56,7 @@ const parseCreators = (raw: string | null): Creator[] => {
 
 const isFormValid = computed(() => {
   const values = form.value;
-  if (!values.title.trim() || !values.title_en.trim() || !values.abstract.trim() || !values.track || !values.submitterType) {
+  if (!values.title.trim() || !values.title_en.trim() || !values.abstract.trim() || !values.track || !values.submitterType || !values.educationLevel) {
     return false;
   }
   return (submissionFormRef.value?.creators ?? initialCreators.value)
@@ -87,6 +89,7 @@ onMounted(async () => {
     keywords: submission.keywords ?? '',
     track: String(submission.track),
     submitterType: submission.submitterType,
+    educationLevel: submission.educationLevel,
   };
   initialCreators.value = parseCreators(submission.creators);
   loading.value = false;
@@ -111,6 +114,7 @@ const submitRevision = async () => {
         creators: JSON.stringify(creators),
         track: parseInt(form.value.track),
         submitterType: form.value.submitterType,
+        educationLevel: form.value.educationLevel,
       },
     })
   );
