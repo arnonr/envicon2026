@@ -17,9 +17,9 @@ interface ReviewDetail {
   track: number;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
-  authorName: string;
-  authorEmail: string;
-  authorAffiliation: string | null;
+  authorName?: string | null;
+  authorEmail?: string | null;
+  authorAffiliation?: string | null;
 }
 
 const route = useRoute();
@@ -145,8 +145,18 @@ onMounted(fetchReview);
       </div>
       <UCard class="mb-6">
         <dl class="grid sm:grid-cols-2 gap-3 text-sm">
-          <div><dt class="text-gray-500">ผู้ส่ง</dt><dd>{{ review.authorName }} ({{ review.authorEmail }})</dd></div>
-          <div><dt class="text-gray-500">สังกัด</dt><dd>{{ review.authorAffiliation || "-" }}</dd></div>
+          <div v-if="review.authorName">
+            <dt class="text-gray-500">ผู้ส่ง</dt>
+            <dd>{{ review.authorName }} ({{ review.authorEmail }})</dd>
+          </div>
+          <div v-else>
+            <dt class="text-gray-500">ผู้ส่ง</dt>
+            <dd>ซ่อนชื่อผู้ส่งเพื่อความยุติธรรม (อีเมล: {{ review.authorEmail }})</dd>
+          </div>
+          <div v-if="review.authorAffiliation">
+            <dt class="text-gray-500">สังกัด</dt>
+            <dd>{{ review.authorAffiliation }}</dd>
+          </div>
           <div v-if="review.keywords" class="sm:col-span-2"><dt class="text-gray-500">คำสำคัญ</dt><dd>{{ review.keywords }}</dd></div>
           <div v-if="review.abstract" class="sm:col-span-2"><dt class="text-gray-500">บทคัดย่อ</dt><dd class="mt-1 whitespace-pre-line">{{ review.abstract }}</dd></div>
         </dl>

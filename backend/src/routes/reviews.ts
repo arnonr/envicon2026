@@ -53,6 +53,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         set.status = 403;
         return fail("FORBIDDEN", "Insufficient permissions");
       }
+      const isAdmin = currentUser.role === "admin";
       const [assignment] = await db
         .select({
           id: reviews.id,
@@ -100,7 +101,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         set.status = 404;
         return fail("NOT_FOUND", "ไม่พบงานประเมิน");
       }
-      if (currentUser.role !== "admin" && assignment.reviewerId !== currentUser.id) {
+      if (!isAdmin && assignment.reviewerId !== currentUser.id) {
         set.status = 403;
         return fail("FORBIDDEN", "ไม่มีสิทธิ์เข้าถึงงานประเมินนี้");
       }
@@ -109,19 +110,28 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         .from(revisions)
         .where(eq(revisions.submissionId, assignment.submissionId));
       const hasSnapshot = assignment.versionTitle !== null;
-      return ok({
+      const resolvedCreators = hasSnapshot ? assignment.versionCreators : assignment.creators;
+      const response: Record<string, unknown> = {
         ...assignment,
         title: hasSnapshot ? assignment.versionTitle : assignment.title,
         titleEn: hasSnapshot ? assignment.versionTitleEn : assignment.titleEn,
         abstract: hasSnapshot ? assignment.versionAbstract : assignment.abstract,
         keywords: hasSnapshot ? assignment.versionKeywords : assignment.keywords,
-        creators: hasSnapshot ? assignment.versionCreators : assignment.creators,
         track: hasSnapshot ? assignment.versionTrack : assignment.track,
         submitterType: hasSnapshot ? assignment.versionSubmitterType : assignment.submitterType,
         fullPaperFileUrl: hasSnapshot ? assignment.versionFileUrl : assignment.fullPaperFileUrl,
         submittedAt: hasSnapshot ? assignment.versionSubmittedAt : assignment.submittedAt,
         revisions: revisionList,
-      });
+      };
+      if (isAdmin) {
+        response.creators = resolvedCreators;
+      } else {
+        delete response.authorName;
+        delete response.authorAffiliation;
+        delete response.creators;
+      }
+      delete response.versionCreators;
+      return ok(response);
     },
     { params: t.Object({ id: t.String() }) },
   )

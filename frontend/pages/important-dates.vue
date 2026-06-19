@@ -36,6 +36,27 @@ const dates = [
     active: false,
   },
 ];
+
+const hotels = [
+  {
+    name: "Bella B Hotel",
+    nameTh: "โรงแรมใจกลางกรุงเทพ",
+    rating: 4.2,
+    price: "฿1,200",
+    distance: "1.2 กม.",
+    transport: "MRT วงศ์สว่าง",
+    url: "https://www.agoda.com/th-th/bella-b-hotel_45/hotel/all/bangkok-th.html?countryId=106&finalPriceView=1&isShowMobileAppPrice=false&cid=1919460&numberOfBedrooms=&familyMode=false&adults=1&children=0&rooms=1&maxRooms=0&checkIn=2026-06-28&isCalendarCallout=false&childAges=&numberOfGuest=0&missingChildAges=false&travellerType=-1&showReviewSubmissionEntry=false&currencyCode=THB&isFreeOccSearch=false&tag=d939ef00-30f1-40e2-865a-42748734786e&tspTypes=16&los=1&searchrequestid=18d073c2-dc02-4765-b624-604ea37b374d&ds=WTt2YJdyiq4sZZ%2BP",
+  },
+  {
+    name: "The Loft Resort Bangkok",
+    nameTh: "รีสอร์ตใจกลางเมือง",
+    rating: 4.5,
+    price: "฿1,800",
+    distance: "2.5 กม.",
+    transport: "ใกล้ MRT",
+    url: "https://www.agoda.com/th-th/the-loft-resort-bangkok/hotel/bangkok-th.html?cid=1844104&ds=S3lYkdED1k3hoXBO",
+  },
+];
 </script>
 
 <template>
@@ -122,6 +143,43 @@ const dates = [
           </ul>
         </UCard>
       </div>
+    </section>
+
+    <section class="mt-16 border-t border-gray-200 pt-12">
+      <div class="text-center mb-10">
+        <p class="text-[11px] tracking-[2px] text-primary-700 font-semibold uppercase mb-2">Nearby Accommodation</p>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">ที่พักใกล้สถานที่จัดงาน</h2>
+        <p class="text-gray-500 text-sm">โรงแรมแนะนำใกล้ มจพ.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <UCard v-for="(hotel, i) in hotels" :key="i" class="!p-0 overflow-hidden">
+          <div class="aspect-[16/9] bg-gray-100 flex items-center justify-center">
+            <span class="text-sm text-gray-400">[ภาพโรงแรม]</span>
+          </div>
+          <div class="p-5">
+            <h3 class="text-lg font-bold text-gray-900">{{ hotel.name }}</h3>
+            <p class="text-sm text-gray-500">{{ hotel.nameTh }}</p>
+            <p class="text-sm text-gray-700 mt-2">⭐ {{ hotel.rating }} · {{ hotel.price }}/คืน</p>
+            <p class="text-xs text-gray-500 mt-1">📍 {{ hotel.distance }} จาก มจพ. · 🚇 {{ hotel.transport }}</p>
+            <UButton
+              color="primary"
+              variant="solid"
+              size="md"
+              block
+              class="mt-4"
+              :to="hotel.url"
+              external
+            >
+              จองผ่าน Agoda →
+            </UButton>
+          </div>
+        </UCard>
+      </div>
+
+      <p class="text-xs text-gray-400 text-center mt-4 max-w-2xl mx-auto">
+        * ลิงก์นี้เป็น affiliate link — ผู้จัดงานอาจได้รับค่าคอมมิชชั่นเล็กน้อยเมื่อท่านจองผ่านลิงก์ โดยไม่มีค่าใช้จ่ายเพิ่มเติมสำหรับผู้จอง
+      </p>
     </section>
   </div>
 </template>
