@@ -23,6 +23,7 @@ interface Submission {
   creators: string | null;
   track: number;
   submitterType: string;
+  educationLevel: string;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -140,6 +141,9 @@ const formatDate = (iso: string | null) => {
   return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
 };
 
+const educationLabel = (v: string) =>
+  ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
+
 import type { Creator } from '~/components/submission/SubmissionForm.vue';
 
 const parsedCreators = computed<Creator[]>(() => {
@@ -199,6 +203,10 @@ watch(() => props.modelValue, (open) => {
           <div>
             <dt class="text-gray-500">ประเภทผู้ส่ง</dt>
             <dd class="font-medium mt-0.5">{{ submission.submitterType === 'student' ? `นิสิต/นักศึกษา (${fees.student.toLocaleString()} บาท)` : `อาจารย์/นักวิจัย/บุคคลทั่วไป (${fees.general.toLocaleString()} บาท)` }}</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">ระดับการศึกษา</dt>
+            <dd class="font-medium mt-0.5">{{ educationLabel(submission.educationLevel) }}</dd>
           </div>
           <div>
             <dt class="text-gray-500">วันที่ส่ง</dt>
