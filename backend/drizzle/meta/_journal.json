@@ -43,6 +43,13 @@
       "when": 1781840514014,
       "tag": "0005_amazing_monster_badoon",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1781852490507,
+      "tag": "0006_mushy_tarot",
+      "breakpoints": true
     }
   ]
 }

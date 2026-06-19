@@ -36,8 +36,6 @@ export const submissions = mysqlTable("submissions", {
   presentationFormat: mysqlEnum("presentation_format", ["oral", "poster"]).notNull(),
   status: mysqlEnum("status", [
     "draft",
-    "pending_payment",
-    "payment_verifying",
     "submitted",
     "under_review",
     "accepted",
@@ -47,6 +45,15 @@ export const submissions = mysqlTable("submissions", {
   abstractFileUrl: varchar("abstract_file_url", { length: 500 }),
   fullPaperFileUrl: varchar("full_paper_file_url", { length: 500 }),
   paymentSlipUrl: varchar("payment_slip_url", { length: 500 }),
+  paymentStatus: mysqlEnum("payment_status", [
+    "unpaid",
+    "pending_verification",
+    "verified",
+    "rejected",
+  ]).notNull().default("unpaid"),
+  paymentVerifiedBy: varchar("payment_verified_by", { length: 36 }).references(() => users.id),
+  paymentVerifiedAt: timestamp("payment_verified_at"),
+  paymentNote: text("payment_note"),
   submittedAt: timestamp("submitted_at"),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
