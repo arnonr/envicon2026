@@ -305,7 +305,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:U1";
+    worksheet.autoFilter = "A1:T1";
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
