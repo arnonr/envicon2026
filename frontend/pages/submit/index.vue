@@ -22,11 +22,12 @@ const form = ref<SubmissionFormData>({
   keywords: '',
   track: '',
   submitterType: 'student',
+  educationLevel: '',
 });
 
 const isStep1Valid = computed(() => {
   const f = form.value;
-  if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track || !f.submitterType) return false;
+  if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track || !f.submitterType || !f.educationLevel) return false;
   const creators = submissionFormRef.value?.creators ?? [];
   return creators.some(c => c.firstName.trim() && c.lastName.trim());
 });
@@ -71,6 +72,7 @@ const createSubmission = async () => {
         creators: creatorsJson,
         track: parseInt(form.value.track),
         submitterType: form.value.submitterType,
+        educationLevel: form.value.educationLevel,
       },
     })
   );

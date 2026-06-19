@@ -6,6 +6,7 @@ export interface SubmissionFormData {
   keywords: string;
   track: string;
   submitterType: string;
+  educationLevel: string;
 }
 
 export interface Creator {
@@ -30,6 +31,12 @@ const TRACK_OPTIONS = [
   { label: '5. เทคโนโลยีดิจิทัลและระบบอัจฉริยะเพื่อการติดตามสิ่งแวดล้อม', value: '5' },
   { label: '6. เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม', value: '6' },
   { label: '7. สิ่งแวดล้อมและสุขภาพ', value: '7' },
+];
+
+const EDUCATION_OPTIONS = [
+  { label: 'ปริญญาตรี', value: 'bachelor' },
+  { label: 'ปริญญาโท', value: 'master' },
+  { label: 'ปริญญาเอก', value: 'doctorate' },
 ];
 
 const { studentLabel, generalLabel } = useFees();
@@ -95,6 +102,15 @@ defineExpose({ creators });
           { label: generalLabel, value: 'general' },
         ]"
         @update:model-value="update('submitterType', $event as string)"
+      />
+    </UFormGroup>
+
+    <UFormGroup label="ระดับการศึกษา" required>
+      <USelect
+        :model-value="modelValue.educationLevel"
+        :options="EDUCATION_OPTIONS"
+        placeholder="-- เลือกระดับการศึกษา --"
+        @update:model-value="update('educationLevel', $event as string)"
       />
     </UFormGroup>
 
