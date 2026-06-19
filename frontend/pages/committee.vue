@@ -94,3 +94,14 @@ function getInitials(m: Member): string {
   return (first + last).toUpperCase();
 }
 </script>
+
+<template>
+  <div class="max-w-6xl mx-auto px-4 py-16">
+    <!-- Page header -->
+    <header class="text-center mb-16">
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">คณะกรรมการ</h1>
+      <p class="text-gray-500 text-lg">Organizing Committee</p>
+      <div class="w-24 h-1 bg-primary-500 mx-auto mt-4 rounded-full"></div>
+    </header>
+  </div>
+</template>
