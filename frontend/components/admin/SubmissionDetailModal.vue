@@ -18,6 +18,7 @@ interface Submission {
   track: number;
   submitterType: string;
   educationLevel: string;
+  presentationFormat: string;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -52,6 +53,7 @@ interface SubmissionVersion {
   track: number;
   submitterType: string;
   educationLevel: string;
+  presentationFormat: string;
   fileUrl: string | null;
   changelog: string | null;
   submittedAt: string;
@@ -152,6 +154,9 @@ const submitterLabel = (type: string) =>
 const educationLabel = (v: string) =>
   ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
 
+const presentationFormatLabel = (v: string) =>
+  ({ oral: 'แบบบรรยาย', poster: 'โปสเตอร์' } as Record<string, string>)[v] ?? v;
+
 interface Creator {
   firstName: string;
   lastName: string;
@@ -202,6 +207,7 @@ const comparisonRows = (version: SubmissionVersion, index: number) => {
     { label: "สาขา", before: TRACK_NAMES[previous.track] ?? String(previous.track), after: TRACK_NAMES[version.track] ?? String(version.track) },
     { label: "ประเภทผู้ส่ง", before: submitterLabel(previous.submitterType), after: submitterLabel(version.submitterType) },
     { label: "ระดับการศึกษา", before: educationLabel(previous.educationLevel), after: educationLabel(version.educationLevel) },
+    { label: "รูปแบบการนำเสนอ", before: presentationFormatLabel(previous.presentationFormat), after: presentationFormatLabel(version.presentationFormat) },
     { label: "ไฟล์", before: previous.fileUrl, after: version.fileUrl },
   ];
   return fields.filter(field => (field.before ?? "") !== (field.after ?? ""));
@@ -398,6 +404,10 @@ watch(() => props.modelValue, (open) => {
           <div>
             <dt class="text-gray-500">ระดับการศึกษา</dt>
             <dd class="font-medium mt-0.5">{{ educationLabel(submission.educationLevel) }}</dd>
+          </div>
+          <div>
+            <dt class="text-gray-500">รูปแบบการนำเสนอ</dt>
+            <dd class="font-medium mt-0.5">{{ presentationFormatLabel(submission.presentationFormat) }}</dd>
           </div>
           <div>
             <dt class="text-gray-500">วันที่ส่ง</dt>
