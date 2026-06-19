@@ -29,6 +29,8 @@ interface Submission {
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
   paymentSlipUrl: string | null;
+  paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
+  paymentNote: string | null;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
@@ -189,6 +191,7 @@ watch(() => props.modelValue, (open) => {
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
             <SubmissionStatusBadge :status="submission.status" />
+            <SubmissionPaymentStatusBadge :status="submission.paymentStatus" />
           </div>
         </div>
       </template>
@@ -278,72 +281,89 @@ watch(() => props.modelValue, (open) => {
           </div>
         </div>
 
-        <!-- Payment info (pending_payment) -->
-        <div v-if="submission.status === 'pending_payment'" class="border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-4">
+        <!-- Payment section (status-driven by paymentStatus) -->
+        <div v-if="submission.paymentStatus !== 'verified'" class="border border-blue-200 rounded-lg p-4 bg-blue-50/50 space-y-4">
           <div class="flex items-center gap-2 mb-2">
             <UIcon name="i-heroicons-credit-card" class="w-5 h-5 text-blue-600" />
             <h3 class="text-sm font-semibold text-blue-700">ชำระค่าส่งผลงาน</h3>
+            <SubmissionPaymentStatusBadge :status="submission.paymentStatus" class="ml-auto" />
           </div>
 
-          <!-- QR Code placeholder -->
-          <div class="flex justify-center">
-            <div class="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-              <span class="text-xs text-gray-400">QR Code</span>
+          <!-- unpaid: QR + bank + upload -->
+          <template v-if="submission.paymentStatus === 'unpaid'">
+            <div class="flex justify-center">
+              <div class="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                <span class="text-xs text-gray-400">QR Code</span>
+              </div>
             </div>
-          </div>
+            <div class="bg-white rounded-lg p-3 text-sm space-y-1.5">
+              <p class="font-semibold text-gray-700">รายละเอียดการโอน</p>
+              <div class="flex justify-between">
+                <span class="text-gray-500">ธนาคาร</span>
+                <span>กสิกรไทย (KBANK)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">เลขบัญชี</span>
+                <span class="font-mono">XXX-X-XXXXX-X</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">ชื่อบัญชี</span>
+                <span>สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">จำนวนเงิน</span>
+                <span class="font-semibold text-primary-700">
+                  {{ submission.submitterType === 'student' ? fees.student.toLocaleString() : fees.general.toLocaleString() }} บาท
+                </span>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-2">อัปโหลดหลักฐานการชำระเงิน (สลิปโอนเงิน)</p>
+              <CommonFileUpload :loading="uploadingSlip" :max-size-mb="10" accept=".pdf,.png,.jpg,.jpeg" @change="onSlipSelected" />
+              <div class="flex justify-end mt-3">
+                <UButton v-if="selectedSlipFile" color="primary" :loading="uploadingSlip" @click="uploadSlip">
+                  บันทึก
+                  <UIcon name="i-heroicons-check" class="w-4 h-4 ml-1" />
+                </UButton>
+                <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึก</p>
+              </div>
+            </div>
+          </template>
 
-          <!-- Bank transfer details -->
-          <div class="bg-white rounded-lg p-3 text-sm space-y-1.5">
-            <p class="font-semibold text-gray-700">รายละเอียดการโอน</p>
-            <div class="flex justify-between">
-              <span class="text-gray-500">ธนาคาร</span>
-              <span>กสิกรไทย (KBANK)</span>
+          <!-- pending_verification: slip preview only -->
+          <template v-else-if="submission.paymentStatus === 'pending_verification'">
+            <p class="text-sm text-gray-600">ได้รับหลักฐานการชำระเงินเรียบร้อย กำลังรอเจ้าหน้าที่ตรวจสอบ</p>
+            <div v-if="submission.paymentSlipUrl">
+              <p class="text-xs text-gray-500 mb-1.5">หลักฐานการชำระเงิน</p>
+              <img
+                :src="fileLink(submission.paymentSlipUrl)"
+                class="w-32 h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity object-cover"
+                @click="slipPreviewOpen = true"
+              />
             </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">เลขบัญชี</span>
-              <span class="font-mono">XXX-X-XXXXX-X</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">ชื่อบัญชี</span>
-              <span>สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">จำนวนเงิน</span>
-              <span class="font-semibold text-primary-700">
-                {{ submission.submitterType === 'student' ? fees.student.toLocaleString() : fees.general.toLocaleString() }} บาท
-              </span>
-            </div>
-          </div>
+          </template>
 
-          <!-- Upload slip -->
-          <div>
-            <p class="text-xs text-gray-500 mb-2">อัปโหลดหลักฐานการชำระเงิน (สลิปโอนเงิน)</p>
+          <!-- rejected: note + re-upload -->
+          <template v-else-if="submission.paymentStatus === 'rejected'">
+            <div class="bg-red-50 border border-red-200 rounded p-3 text-sm">
+              <p class="font-semibold text-red-700 mb-1">เหตุผลที่ปฏิเสธ</p>
+              <p class="text-red-600 whitespace-pre-line">{{ submission.paymentNote || '-' }}</p>
+            </div>
+            <p class="text-xs text-gray-500">กรุณาอัปโหลดหลักฐานการชำระเงินใหม่</p>
             <CommonFileUpload :loading="uploadingSlip" :max-size-mb="10" accept=".pdf,.png,.jpg,.jpeg" @change="onSlipSelected" />
             <div class="flex justify-end mt-3">
               <UButton v-if="selectedSlipFile" color="primary" :loading="uploadingSlip" @click="uploadSlip">
-                บันทึก
-                <UIcon name="i-heroicons-check" class="w-4 h-4 ml-1" />
+                อัปโหลดใหม่
+                <UIcon name="i-heroicons-arrow-up-tray" class="w-4 h-4 ml-1" />
               </UButton>
-              <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึก</p>
             </div>
-          </div>
+          </template>
         </div>
 
-        <!-- Payment verifying -->
-        <div v-if="submission.status === 'payment_verifying'" class="border border-yellow-200 rounded-lg p-4 bg-yellow-50/50 space-y-3">
-          <div class="flex items-center gap-2">
-            <UIcon name="i-heroicons-clock" class="w-5 h-5 text-yellow-600" />
-            <h3 class="text-sm font-semibold text-yellow-700">รอตรวจสอบการชำระเงิน</h3>
-          </div>
-          <p class="text-sm text-gray-600">ได้รับหลักฐานการชำระเงินเรียบร้อย กำลังรอเจ้าหน้าที่ตรวจสอบ</p>
-          <div v-if="submission.paymentSlipUrl">
-            <p class="text-xs text-gray-500 mb-1.5">หลักฐานการชำระเงิน</p>
-            <img
-              :src="fileLink(submission.paymentSlipUrl)"
-              class="w-32 h-auto rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity object-cover"
-              @click="slipPreviewOpen = true"
-            />
-          </div>
+        <!-- Verified: replace section with a small success line -->
+        <div v-else class="flex items-center gap-1.5 text-sm text-green-700 px-1">
+          <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
+          <span>ชำระเงินเรียบร้อย</span>
         </div>
 
         <!-- Slip preview modal -->
