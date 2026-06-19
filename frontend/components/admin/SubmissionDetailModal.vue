@@ -724,20 +724,7 @@ watch(() => props.modelValue, (open) => {
       </div>
 
       <template #footer>
-        <div class="flex items-center justify-between">
-          <!-- Admin action buttons -->
-          <div class="flex gap-2">
-            <UButton
-              v-if="submission?.status === 'payment_verifying'"
-              color="green"
-              :loading="updating"
-              @click="updateStatus('submitted', 'อนุมัติการชำระเงินเรียบร้อย')"
-            >
-              อนุมัติการชำระเงิน
-            </UButton>
-
-          </div>
-
+        <div class="flex items-center justify-end">
           <UButton color="gray" variant="soft" @click="isOpen = false">ปิด</UButton>
         </div>
       </template>
