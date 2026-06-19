@@ -103,6 +103,7 @@ async function ensureCurrentSubmissionVersion(submission: typeof submissions.$in
     creators: submission.creators,
     track: submission.track,
     educationLevel: submission.educationLevel,
+    presentationFormat: submission.presentationFormat,
     submitterType: submission.submitterType,
     fileUrl: submission.fullPaperFileUrl ?? submission.abstractFileUrl,
     changelog: null,
