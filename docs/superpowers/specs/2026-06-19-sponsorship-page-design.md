@@ -81,7 +81,7 @@ const tiers = [
     name: "Bronze",
     nameTh: "บรอนซ์",
     price: 10000,
-    color: "amber",          // accent: text-amber-700, bg-amber-50/30
+    color: "neutral",         // gray/neutral — no warm accent
     featured: false,
     perks: [
       "Logo บนเว็บไซต์งาน",
@@ -134,19 +134,19 @@ const tiers = [
 ### Card Visual
 
 **Default card** (Bronze, Gold, Platinum):
-- `border border-gray-200 rounded-xl p-6 bg-white`
-- Bronze: plain white
-- Gold: `bg-gradient-to-b from-amber-50/40 to-white` subtle
-- Platinum: `bg-gradient-to-b from-blue-50/40 to-white` subtle
-- Eyebrow tier name: `text-xs font-bold tracking-widest text-{color}-700` (or text-blue-900 for Platinum)
+- Base: `border border-gray-200 rounded-xl p-6 bg-white`
+- Bronze: plain white, gray accent (`text-gray-700`, `border-gray-200` divider)
+- Gold: `bg-gradient-to-b from-amber-50/40 to-white` subtle, amber accent (`text-amber-700`, `border-amber-100` divider)
+- Platinum: `bg-gradient-to-b from-blue-50/40 to-white` subtle, blue accent (`text-blue-900`, `border-blue-100` divider)
+- Eyebrow tier name: `text-xs font-bold tracking-widest` in the tier's accent color
 - Thai subtitle: `text-sm text-gray-500`
-- Divider line: `border-t border-{color}-100 my-4`
-- "เริ่มต้น" / "คุ้มค่า" / "พรีเมียม" small label
-- Price: `text-3xl font-extrabold text-{color}-700` formatted as `฿10,000` via `toLocaleString()`
+- Divider line: `border-t` in the tier's accent (or `border-gray-200` for Bronze)
+- Small label above price: "เริ่มต้น" (Bronze) / "คุ้มค่า" (Gold) / "พรีเมียม" (Platinum)
+- Price: `text-3xl font-extrabold` in the tier's accent color, formatted as `฿10,000` via `toLocaleString()`
 - Perks list: `text-xs text-gray-700 leading-relaxed` with `✓` prefix
 
 **Featured card** (Silver):
-- `border-2 border-primary-700 rounded-xl p-6 bg-white shadow-xl shadow-primary-700/15`
+- `border-2 border-primary-700 rounded-xl p-6 bg-white shadow-lg`
 - "⭐ แนะนำ" badge: positioned absolute, `top: -12px`, centered, `bg-primary-700 text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-wider`
 - Uses primary green for all accents (eyebrow, price, divider)
 - Slightly visually elevated via shadow (no scale change — alignment must stay in grid)
