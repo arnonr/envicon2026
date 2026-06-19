@@ -27,7 +27,7 @@ The new "ที่พัก" section is appended as a 3rd section after the venu
 
 ## Layout
 
-`grid grid-cols-1 md:grid-cols-2 gap-6` — 2 cards side-by-side on tablet+, stacked on mobile. Same `max-w-5xl mx-auto px-4 py-16` wrapper as the venue section, but with an extra `border-t border-gray-200 pt-12` for visual separation.
+`grid grid-cols-1 md:grid-cols-2 gap-6` — 2 cards side-by-side on tablet+, stacked on mobile. The new section's wrapper matches the existing venue section pattern: `<section class="mt-16 border-t border-gray-200 pt-12">` containing a `<div class="max-w-5xl mx-auto px-4 py-12">`. The `py-12` (smaller than the venue's `py-16`) keeps the page balanced — the accommodation section is supplementary, not a primary focus.
 
 ### Section header
 
