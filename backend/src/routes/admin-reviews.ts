@@ -575,6 +575,54 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
     },
     { params: t.Object({ roundId: t.String() }) },
   )
+  .patch(
+    "/submissions/:id/payment",
+    async ({ params, body, headers, set }) => {
+      const admin = (await getUserFromHeaders(headers.authorization))!;
+      const [sub] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+      if (!sub) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบผลงาน");
+      }
+      if (sub.paymentStatus !== "pending_verification") {
+        set.status = 400;
+        return fail(
+          "VALIDATION_ERROR",
+          `ไม่สามารถดำเนินการได้ สถานะการชำระเงินปัจจุบันคือ ${sub.paymentStatus}`,
+        );
+      }
+      if (body.paymentStatus === "rejected" && !body.note?.trim()) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "กรุณาระบุเหตุผลในการปฏิเสธ");
+      }
+      await db
+        .update(submissions)
+        .set({
+          paymentStatus: body.paymentStatus,
+          paymentVerifiedBy: admin.id,
+          paymentVerifiedAt: new Date(),
+          paymentNote: body.paymentStatus === "rejected" ? body.note : null,
+        })
+        .where(eq(submissions.id, params.id));
+      const [updated] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+      return ok(updated);
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        paymentStatus: t.Union([t.Literal("verified"), t.Literal("rejected")]),
+        note: t.Optional(t.String()),
+      }),
+    },
+  )
   .post(
     "/email-notifications/:id/retry",
     async ({ params, set }) => {
