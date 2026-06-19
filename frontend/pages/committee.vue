@@ -103,5 +103,46 @@ function getInitials(m: Member): string {
       <p class="text-gray-500 text-lg">Organizing Committee</p>
       <div class="w-24 h-1 bg-primary-500 mx-auto mt-4 rounded-full"></div>
     </header>
+
+    <!-- Sections -->
+    <section
+      v-for="(group, gi) in committees"
+      :key="group.id"
+      :class="gi > 0 ? 'mt-16' : ''"
+    >
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
+          <UIcon :name="group.icon" class="w-6 h-6 text-primary-600" aria-hidden="true" />
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">{{ group.title }}</h2>
+          <p class="text-sm text-gray-500">{{ group.titleEn }}</p>
+        </div>
+      </div>
+      <div class="h-px bg-gray-200 mb-8"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <UCard
+          v-for="(m, mi) in group.members"
+          :key="group.id + '-' + mi"
+          class="p-4 transition-shadow hover:shadow-md"
+        >
+          <div class="flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-lg flex-shrink-0"
+              aria-hidden="true"
+            >
+              {{ getInitials(m) }}
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-base font-semibold text-gray-900 leading-snug">
+                {{ m.prefix }} {{ m.firstName }} {{ m.lastName }}
+              </h3>
+              <p class="text-sm text-gray-500 mt-0.5 truncate">{{ m.affiliation }}</p>
+            </div>
+          </div>
+        </UCard>
+      </div>
+    </section>
   </div>
 </template>
