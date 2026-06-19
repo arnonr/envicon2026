@@ -7,6 +7,7 @@ interface Submission {
   track: number;
   submitterType: string;
   educationLevel: string;
+  presentationFormat: string;
   creators: string | null;
   status: string;
   abstractFileUrl: string | null;
@@ -60,6 +61,10 @@ const TRACK_NAMES: Record<number, string> = {
 
 function educationLabel(v: string): string {
   return ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
+}
+
+function presentationFormatLabel(v: string): string {
+  return ({ oral: 'แบบบรรยาย', poster: 'โปสเตอร์' } as Record<string, string>)[v] ?? v;
 }
 
 onMounted(async () => {
@@ -163,6 +168,7 @@ onMounted(async () => {
                     คน</template>
                   · {{ sub.submitterType === 'student' ? `นิสิต/นักศึกษา (${fees.student.toLocaleString()} บาท)` : `อาจารย์/นักวิจัย/บุคคลทั่วไป (${fees.general.toLocaleString()} บาท)` }}
                   · {{ educationLabel(sub.educationLevel) }}
+                  · {{ presentationFormatLabel(sub.presentationFormat) }}
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
