@@ -29,6 +29,12 @@ const STATUS_NAMES: Record<string, string> = {
   revision_requested: "ขอแก้ไข",
 };
 
+const EDUCATION_LEVEL_NAMES: Record<string, string> = {
+  bachelor: "ปริญญาตรี",
+  master: "ปริญญาโท",
+  doctorate: "ปริญญาเอก",
+};
+
 function formatExportDate(value: Date | string | null) {
   if (!value) return "";
   return new Date(value).toLocaleDateString("th-TH", {
@@ -116,6 +122,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           titleEn: submissions.titleEn,
           track: submissions.track,
           submitterType: submissions.submitterType,
+          educationLevel: submissions.educationLevel,
           status: submissions.status,
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
@@ -206,6 +213,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         keywords: submissions.keywords,
         track: submissions.track,
         submitterType: submissions.submitterType,
+        educationLevel: submissions.educationLevel,
         status: submissions.status,
         abstractFileUrl: submissions.abstractFileUrl,
         fullPaperFileUrl: submissions.fullPaperFileUrl,
@@ -237,6 +245,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       { header: "อีเมลผู้ส่ง", key: "authorEmail", width: 30 },
       { header: "สังกัด", key: "authorAffiliation", width: 32 },
       { header: "ประเภทผู้ส่ง", key: "submitterType", width: 28 },
+      { header: "ระดับการศึกษา", key: "educationLevel", width: 18 },
       { header: "หัวข้อ", key: "track", width: 52 },
       { header: "สถานะ", key: "status", width: 28 },
       { header: "คำสำคัญ", key: "keywords", width: 35 },
@@ -263,6 +272,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         authorEmail: submission.authorEmail ?? "",
         authorAffiliation: submission.authorAffiliation ?? "",
         submitterType: submission.submitterType === "student" ? "นิสิต/นักศึกษา" : "อาจารย์/นักวิจัย/บุคคลทั่วไป",
+        educationLevel: EDUCATION_LEVEL_NAMES[submission.educationLevel] ?? submission.educationLevel,
         track: TRACK_NAMES[submission.track] ?? String(submission.track),
         status: STATUS_NAMES[submission.status] ?? submission.status,
         keywords: submission.keywords ?? "",
@@ -286,7 +296,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:R1";
+    worksheet.autoFilter = "A1:S1";
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
