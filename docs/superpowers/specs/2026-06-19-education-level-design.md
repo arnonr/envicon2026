@@ -1,0 +1,168 @@
+# Education Level Field — Design Spec
+
+Date: 2026-06-19
+
+## Goal
+
+Add a required "ระดับการศึกษา" (education level) field to the submission form so that admin and reviewers can see whether the submitter is a bachelor's, master's, or doctoral student. Shown to all submitters (no conditional logic), persisted with versioning, and displayed everywhere `submitterType` is shown.
+
+## Scope
+
+1. New `educationLevel` column on `submissions` and `submission_versions`
+2. Required field on the submission form, persisted via POST/PUT/revise
+3. Display in dashboard, admin list, both detail modals
+4. Migration with backfill of existing rows
+
+## Section 1: Data Model
+
+### Schema (`backend/src/db/schema.ts`)
+
+Add to `submissions` table:
+```ts
+educationLevel: mysqlEnum("education_level", ["bachelor", "master", "doctorate"]).notNull()
+```
+
+Add the same field to `submission_versions` (snapshot, like `submitterType`):
+```ts
+educationLevel: mysqlEnum("education_level", ["bachelor", "master", "doctorate"]).notNull()
+```
+
+The field is **NOT NULL with no default** — the application enforces the value at create time. Existing rows are backfilled to `"bachelor"` in the migration (see Section 2).
+
+### Migration
+
+- Generate: `cd backend && bun run db:generate`
+- Apply: `cd backend && bun run db:push`
+- Backfill step (manual SQL in the migration file):
+  ```sql
+  UPDATE submissions SET education_level = 'bachelor' WHERE education_level IS NULL;
+  UPDATE submission_versions SET education_level = 'bachelor' WHERE education_level IS NULL;
+  ```
+- This matches the pattern of `submitterType` (NOT NULL + default) but is applied to existing data via backfill rather than a SQL DEFAULT clause, so the column constraint is identical for old and new rows.
+
+## Section 2: Backend API
+
+### `backend/src/routes/submissions.ts`
+
+**POST `/submissions`** (create) — body validation gets a new required field:
+```ts
+educationLevel: t.Union([
+  t.Literal("bachelor"),
+  t.Literal("master"),
+  t.Literal("doctorate"),
+]),
+```
+
+Insert statement also stores `educationLevel: body.educationLevel`.
+
+**PUT `/submissions/:id`** (edit draft / revision_requested) — body validation gets the same field as optional:
+```ts
+educationLevel: t.Optional(t.Union([
+  t.Literal("bachelor"),
+  t.Literal("master"),
+  t.Literal("doctorate"),
+])),
+```
+
+Update clause adds:
+```ts
+...(body.educationLevel && { educationLevel: body.educationLevel }),
+```
+
+**POST `/submissions/:id/revise`** — the snapshot insert into `submission_versions` adds `educationLevel: sub.educationLevel` (next to the existing `submitterType: sub.submitterType` at line 493). This preserves history when the field changes between rounds.
+
+## Section 3: Frontend Form
+
+### `frontend/components/submission/SubmissionForm.vue`
+
+Add to `SubmissionFormData` interface:
+```ts
+educationLevel: string;
+```
+
+Add options constant:
+```ts
+const EDUCATION_OPTIONS = [
+  { label: 'ปริญญาตรี', value: 'bachelor' },
+  { label: 'ปริญญาโท', value: 'master' },
+  { label: 'ปริญญาเอก', value: 'doctorate' },
+];
+```
+
+Add a new `UFormGroup` immediately after the `submitterType` field (groups submitter info together):
+```vue
+<UFormGroup label="ระดับการศึกษา" required>
+  <USelect :model-value="modelValue.educationLevel" :options="EDUCATION_OPTIONS"
+    placeholder="-- เลือกระดับการศึกษา --"
+    @update:model-value="update('educationLevel', $event as string)" />
+</UFormGroup>
+```
+
+The field is always shown (no `v-if` based on `submitterType`).
+
+### `frontend/pages/submit/index.vue`
+
+- Initial form state: add `educationLevel: ''`
+- `isStep1Valid` computed: add `|| !f.educationLevel` to the falsy chain
+- POST body: add `educationLevel: form.value.educationLevel`
+
+### `frontend/pages/submissions/[id]/revise.vue`
+
+- Initial form state: add `educationLevel: ''`
+- Validation chain: include `!values.educationLevel`
+- After loading `submission`, prefill `form.value.educationLevel = submission.educationLevel` (alongside the existing `submitterType` prefill at line 89)
+- PUT body: include `educationLevel: form.value.educationLevel`
+
+## Section 4: Display Layer
+
+### Label helper
+
+Add a small `educationLabel(value: string): string` helper, mirroring the existing `submitterLabel` pattern. Either:
+- A new file `frontend/composables/useEducationLabel.ts` exporting the function, or
+- Inline in each consumer (preferred for the 4 display sites since usage is trivial)
+
+Decision: **inline** — single-line mapping, no composable needed.
+
+### `frontend/pages/dashboard/index.vue` (line ~159)
+
+Append to the existing line that displays the fee subtitle:
+```vue
+· {{ educationLabel(sub.educationLevel) }}
+```
+
+### `frontend/pages/admin/index.vue` (line ~351)
+
+Display education level next to the submitter-type label in the submission list row, in the same muted style.
+
+### `frontend/components/submission/SubmissionDetailModal.vue` (line ~201)
+
+Add a new `<div>` to the 2-column info grid next to the submitter-type cell, showing `educationLabel(submission.educationLevel)`. Add `educationLevel: string` to the `Submission` interface (line 25).
+
+### `frontend/components/admin/SubmissionDetailModal.vue` (lines 19, 52, 198, 390)
+
+- Add `educationLevel: string` to both `Submission` and `SubmissionVersion` interfaces
+- Add a cell to the info grid (next to submitter-type)
+- Add a row in the version-diff table: `{ label: 'ระดับการศึกษา', before: educationLabel(previous.educationLevel), after: educationLabel(version.educationLevel) }`
+
+## Section 5: File Change Summary
+
+| File | Action |
+|------|--------|
+| `backend/src/db/schema.ts` | Add `educationLevel` column to `submissions` + `submission_versions` |
+| `backend/src/routes/submissions.ts` | Add field to POST, PUT, revise-snapshot |
+| New migration file (Drizzle) | Generated by `bun run db:generate`; backfill SQL applied to existing rows |
+| `frontend/components/submission/SubmissionForm.vue` | Add field, options, UFormGroup |
+| `frontend/pages/submit/index.vue` | Add to state, validation, POST body |
+| `frontend/pages/submissions/[id]/revise.vue` | Add to state, validation, prefill, PUT body |
+| `frontend/pages/dashboard/index.vue` | Display in submission list |
+| `frontend/pages/admin/index.vue` | Display in admin submission list |
+| `frontend/components/submission/SubmissionDetailModal.vue` | Display in info grid + interface |
+| `frontend/components/admin/SubmissionDetailModal.vue` | Display in info grid, version diff, interfaces |
+
+## Out of Scope
+
+- Filtering or searching submissions by education level
+- Aggregate statistics grouped by education level
+- Auto-fill from `users` profile (would require a parallel user-profile change)
+- Re-uploading the abstract or payment slip when only education level changes
+- Reviewer-side or notification-side use of this field (admin/reviewer can see it, but review workflow does not branch on it)
