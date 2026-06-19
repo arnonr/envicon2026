@@ -6,6 +6,7 @@ interface Submission {
   title: string;
   track: number;
   submitterType: string;
+  educationLevel: string;
   creators: string | null;
   status: string;
   abstractFileUrl: string | null;
@@ -56,6 +57,10 @@ const TRACK_NAMES: Record<number, string> = {
   6: 'เมืองยั่งยืนฯ',
   7: 'สิ่งแวดล้อมและสุขภาพ',
 };
+
+function educationLabel(v: string): string {
+  return ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
+}
 
 onMounted(async () => {
   const { data, error } = await handleApiCall(() =>
@@ -157,6 +162,7 @@ onMounted(async () => {
                   <template v-if="getCreatorCount(sub.creators)"> · ผู้สร้างสรรค์ {{ getCreatorCount(sub.creators) }}
                     คน</template>
                   · {{ sub.submitterType === 'student' ? `นิสิต/นักศึกษา (${fees.student.toLocaleString()} บาท)` : `อาจารย์/นักวิจัย/บุคคลทั่วไป (${fees.general.toLocaleString()} บาท)` }}
+                  · {{ educationLabel(sub.educationLevel) }}
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
