@@ -4,6 +4,7 @@ const { show: showComingSoon } = useComingSoon();
 const links = [
   { label: "หน้าแรก", to: "/" },
   { label: "เกี่ยวกับ", to: "/about" },
+  { label: "คณะกรรมการ", to: "/committee" },
   { label: "กำหนดการ", to: "/important-dates" },
   { label: "ลงทะเบียน", to: "/registration" },
   { label: "แนวทาง", to: "/guidelines" },
