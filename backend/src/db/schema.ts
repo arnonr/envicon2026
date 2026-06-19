@@ -32,6 +32,7 @@ export const submissions = mysqlTable("submissions", {
   creators: text("creators"),
   track: int("track").notNull(),
   submitterType: mysqlEnum("submitter_type", ["student", "general"]).notNull().default("student"),
+  educationLevel: mysqlEnum("education_level", ["bachelor", "master", "doctorate"]).notNull(),
   status: mysqlEnum("status", [
     "draft",
     "pending_payment",
@@ -61,6 +62,7 @@ export const submissionVersions = mysqlTable("submission_versions", {
   creators: text("creators"),
   track: int("track").notNull(),
   submitterType: mysqlEnum("submitter_type", ["student", "general"]).notNull().default("student"),
+  educationLevel: mysqlEnum("education_level", ["bachelor", "master", "doctorate"]).notNull(),
   fileUrl: varchar("file_url", { length: 500 }),
   changelog: text("changelog"),
   submittedAt: timestamp("submitted_at").notNull(),
