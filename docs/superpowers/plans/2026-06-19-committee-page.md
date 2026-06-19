@@ -1,0 +1,360 @@
+# Committee Page — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Add a public `/committee` page listing all 5 organizing committee groups and a "คณะกรรมการ" link in the navbar.
+
+**Architecture:** Single new page `frontend/pages/committee.vue` with inline committee data (no backend, no API). All members grouped into 5 sections rendered with a card grid using @nuxt/ui `UCard` and `UIcon`. Navbar modified by adding one entry to its existing `links` array.
+
+**Tech Stack:** Nuxt 3, Vue 3 (`<script setup lang="ts">`), @nuxt/ui (`UCard`, `UIcon`), Tailwind CSS (existing `primary` palette).
+
+**Note on tests:** Per `CLAUDE.md`, no test framework is configured in this project. Verification is done by running the dev server and viewing the page in a browser.
+
+---
+
+## File Structure
+
+| File | Action | Responsibility |
+|------|--------|---------------|
+| `frontend/pages/committee.vue` | Create | Public page with 5 committee sections, person cards, header |
+| `frontend/components/layout/Navbar.vue` | Modify | Add one entry to `links` array for `/committee` |
+
+---
+
+### Task 1: Create committee.vue with types and data
+
+**Files:**
+- Create: `frontend/pages/committee.vue`
+
+- [ ] **Step 1: Create the file with script setup, types, and full data array**
+
+Write the file `frontend/pages/committee.vue` with the following content. This step writes the script section only — the template will be filled in Task 2.
+
+```vue
+<script setup lang="ts">
+interface Member {
+  prefix: string;
+  firstName: string;
+  lastName: string;
+  affiliation: string;
+}
+
+interface CommitteeGroup {
+  id: string;
+  title: string;
+  titleEn: string;
+  icon: string;
+  members: Member[];
+}
+
+const committees: CommitteeGroup[] = [
+  {
+    id: "advisory",
+    title: "คณะกรรมการอำนวยการ",
+    titleEn: "Advisory Committee",
+    icon: "i-heroicons-user-group",
+    members: [
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "รัฐชา", lastName: "ชัยชนะ", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ศาสตราจารย์ ดร.", firstName: "วรณพ", lastName: "วิยกาญจน์", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+    ],
+  },
+  {
+    id: "academic",
+    title: "คณะกรรมการฝ่ายวิชาการ",
+    titleEn: "Academic Committee",
+    icon: "i-heroicons-academic-cap",
+    members: [
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "อุมา", lastName: "ลางคุลเสน", affiliation: "มหาวิทยาลัยธรรมศาสตร์" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "สุเมธ", lastName: "วงศ์เขียว", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "ชุลีมาศ", lastName: "บุญไทย อิวาย", affiliation: "มหาวิทยาลัยขอนแก่น" },
+      { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรรณวดี", lastName: "สุวัฒิกะ", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อรประภา", lastName: "ภุมมะกาญจนะ โรแบร์", affiliation: "มหาวิทยาลัยศิลปากร" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "รัชวุฒิ", lastName: "โคตรลาคำ", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "มนพร", lastName: "วงศ์สุนทรชัย", affiliation: "มหาวิทยาลัยธรรมศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปฏิพัทธ์", lastName: "วงค์เรือง", affiliation: "มหาวิทยาลัยพะเยา" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปิยะวดี", lastName: "ศรีวิชัย", affiliation: "มหาวิทยาลัยพะเยา" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "บงกช", lastName: "วิชาชูเชิด", affiliation: "มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน" },
+      { prefix: "ดร.", firstName: "นฤพร", lastName: "เพ็ชร์กลาง", affiliation: "มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน" },
+      { prefix: "ดร.", firstName: "พรเทพ", lastName: "พรรณรักษ์", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ดร.", firstName: "ยศวดี", lastName: "ฮะวังจู", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ดร.", firstName: "ชิษณุพงษ์", lastName: "ชาติอาษา", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+    ],
+  },
+  {
+    id: "registration",
+    title: "ฝ่ายลงทะเบียน",
+    titleEn: "Registration Committee",
+    icon: "i-heroicons-clipboard-document-list",
+    members: [
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "นางสาว", firstName: "ปุณยานุช", lastName: "แดงจะนะ", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "นางสาว", firstName: "ณัฐนริน", lastName: "ทองดี", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "นางสาว", firstName: "อมรรัตน์", lastName: "รักงาม", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+    ],
+  },
+  {
+    id: "venue",
+    title: "ฝ่ายสถานที่ พิธีการ และการศึกษาดูงาน",
+    titleEn: "Venue, Ceremony & Study Visit Committee",
+    icon: "i-heroicons-map-pin",
+    members: [
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรรณวดี", lastName: "สุวัฒิกะ", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "สุเมธ", lastName: "วงศ์เขียว", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อรประภา", lastName: "ภุมมะกาญจนะ โรแบร์", affiliation: "มหาวิทยาลัยศิลปากร" },
+    ],
+  },
+  {
+    id: "sponsorship",
+    title: "ฝ่ายระดมทุนและสปอนเซอร์",
+    titleEn: "Fundraising & Sponsorship Committee",
+    icon: "i-heroicons-currency-dollar",
+    members: [
+      { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
+    ],
+  },
+];
+
+function getInitials(m: Member): string {
+  const first = m.firstName?.charAt(0) ?? "";
+  const last = m.lastName?.charAt(0) ?? "";
+  return (first + last).toUpperCase();
+}
+</script>
+```
+
+- [ ] **Step 2: Verify TypeScript compiles**
+
+Run: `cd /Users/macbook-arnon/Projects/envicon2026/frontend && npx nuxi typecheck 2>&1 | head -30`
+
+Expected: Either no errors, or only unrelated pre-existing errors. No errors mentioning `committee.vue`, `Member`, `CommitteeGroup`, or `getInitials`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd /Users/macbook-arnon/Projects/envicon2026
+git add frontend/pages/committee.vue
+git commit -m "feat(frontend): add committee page data and types"
+```
+
+---
+
+### Task 2: Add template — page header
+
+**Files:**
+- Modify: `frontend/pages/committee.vue` (append template after `</script>`)
+
+- [ ] **Step 1: Append the template opening and page header**
+
+Find the `</script>` closing tag at the end of `frontend/pages/committee.vue` (after the `getInitials` function). Replace it with:
+
+```vue
+</script>
+
+<template>
+  <div class="max-w-6xl mx-auto px-4 py-16">
+    <!-- Page header -->
+    <header class="text-center mb-16">
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">คณะกรรมการ</h1>
+      <p class="text-gray-500 text-lg">Organizing Committee</p>
+      <div class="w-24 h-1 bg-primary-500 mx-auto mt-4 rounded-full"></div>
+    </header>
+  </div>
+</template>
+```
+
+- [ ] **Step 2: Run the dev server and check the header renders**
+
+Run (in background):
+```bash
+cd /Users/macbook-arnon/Projects/envicon2026/frontend && npm run dev
+```
+
+Wait for "Listening on" output (≈ 5–10s), then visit `http://localhost:3000/committee` in a browser. Expected: page shows "คณะกรรมการ" title, "Organizing Committee" subtitle, and a short primary-color underline. No member sections yet (added in Task 3).
+
+Stop the dev server before continuing (Ctrl+C in the background task).
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd /Users/macbook-arnon/Projects/envicon2026
+git add frontend/pages/committee.vue
+git commit -m "feat(frontend): add committee page header"
+```
+
+---
+
+### Task 3: Add template — sections and person cards
+
+**Files:**
+- Modify: `frontend/pages/committee.vue` (insert section/card markup inside the template container)
+
+- [ ] **Step 1: Insert sections and cards inside the template container**
+
+In `frontend/pages/committee.vue`, replace the current `<template>` block (everything between `<template>` and `</template>`) with:
+
+```vue
+<template>
+  <div class="max-w-6xl mx-auto px-4 py-16">
+    <!-- Page header -->
+    <header class="text-center mb-16">
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">คณะกรรมการ</h1>
+      <p class="text-gray-500 text-lg">Organizing Committee</p>
+      <div class="w-24 h-1 bg-primary-500 mx-auto mt-4 rounded-full"></div>
+    </header>
+
+    <!-- Sections -->
+    <section
+      v-for="(group, gi) in committees"
+      :key="group.id"
+      :class="gi > 0 ? 'mt-16' : ''"
+    >
+      <div class="flex items-center gap-4 mb-6">
+        <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
+          <UIcon :name="group.icon" class="w-6 h-6 text-primary-600" aria-hidden="true" />
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">{{ group.title }}</h2>
+          <p class="text-sm text-gray-500">{{ group.titleEn }}</p>
+        </div>
+      </div>
+      <div class="h-px bg-gray-200 mb-8"></div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <UCard
+          v-for="(m, mi) in group.members"
+          :key="group.id + '-' + mi"
+          class="p-4 transition-shadow hover:shadow-md"
+        >
+          <div class="flex items-center gap-4">
+            <div
+              class="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-lg flex-shrink-0"
+              aria-hidden="true"
+            >
+              {{ getInitials(m) }}
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-base font-semibold text-gray-900 leading-snug">
+                {{ m.prefix }} {{ m.firstName }} {{ m.lastName }}
+              </h3>
+              <p class="text-sm text-gray-500 mt-0.5 truncate">{{ m.affiliation }}</p>
+            </div>
+          </div>
+        </UCard>
+      </div>
+    </section>
+  </div>
+</template>
+```
+
+- [ ] **Step 2: Verify TypeScript still compiles**
+
+Run: `cd /Users/macbook-arnon/Projects/envicon2026/frontend && npx nuxi typecheck 2>&1 | head -30`
+
+Expected: No new errors. Any pre-existing unrelated errors are acceptable.
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd /Users/macbook-arnon/Projects/envicon2026
+git add frontend/pages/committee.vue
+git commit -m "feat(frontend): render committee sections and person cards"
+```
+
+---
+
+### Task 4: Add navbar link
+
+**Files:**
+- Modify: `frontend/components/layout/Navbar.vue` (insert one entry in the `links` array)
+
+- [ ] **Step 1: Add the "คณะกรรมการ" entry to the links array**
+
+Open `frontend/components/layout/Navbar.vue`. Find the `links` array:
+
+```ts
+const links = [
+  { label: "หน้าแรก", to: "/" },
+  { label: "เกี่ยวกับ", to: "/about" },
+  { label: "กำหนดการ", to: "/important-dates" },
+  { label: "ลงทะเบียน", to: "/registration" },
+  { label: "แนวทาง", to: "/guidelines" },
+  { label: "ติดต่อ", to: "/contact" },
+];
+```
+
+Insert a new entry between "เกี่ยวกับ" and "กำหนดการ":
+
+```ts
+const links = [
+  { label: "หน้าแรก", to: "/" },
+  { label: "เกี่ยวกับ", to: "/about" },
+  { label: "คณะกรรมการ", to: "/committee" },
+  { label: "กำหนดการ", to: "/important-dates" },
+  { label: "ลงทะเบียน", to: "/registration" },
+  { label: "แนวทาง", to: "/guidelines" },
+  { label: "ติดต่อ", to: "/contact" },
+];
+```
+
+- [ ] **Step 2: Commit**
+
+```bash
+cd /Users/macbook-arnon/Projects/envicon2026
+git add frontend/components/layout/Navbar.vue
+git commit -m "feat(frontend): add คณะกรรมการ link to navbar"
+```
+
+---
+
+### Task 5: Visual verification
+
+**Files:** None (manual verification)
+
+- [ ] **Step 1: Start the dev server**
+
+Run (in background):
+```bash
+cd /Users/macbook-arnon/Projects/envicon2026/frontend && npm run dev
+```
+
+Wait for "Listening on" output.
+
+- [ ] **Step 2: Verify the page at desktop width**
+
+In a browser, visit `http://localhost:3000/committee`. Confirm:
+- Page shows the centered "คณะกรรมการ" header with primary underline
+- 5 sections appear in order: Advisory, Academic, Registration, Venue, Sponsorship
+- Academic Committee shows 17 cards in a 3-column grid
+- Each card has initials in a primary-100 circle, name, and affiliation
+- Hover any card — shadow appears
+- No console errors in DevTools
+
+- [ ] **Step 3: Verify the navbar link**
+
+Click the "คณะกรรมการ" entry in the desktop navbar. Confirm it navigates to `/committee` and the link text is highlighted (meadow color, font-semibold from the `active-class`).
+
+- [ ] **Step 4: Verify mobile width**
+
+Resize the browser to ≤ 768px (or use DevTools device emulation). Confirm:
+- Cards stack to 1 column
+- Section headers (icon + title) stay horizontal
+- Mobile hamburger menu shows "คณะกรรมการ" entry and tapping it navigates correctly
+
+- [ ] **Step 5: Stop the dev server**
+
+Stop the background dev server task (Ctrl+C). The page is verified.
+
+---
+
+## Self-Review Notes
+
+- **Spec coverage:** Page header (Task 2), section header pattern (Task 3), person card with initials (Task 3), navbar link (Task 4), visual verification (Task 5), responsive behavior (Task 5 Step 4), accessibility (`aria-hidden` on icons, semantic h1/h2/h3 — Task 3), no backend (all data inline in Task 1) — all covered.
+- **Placeholder scan:** No TBDs, no "similar to Task N" shortcuts; every step has the exact code or command to run.
+- **Type consistency:** `Member`, `CommitteeGroup`, `getInitials` are defined in Task 1 and used in Task 3 with the same names and signatures.
