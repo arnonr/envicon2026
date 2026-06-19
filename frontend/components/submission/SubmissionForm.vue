@@ -7,6 +7,7 @@ export interface SubmissionFormData {
   track: string;
   submitterType: string;
   educationLevel: string;
+  presentationFormat: string;
 }
 
 export interface Creator {
@@ -37,6 +38,11 @@ const EDUCATION_OPTIONS = [
   { label: 'ปริญญาตรี', value: 'bachelor' },
   { label: 'ปริญญาโท', value: 'master' },
   { label: 'ปริญญาเอก', value: 'doctorate' },
+];
+
+const PRESENTATION_FORMAT_OPTIONS = [
+  { label: 'แบบบรรยาย', value: 'oral' },
+  { label: 'โปสเตอร์', value: 'poster' },
 ];
 
 const { studentLabel, generalLabel } = useFees();
@@ -111,6 +117,14 @@ defineExpose({ creators });
         :options="EDUCATION_OPTIONS"
         placeholder="-- เลือกระดับการศึกษา --"
         @update:model-value="update('educationLevel', $event as string)"
+      />
+    </UFormGroup>
+
+    <UFormGroup label="รูปแบบการนำเสนอ" required>
+      <URadioGroup
+        :model-value="modelValue.presentationFormat"
+        :options="PRESENTATION_FORMAT_OPTIONS"
+        @update:model-value="update('presentationFormat', $event as string)"
       />
     </UFormGroup>
 
