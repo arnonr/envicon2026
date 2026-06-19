@@ -232,24 +232,6 @@ const fetchSubmission = async () => {
   submission.value = data!.data;
 };
 
-const updateStatus = async (newStatus: string, successMsg: string) => {
-  if (!props.submissionId) return;
-  updating.value = true;
-  const { error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/status`, {
-      method: 'PATCH',
-      headers: headers.value,
-      body: { status: newStatus },
-    })
-  );
-  updating.value = false;
-  if (error) { showError(error); return; }
-  showSuccess(successMsg);
-  emit('status-changed');
-  await fetchSubmission();
-  await fetchWorkflow();
-};
-
 const fetchWorkflow = async () => {
   if (!props.submissionId || !submission.value) {
     workflow.value = null;
