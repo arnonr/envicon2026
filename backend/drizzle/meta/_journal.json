@@ -29,6 +29,13 @@
       "when": 1779931760296,
       "tag": "0003_lazy_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1781837138297,
+      "tag": "0004_rainy_kate_bishop",
+      "breakpoints": true
     }
   ]
 }
