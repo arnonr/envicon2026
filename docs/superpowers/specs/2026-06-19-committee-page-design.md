@@ -43,7 +43,7 @@ Members are de-duplicated by full name within a group. The same person can appea
 ## Section Order (top to bottom)
 
 1. **คณะกรรมการอำนวยการ** — Advisory Committee (3 members)
-2. **คณะกรรมการฝ่ายวิชาการ** — Academic Committee (16 members)
+2. **คณะกรรมการฝ่ายวิชาการ** — Academic Committee (17 members)
 3. **ฝ่ายลงทะเบียน** — Registration Committee (5 members)
 4. **ฝ่ายสถานที่ พิธีการ และการศึกษาดูงาน** — Venue, Ceremony & Study Visit Committee (5 members)
 5. **ฝ่ายระดมทุนและสปอนเซอร์** — Fundraising & Sponsorship Committee (1 member)
@@ -87,13 +87,12 @@ Members are de-duplicated by full name within a group. The same person can appea
 - Icon container: `w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center`
 - Icon: `w-6 h-6 text-primary-600`
 - Title: `text-xl font-bold text-gray-900`
-- English title: `text-sm text-gray-500` (right after Thai title, on next line or beside)
+- English title: `text-sm text-gray-500` (on the line below the Thai title)
 - Below the header row: `h-px bg-gray-200 mb-8` divider
 
 ## Person Card
 
-- Uses `UCard` from @nuxt/ui
-- Padding: default UCard padding (`p-5` or similar)
+- Uses `UCard` from @nuxt/ui with `class="p-4"`
 - Hover: `transition-shadow hover:shadow-md`
 - Layout inside the card:
   - Top row: 56px circle avatar + name block
