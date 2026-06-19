@@ -77,8 +77,6 @@ const TRACK_NAMES: Record<number, string> = {
 const STATUS_OPTIONS = [
   { value: "", label: "ทั้งหมด" },
   { value: "draft", label: "ร่าง" },
-  { value: "pending_payment", label: "รอชำระเงิน" },
-  { value: "payment_verifying", label: "รอตรวจสอบการชำระเงิน" },
   { value: "submitted", label: "ส่งแล้ว" },
   { value: "under_review", label: "กำลังพิจารณา" },
   { value: "accepted", label: "ผ่านการพิจารณา" },
@@ -88,8 +86,6 @@ const STATUS_OPTIONS = [
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "gray",
-  pending_payment: "orange",
-  payment_verifying: "yellow",
   submitted: "blue",
   under_review: "yellow",
   accepted: "green",
