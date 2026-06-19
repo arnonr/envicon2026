@@ -12,6 +12,7 @@ interface Submission {
   track: number;
   submitterType: string;
   educationLevel: string;
+  presentationFormat: string;
   status: string;
 }
 
@@ -34,6 +35,7 @@ const form = ref<SubmissionFormData>({
   track: '',
   submitterType: 'student',
   educationLevel: '',
+  presentationFormat: '',
 });
 const changelog = ref('');
 const selectedFile = ref<File | null>(null);
@@ -56,7 +58,7 @@ const parseCreators = (raw: string | null): Creator[] => {
 
 const isFormValid = computed(() => {
   const values = form.value;
-  if (!values.title.trim() || !values.title_en.trim() || !values.abstract.trim() || !values.track || !values.submitterType || !values.educationLevel) {
+  if (!values.title.trim() || !values.title_en.trim() || !values.abstract.trim() || !values.track || !values.submitterType || !values.educationLevel || !values.presentationFormat) {
     return false;
   }
   return (submissionFormRef.value?.creators ?? initialCreators.value)
@@ -90,6 +92,7 @@ onMounted(async () => {
     track: String(submission.track),
     submitterType: submission.submitterType,
     educationLevel: submission.educationLevel,
+    presentationFormat: submission.presentationFormat,
   };
   initialCreators.value = parseCreators(submission.creators);
   loading.value = false;
@@ -115,6 +118,7 @@ const submitRevision = async () => {
         track: parseInt(form.value.track),
         submitterType: form.value.submitterType,
         educationLevel: form.value.educationLevel,
+        presentationFormat: form.value.presentationFormat,
       },
     })
   );
