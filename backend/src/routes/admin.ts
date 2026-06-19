@@ -20,13 +20,18 @@ const TRACK_NAMES: Record<number, string> = {
 
 const STATUS_NAMES: Record<string, string> = {
   draft: "ร่าง",
-  pending_payment: "รอชำระเงิน",
-  payment_verifying: "รอตรวจสอบการชำระเงิน",
   submitted: "ส่งแล้ว",
   under_review: "กำลังพิจารณา",
   accepted: "ผ่านการพิจารณา",
   rejected: "ไม่ผ่าน",
   revision_requested: "ขอแก้ไข",
+};
+
+const PAYMENT_STATUS_NAMES: Record<string, string> = {
+  unpaid: "ยังไม่ชำระ",
+  pending_verification: "รอตรวจสอบ",
+  verified: "ชำระแล้ว",
+  rejected: "ปฏิเสธ",
 };
 
 const EDUCATION_LEVEL_NAMES: Record<string, string> = {
@@ -111,6 +116,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   .get("/submissions", async ({ query }) => {
     const conditions = [];
     if (query.status) conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    if (query.paymentStatus) conditions.push(eq(submissions.paymentStatus, query.paymentStatus as typeof submissions.paymentStatus.enumValues[number]));
     if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
 
     const where = conditions.length ? and(...conditions) : undefined;
@@ -133,6 +139,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
           paymentSlipUrl: submissions.paymentSlipUrl,
+          paymentStatus: submissions.paymentStatus,
           submittedAt: submissions.submittedAt,
           updatedAt: submissions.updatedAt,
           authorName: users.name,
@@ -198,6 +205,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
   }, {
     query: t.Object({
       status: t.Optional(t.String()),
+      paymentStatus: t.Optional(t.String()),
       track: t.Optional(t.String()),
       page: t.Optional(t.String()),
       limit: t.Optional(t.String()),
@@ -225,6 +233,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         abstractFileUrl: submissions.abstractFileUrl,
         fullPaperFileUrl: submissions.fullPaperFileUrl,
         paymentSlipUrl: submissions.paymentSlipUrl,
+        paymentStatus: submissions.paymentStatus,
         submittedAt: submissions.submittedAt,
         updatedAt: submissions.updatedAt,
         authorName: users.name,
@@ -263,6 +272,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       { header: "ลิงก์ไฟล์บทคัดย่อ", key: "abstractFileUrl", width: 55 },
       { header: "ลิงก์ไฟล์ฉบับเต็ม", key: "fullPaperFileUrl", width: 55 },
       { header: "ลิงก์หลักฐานชำระเงิน", key: "paymentSlipUrl", width: 55 },
+      { header: "สถานะการชำระเงิน", key: "paymentStatus", width: 20 },
     ];
 
     const origin = new URL(request.url).origin;
@@ -291,6 +301,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         abstractFileUrl,
         fullPaperFileUrl,
         paymentSlipUrl,
+        paymentStatus: PAYMENT_STATUS_NAMES[submission.paymentStatus] ?? submission.paymentStatus,
       });
 
       for (const [key, url] of [
@@ -305,7 +316,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:T1";
+    worksheet.autoFilter = "A1:U1";
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -416,8 +427,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       body: t.Object({
         status: t.Union([
           t.Literal("draft"),
-          t.Literal("pending_payment"),
-          t.Literal("payment_verifying"),
           t.Literal("submitted"),
           t.Literal("under_review"),
           t.Literal("accepted"),
