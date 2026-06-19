@@ -4,7 +4,6 @@ definePageMeta({ middleware: ["auth", "role"] });
 interface ReviewDetail {
   id: string;
   status: "sent" | "in_progress" | "completed";
-  score: number | null;
   recommendation: "accept" | "reject" | "revise" | null;
   commentsToAuthor: string | null;
   commentsToEditor: string | null;
@@ -32,7 +31,6 @@ const review = ref<ReviewDetail | null>(null);
 const loading = ref(true);
 const saving = ref(false);
 const form = reactive({
-  score: null as number | null,
   recommendation: "" as "" | "accept" | "reject" | "revise",
   commentsToAuthor: "",
   commentsToEditor: "",
@@ -59,7 +57,6 @@ async function fetchReview() {
   loading.value = false;
   if (error) return showError(error);
   review.value = data!.data;
-  form.score = review.value.score;
   form.recommendation = review.value.recommendation ?? "";
   form.commentsToAuthor = review.value.commentsToAuthor ?? "";
   form.commentsToEditor = review.value.commentsToEditor ?? "";
@@ -72,7 +69,6 @@ async function saveDraft() {
       method: "PUT",
       headers: headers.value,
       body: {
-        score: form.score ?? undefined,
         recommendation: form.recommendation || undefined,
         commentsToAuthor: form.commentsToAuthor || undefined,
         commentsToEditor: form.commentsToEditor || undefined,
@@ -86,8 +82,8 @@ async function saveDraft() {
 }
 
 async function submitReview() {
-  if (!form.score || !form.recommendation || !form.commentsToAuthor.trim()) {
-    showError({ status: 400, error: "กรุณากรอกคะแนน ผลแนะนำ และข้อเสนอแนะถึงผู้เขียน" });
+  if (!form.recommendation || !form.commentsToAuthor.trim()) {
+    showError({ status: 400, error: "กรุณาเลือกผลแนะนำและกรอกข้อเสนอแนะถึงผู้เขียน" });
     return;
   }
   const confirmed = await useModalConfirm({
@@ -104,7 +100,6 @@ async function submitReview() {
       method: "POST",
       headers: headers.value,
       body: {
-        score: form.score,
         recommendation: form.recommendation,
         commentsToAuthor: form.commentsToAuthor,
         commentsToEditor: form.commentsToEditor || undefined,
@@ -168,9 +163,6 @@ onMounted(fetchReview);
       <UCard>
         <template #header><h2 class="font-semibold">แบบประเมิน รอบที่ {{ review.roundNumber }}</h2></template>
         <div class="space-y-4">
-          <UFormGroup label="คะแนน (1-5)" required>
-            <UInput v-model.number="form.score" type="number" min="1" max="5" :disabled="review.status === 'completed'" />
-          </UFormGroup>
           <UFormGroup label="ข้อเสนอแนะผลพิจารณา" required>
             <USelectMenu v-model="form.recommendation" :options="recommendationOptions" value-attribute="value" option-attribute="label" :disabled="review.status === 'completed'" />
           </UFormGroup>

@@ -50,6 +50,13 @@
       "when": 1781852490507,
       "tag": "0006_mushy_tarot",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1781859427737,
+      "tag": "0007_nasty_proteus",
+      "breakpoints": true
     }
   ]
 }

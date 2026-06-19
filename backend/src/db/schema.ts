@@ -102,7 +102,6 @@ export const reviews = mysqlTable("reviews", {
   submissionId: varchar("submission_id", { length: 36 }).notNull().references(() => submissions.id),
   roundId: varchar("round_id", { length: 36 }).notNull().references(() => reviewRounds.id),
   reviewerId: varchar("reviewer_id", { length: 36 }).notNull().references(() => users.id),
-  score: int("score"),
   recommendation: mysqlEnum("recommendation", ["accept", "reject", "revise"]),
   commentsToAuthor: text("comments_to_author"),
   commentsToEditor: text("comments_to_editor"),

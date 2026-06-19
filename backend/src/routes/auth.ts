@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
-import { passwordSetupTokens, users } from "../db/schema";
+import { passwordSetupTokens, reviewerExpertiseTracks, users } from "../db/schema";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import { jwtPlugin, authPlugin, requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
@@ -188,11 +188,23 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       }
 
       const [user] = await db
-        .select({ name: users.name, email: users.email })
+        .select({ name: users.name, email: users.email, role: users.role, affiliation: users.affiliation })
         .from(users)
         .where(eq(users.id, setup.userId))
         .limit(1);
-      return ok(user);
+      if (!user) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบบัญชีผู้ใช้");
+      }
+      let expertiseTracks: number[] = [];
+      if (user.role === "reviewer") {
+        const rows = await db
+          .select({ track: reviewerExpertiseTracks.track })
+          .from(reviewerExpertiseTracks)
+          .where(eq(reviewerExpertiseTracks.reviewerId, setup.userId));
+        expertiseTracks = rows.map((row) => row.track);
+      }
+      return ok({ ...user, expertiseTracks });
     },
     { params: t.Object({ token: t.String() }) },
   )
@@ -214,11 +226,33 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         return fail("VALIDATION_ERROR", "ลิงก์ตั้งรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว");
       }
 
+      const [targetUser] = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, setup.userId))
+        .limit(1);
+      if (!targetUser) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบบัญชีผู้ใช้");
+      }
+
       const passwordHash = await Bun.password.hash(body.password, {
         algorithm: "bcrypt",
         cost: 10,
       });
-      await db.update(users).set({ passwordHash }).where(eq(users.id, setup.userId));
+      const userUpdate: Partial<typeof users.$inferInsert> = { passwordHash };
+      if (body.affiliation !== undefined) {
+        userUpdate.affiliation = body.affiliation;
+      }
+      await db.update(users).set(userUpdate).where(eq(users.id, setup.userId));
+
+      if (targetUser.role === "reviewer" && body.expertiseTracks && body.expertiseTracks.length > 0) {
+        await db.delete(reviewerExpertiseTracks).where(eq(reviewerExpertiseTracks.reviewerId, setup.userId));
+        await db.insert(reviewerExpertiseTracks).values(
+          body.expertiseTracks.map((track) => ({ reviewerId: setup.userId, track })),
+        );
+      }
+
       await db.update(passwordSetupTokens).set({ usedAt: new Date() }).where(eq(passwordSetupTokens.id, setup.id));
       return ok({ ready: true }, "ตั้งรหัสผ่านสำเร็จ");
     },
@@ -226,6 +260,8 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       body: t.Object({
         token: t.String(),
         password: t.String({ minLength: 8 }),
+        affiliation: t.Optional(t.String({ minLength: 1, maxLength: 500 })),
+        expertiseTracks: t.Optional(t.Array(t.Number({ minimum: 1, maximum: 7 }), { minItems: 1 })),
       }),
     },
   )

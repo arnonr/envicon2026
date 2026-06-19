@@ -38,7 +38,6 @@ interface WorkflowAssignment {
   reviewerEmail: string;
   status: "assigned" | "sent" | "in_progress" | "completed";
   dueAt: string | null;
-  score: number | null;
   recommendation: string | null;
   commentsToAuthor: string | null;
   commentsToEditor: string | null;
@@ -585,7 +584,6 @@ watch(() => props.modelValue, (open) => {
                 <p class="font-medium">{{ assignment.reviewerName }}</p>
                 <p><span class="text-gray-500">สถานะ:</span> {{ assignmentLabel(assignment.status) }}</p>
                 <template v-if="assignment.status === 'completed'">
-                  <p><span class="text-gray-500">คะแนน:</span> {{ assignment.score }}/5</p>
                   <p><span class="text-gray-500">ข้อเสนอ:</span> {{ assignment.recommendation }}</p>
                   <p class="whitespace-pre-line"><span class="text-gray-500">ถึงผู้เขียน:</span> {{ assignment.commentsToAuthor }}</p>
                   <p v-if="assignment.commentsToEditor" class="whitespace-pre-line"><span class="text-gray-500">ถึงเจ้าหน้าที่:</span> {{ assignment.commentsToEditor }}</p>
@@ -673,7 +671,6 @@ watch(() => props.modelValue, (open) => {
               </div>
               <p v-else-if="assignment.dueAt" class="text-xs text-gray-500">กำหนดส่ง {{ formatDate(assignment.dueAt) }}</p>
               <div v-if="assignment.status === 'completed'" class="bg-gray-50 rounded p-3 text-sm space-y-1">
-                <p><span class="text-gray-500">คะแนน:</span> {{ assignment.score }}/5</p>
                 <p><span class="text-gray-500">ข้อเสนอ:</span> {{ assignment.recommendation }}</p>
                 <p><span class="text-gray-500">ถึงผู้เขียน:</span> {{ assignment.commentsToAuthor }}</p>
                 <p v-if="assignment.commentsToEditor"><span class="text-gray-500">ถึงเจ้าหน้าที่:</span> {{ assignment.commentsToEditor }}</p>

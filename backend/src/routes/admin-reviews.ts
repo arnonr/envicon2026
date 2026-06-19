@@ -130,18 +130,12 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         id,
         name: body.name,
         email: body.email,
-        affiliation: body.affiliation ?? null,
         role: "reviewer",
       });
       await db.insert(reviewerProfiles).values({
         userId: id,
         maxConcurrentReviews: body.maxConcurrentReviews,
       });
-      if (body.expertiseTracks.length) {
-        await db.insert(reviewerExpertiseTracks).values(
-          body.expertiseTracks.map((track) => ({ reviewerId: id, track })),
-        );
-      }
 
       const email = await sendInvitation({ id, name: body.name, email: body.email });
       set.status = 201;
@@ -151,8 +145,6 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       body: t.Object({
         name: t.String({ minLength: 1 }),
         email: t.String({ format: "email" }),
-        affiliation: t.Optional(t.String()),
-        expertiseTracks: t.Array(t.Number({ minimum: 1, maximum: 7 })),
         maxConcurrentReviews: t.Number({ minimum: 1 }),
       }),
     },
@@ -262,7 +254,6 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
             status: reviews.status,
             dueAt: reviews.dueAt,
             sentAt: reviews.sentAt,
-            score: reviews.score,
             recommendation: reviews.recommendation,
             commentsToAuthor: reviews.commentsToAuthor,
             commentsToEditor: reviews.commentsToEditor,

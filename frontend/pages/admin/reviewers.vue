@@ -84,13 +84,15 @@ function toggleTrack(track: number) {
 async function saveReviewer() {
   if (!form.name.trim() || (!editingId.value && !form.email.trim())) return;
   saving.value = true;
-  const payload = {
+  const payload: Record<string, unknown> = {
     name: form.name.trim(),
-    affiliation: form.affiliation.trim() || undefined,
-    expertiseTracks: form.expertiseTracks,
     maxConcurrentReviews: Number(form.maxConcurrentReviews),
     active: form.active,
   };
+  if (editingId.value) {
+    payload.affiliation = form.affiliation.trim() || null;
+    payload.expertiseTracks = form.expertiseTracks;
+  }
   const { error } = await handleApiCall(() =>
     editingId.value
       ? $fetch(`${apiBase}/admin/reviewers/${editingId.value}`, { method: "PATCH", headers: headers.value, body: payload })
@@ -145,22 +147,27 @@ onMounted(fetchReviewers);
           <UFormGroup label="อีเมล" required>
             <UInput v-model="form.email" type="email" :disabled="Boolean(editingId)" />
           </UFormGroup>
-          <UFormGroup label="สังกัด">
-            <UInput v-model="form.affiliation" />
-          </UFormGroup>
           <UFormGroup label="จำนวนงานแนะนำสูงสุด">
             <UInput v-model.number="form.maxConcurrentReviews" type="number" min="1" />
           </UFormGroup>
-          <UFormGroup label="สาขาความเชี่ยวชาญ">
-            <label v-for="(label, track) in TRACKS" :key="track" class="flex gap-2 text-sm mb-2">
-              <input type="checkbox" :checked="form.expertiseTracks.includes(Number(track))" @change="toggleTrack(Number(track))" />
-              <span>{{ label }}</span>
+          <template v-if="editingId">
+            <UFormGroup label="สังกัด">
+              <UInput v-model="form.affiliation" placeholder="ปล่อยว่างได้หากผู้รีวิวยังไม่ได้ระบุ" />
+            </UFormGroup>
+            <UFormGroup label="สาขาความเชี่ยวชาญ">
+              <label v-for="(label, track) in TRACKS" :key="track" class="flex gap-2 text-sm mb-2">
+                <input type="checkbox" :checked="form.expertiseTracks.includes(Number(track))" @change="toggleTrack(Number(track))" />
+                <span>{{ label }}</span>
+              </label>
+            </UFormGroup>
+            <label class="flex items-center gap-2 text-sm">
+              <input v-model="form.active" type="checkbox" />
+              เปิดรับงานรีวิวใหม่
             </label>
-          </UFormGroup>
-          <label v-if="editingId" class="flex items-center gap-2 text-sm">
-            <input v-model="form.active" type="checkbox" />
-            เปิดรับงานรีวิวใหม่
-          </label>
+          </template>
+          <p v-else class="text-xs text-gray-500">
+            สังกัดและสาขาความเชี่ยวชาญจะให้ผู้รีวิวระบุเองในขั้นตอนตั้งรหัสผ่านครั้งแรก
+          </p>
           <div class="flex gap-2">
             <UButton type="submit" color="primary" :loading="saving">{{ editingId ? "บันทึก" : "สร้างและส่งคำเชิญ" }}</UButton>
             <UButton v-if="editingId" color="gray" variant="soft" @click="resetForm">ยกเลิก</UButton>
@@ -182,9 +189,16 @@ onMounted(fetchReviewers);
                 <UBadge :color="reviewer.hasPassword ? 'blue' : 'yellow'" variant="soft" size="xs">{{ reviewer.hasPassword ? "เปิดใช้งานแล้ว" : "รอตั้งรหัสผ่าน" }}</UBadge>
                 <UBadge v-if="reviewer.invitationStatus === 'failed'" color="red" variant="soft" size="xs">ส่งคำเชิญไม่สำเร็จ</UBadge>
               </div>
-              <p class="text-sm text-gray-500">{{ reviewer.email }} {{ reviewer.affiliation ? ` | ${reviewer.affiliation}` : "" }}</p>
+              <p class="text-sm text-gray-500">
+                {{ reviewer.email }}
+                <span v-if="reviewer.affiliation"> | {{ reviewer.affiliation }}</span>
+                <span v-else class="text-gray-400"> | ยังไม่ได้ระบุสังกัด</span>
+              </p>
               <div class="flex flex-wrap gap-1 mt-2">
-                <UBadge v-for="track in reviewer.expertiseTracks" :key="track" color="primary" variant="soft" size="xs">{{ TRACKS[track] }}</UBadge>
+                <template v-if="reviewer.expertiseTracks.length">
+                  <UBadge v-for="track in reviewer.expertiseTracks" :key="track" color="primary" variant="soft" size="xs">{{ TRACKS[track] }}</UBadge>
+                </template>
+                <UBadge v-else color="yellow" variant="soft" size="xs">ยังไม่ได้ระบุสาขาความเชี่ยวชาญ</UBadge>
               </div>
               <p class="text-xs text-gray-500 mt-2">งานค้าง {{ reviewer.activeReviewCount }}/{{ reviewer.maxConcurrentReviews }} | เสร็จแล้ว {{ reviewer.completedReviewCount }}</p>
             </div>

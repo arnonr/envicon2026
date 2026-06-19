@@ -28,7 +28,6 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         dueAt: reviews.dueAt,
         sentAt: reviews.sentAt,
         completedAt: reviews.completedAt,
-        score: reviews.score,
         recommendation: reviews.recommendation,
         roundNumber: reviewRounds.roundNumber,
         title: submissions.title,
@@ -59,7 +58,6 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           id: reviews.id,
           reviewerId: reviews.reviewerId,
           status: reviews.status,
-          score: reviews.score,
           recommendation: reviews.recommendation,
           commentsToAuthor: reviews.commentsToAuthor,
           commentsToEditor: reviews.commentsToEditor,
@@ -159,7 +157,6 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         return fail("VALIDATION_ERROR", "ไม่สามารถแก้ไขผลประเมินนี้");
       }
       await db.update(reviews).set({
-        score: body.score ?? null,
         recommendation: body.recommendation ?? null,
         commentsToAuthor: body.commentsToAuthor ?? null,
         commentsToEditor: body.commentsToEditor ?? null,
@@ -170,7 +167,6 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
     {
       params: t.Object({ id: t.String() }),
       body: t.Object({
-        score: t.Optional(t.Number({ minimum: 1, maximum: 5 })),
         recommendation: t.Optional(t.Union([t.Literal("accept"), t.Literal("reject"), t.Literal("revise")])),
         commentsToAuthor: t.Optional(t.String()),
         commentsToEditor: t.Optional(t.String()),
@@ -203,7 +199,6 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         return fail("VALIDATION_ERROR", "กรุณากรอกข้อเสนอแนะถึงผู้เขียน");
       }
       await db.update(reviews).set({
-        score: body.score,
         recommendation: body.recommendation,
         commentsToAuthor: body.commentsToAuthor.trim(),
         commentsToEditor: body.commentsToEditor?.trim() || null,
@@ -221,7 +216,6 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
     {
       params: t.Object({ id: t.String() }),
       body: t.Object({
-        score: t.Number({ minimum: 1, maximum: 5 }),
         recommendation: t.Union([t.Literal("accept"), t.Literal("reject"), t.Literal("revise")]),
         commentsToAuthor: t.String({ minLength: 1 }),
         commentsToEditor: t.Optional(t.String()),
