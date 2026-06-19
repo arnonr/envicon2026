@@ -89,6 +89,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           versionSubmitterType: submissionVersions.submitterType,
           versionFileUrl: submissionVersions.fileUrl,
           versionSubmittedAt: submissionVersions.submittedAt,
+          paymentStatus: submissions.paymentStatus,
         })
         .from(reviews)
         .innerJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
@@ -129,6 +130,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         delete response.authorName;
         delete response.authorAffiliation;
         delete response.creators;
+        delete response.paymentStatus;
       }
       delete response.versionCreators;
       return ok(response);
