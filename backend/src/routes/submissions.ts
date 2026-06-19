@@ -152,6 +152,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         creators,
         track: body.track,
         submitterType: body.submitterType,
+        educationLevel: body.educationLevel,
       });
 
       const [sub] = await db
@@ -172,6 +173,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         creators: t.Optional(t.String()),
         track: t.Number({ minimum: 1, maximum: 7 }),
         submitterType: t.Union([t.Literal("student"), t.Literal("general")]),
+        educationLevel: t.Union([t.Literal("bachelor"), t.Literal("master"), t.Literal("doctorate")]),
       }),
     }
   )
@@ -273,6 +275,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.creators !== undefined && { creators: parseCreators(body.creators) }),
           ...(body.track && { track: body.track }),
           ...(body.submitterType && { submitterType: body.submitterType }),
+          ...(body.educationLevel && { educationLevel: body.educationLevel }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -293,6 +296,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         creators: t.Optional(t.String()),
         track: t.Optional(t.Number({ minimum: 1, maximum: 7 })),
         submitterType: t.Optional(t.Union([t.Literal("student"), t.Literal("general")])),
+        educationLevel: t.Optional(t.Union([t.Literal("bachelor"), t.Literal("master"), t.Literal("doctorate")])),
       }),
     }
   )
@@ -491,6 +495,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         creators: sub.creators,
         track: sub.track,
         submitterType: sub.submitterType,
+        educationLevel: sub.educationLevel,
         fileUrl,
         changelog: body.changelog ?? null,
         submittedAt: new Date(),
