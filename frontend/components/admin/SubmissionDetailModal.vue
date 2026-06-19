@@ -23,6 +23,9 @@ interface Submission {
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
   paymentSlipUrl: string | null;
+  paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
+  paymentNote: string | null;
+  paymentVerifiedAt: string | null;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
@@ -133,6 +136,9 @@ const selectedReviewerIds = ref<string[]>([]);
 const dueDates = reactive<Record<string, string>>({});
 const decision = ref<"" | "accept" | "reject" | "revise">("");
 const adminNote = ref("");
+const rejectModalOpen = ref(false);
+const rejectNote = ref('');
+const rejectSubmitting = ref(false);
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -355,6 +361,40 @@ const releaseDecision = async () => {
 const assignmentLabel = (status: WorkflowAssignment["status"]) =>
   ({ assigned: "ยังไม่ส่ง", sent: "ส่งแล้ว", in_progress: "กำลังกรอก", completed: "ประเมินแล้ว" })[status];
 
+const verifyPayment = async () => {
+  if (!props.submissionId) return;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/payment`, {
+      method: 'PATCH',
+      headers: headers.value,
+      body: { paymentStatus: 'verified' },
+    })
+  );
+  if (error) { showError(error); return; }
+  showSuccess('ยืนยันการชำระเงินเรียบร้อย');
+  emit('status-changed');
+  await fetchSubmission();
+};
+
+const submitReject = async () => {
+  if (!props.submissionId || !rejectNote.value.trim()) return;
+  rejectSubmitting.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/payment`, {
+      method: 'PATCH',
+      headers: headers.value,
+      body: { paymentStatus: 'rejected', note: rejectNote.value },
+    })
+  );
+  rejectSubmitting.value = false;
+  if (error) { showError(error); return; }
+  showSuccess('ปฏิเสธการชำระเงินเรียบร้อย');
+  rejectModalOpen.value = false;
+  rejectNote.value = '';
+  emit('status-changed');
+  await fetchSubmission();
+};
+
 const availableReviewers = computed(() => (workflow.value?.reviewers ?? []).filter(
   (reviewer) => reviewer.active && !workflow.value?.currentRound?.assignments.some((assignment) => assignment.reviewerId === reviewer.id),
 ));
@@ -391,6 +431,29 @@ watch(() => props.modelValue, (open) => {
       </div>
 
       <div v-else-if="submission" class="space-y-4 max-h-[70vh] overflow-y-auto -mx-6 px-6">
+        <!-- Payment section -->
+        <div class="border border-gray-200 rounded-lg p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-gray-700">การชำระเงิน</h3>
+            <SubmissionPaymentStatusBadge :status="submission.paymentStatus" />
+          </div>
+
+          <div v-if="submission.paymentSlipUrl" class="text-sm">
+            <span class="text-gray-500">หลักฐาน: </span>
+            <a :href="submission.paymentSlipUrl" target="_blank" class="text-primary-600 hover:underline">เปิดดูสลิป</a>
+          </div>
+
+          <div v-if="submission.paymentStatus === 'rejected' && submission.paymentNote" class="bg-red-50 border border-red-200 rounded p-3 text-sm">
+            <p class="font-semibold text-red-700 mb-1">เหตุผลที่ปฏิเสธ</p>
+            <p class="text-red-600 whitespace-pre-line">{{ submission.paymentNote }}</p>
+          </div>
+
+          <div v-if="submission.paymentStatus === 'pending_verification'" class="flex gap-2">
+            <UButton color="green" size="sm" @click="verifyPayment">✓ ยืนยันการชำระเงิน</UButton>
+            <UButton color="red" variant="soft" size="sm" @click="rejectModalOpen = true">✗ ปฏิเสธ</UButton>
+          </div>
+        </div>
+
         <!-- Info grid -->
         <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
@@ -676,6 +739,24 @@ watch(() => props.modelValue, (open) => {
           </div>
 
           <UButton color="gray" variant="soft" @click="isOpen = false">ปิด</UButton>
+        </div>
+      </template>
+    </UCard>
+  </UModal>
+
+  <UModal v-model="rejectModalOpen" :ui="{ width: 'sm:max-w-md' }">
+    <UCard>
+      <template #header>
+        <h3 class="font-semibold text-sm">ปฏิเสธการชำระเงิน</h3>
+      </template>
+      <div class="space-y-3">
+        <p class="text-sm text-gray-600">กรุณาระบุเหตุผล (ผู้ส่งจะเห็นข้อความนี้)</p>
+        <UTextarea v-model="rejectNote" :rows="4" placeholder="เช่น สลิปไม่ชัด, ยอดเงินไม่ครบ" />
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton color="gray" variant="ghost" @click="rejectModalOpen = false">ยกเลิก</UButton>
+          <UButton color="red" :loading="rejectSubmitting" :disabled="!rejectNote.trim()" @click="submitReject">ปฏิเสธ</UButton>
         </div>
       </template>
     </UCard>
