@@ -418,7 +418,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           title: submissions.title,
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
+          round1FileUrl: submissions.round1FileUrl,
           versionFileUrl: submissionVersions.fileUrl,
+          roundNumber: reviewRounds.roundNumber,
           reviewerId: users.id,
           reviewerName: users.name,
           reviewerEmail: users.email,
@@ -435,7 +437,14 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "งานนี้ถูกส่งไปแล้วหรือไม่พบการมอบหมาย");
       }
-      const reviewFileUrl = assignment.versionFileUrl ?? assignment.fullPaperFileUrl ?? assignment.abstractFileUrl;
+      if ((assignment.roundNumber ?? 1) >= 2 && !assignment.fullPaperFileUrl) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ต้องแนบไฟล์ฉบับสมบูรณ์ก่อนเริ่มรอบที่ 2");
+      }
+      const reviewFileUrl = assignment.versionFileUrl
+        ?? assignment.fullPaperFileUrl
+        ?? assignment.round1FileUrl
+        ?? assignment.abstractFileUrl;
       if (!await storedFileExists(reviewFileUrl)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "ไม่พบไฟล์ผลงานสำหรับรอบพิจารณานี้ กรุณาให้เจ้าของผลงานแนบไฟล์ใหม่ก่อนส่งพิจารณา");
@@ -451,6 +460,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         dueDate: new Date(body.dueAt).toLocaleDateString("th-TH"),
         reviewLink,
         setupLink,
+        roundNumber: assignment.roundNumber ?? 1,
       });
       const email = await sendTrackedEmail({
         type: "review_assignment",
@@ -519,6 +529,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           decision: reviewRounds.decision,
           adminNote: reviewRounds.adminNote,
           status: reviewRounds.status,
+          roundNumber: reviewRounds.roundNumber,
           title: submissions.title,
           authorName: users.name,
           authorEmail: users.email,
@@ -553,6 +564,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         decision: round.decision,
         adminNote: round.adminNote,
         reviewerComments,
+        roundNumber: round.roundNumber,
       });
 
       const notification = await sendTrackedEmail({

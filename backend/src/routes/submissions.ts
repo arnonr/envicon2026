@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { db } from "../db";
 import { reviewRounds, reviews, submissions, revisions, submissionVersions } from "../db/schema";
-import { and, eq, desc, ne } from "drizzle-orm";
+import { and, eq, desc, inArray, ne, sql } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
 import { saveFile, storedFileExists } from "../services/storage";
@@ -37,7 +37,19 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       .from(submissions)
       .where(eq(submissions.authorId, user!.id))
       .orderBy(desc(submissions.updatedAt));
-    return ok(own);
+    const submissionIds = own.map((s) => s.id);
+    const maxRounds = submissionIds.length
+      ? await db
+        .select({
+          submissionId: reviewRounds.submissionId,
+          maxRound: sql<number>`MAX(${reviewRounds.roundNumber})`.as("max_round"),
+        })
+        .from(reviewRounds)
+        .where(inArray(reviewRounds.submissionId, submissionIds))
+        .groupBy(reviewRounds.submissionId)
+      : [];
+    const roundBySubmission = new Map(maxRounds.map((row) => [row.submissionId, row.maxRound ?? 0]));
+    return ok(own.map((s) => ({ ...s, currentRoundNumber: roundBySubmission.get(s.id) ?? 0 })));
   })
 
   // Get by ID (with revisions)
@@ -86,6 +98,22 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         .where(eq(reviews.roundId, releasedRound.id))
       : [];
 
+    const roundSummaries = await db
+      .select({
+        id: reviewRounds.id,
+        roundNumber: reviewRounds.roundNumber,
+        status: reviewRounds.status,
+        decision: reviewRounds.decision,
+        adminNote: reviewRounds.adminNote,
+        releasedAt: reviewRounds.releasedAt,
+      })
+      .from(reviewRounds)
+      .where(eq(reviewRounds.submissionId, params.id))
+      .orderBy(reviewRounds.roundNumber);
+    const currentRoundNumber = roundSummaries.length
+      ? Math.max(...roundSummaries.map((r) => r.roundNumber))
+      : 0;
+
     const latestRevision = revisionList[0] ?? null;
     const dispatchedInOpenRound = latestRevision && sub.status === "submitted"
       ? await db
@@ -103,6 +131,8 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     return ok({
       ...sub,
       revisions: revisionList,
+      currentRoundNumber,
+      rounds: roundSummaries,
       canReplaceLatestRevisionFile: user!.role === "author"
         && sub.authorId === user!.id
         && sub.status === "submitted"
@@ -350,7 +380,57 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     }
   )
 
-  // Upload full paper PDF
+  // Upload round-1 file (author chooses abstract-only or full paper)
+  .post(
+    "/:id/upload-round1-file",
+    async ({ params, body, user, set }) => {
+      const [sub] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      if (!sub) {
+        set.status = 404;
+        return fail("NOT_FOUND", "Submission not found");
+      }
+      if (sub.authorId !== user!.id) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Access denied");
+      }
+      if (sub.status !== "draft") {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "Cannot upload in current status");
+      }
+
+      const fileUrl = await saveFile(body.file, `round1-${params.id}-${body.fileType}`);
+      await db
+        .update(submissions)
+        .set({
+          round1FileUrl: fileUrl,
+          round1FileType: body.fileType,
+          status: "submitted",
+          submittedAt: new Date(),
+        })
+        .where(eq(submissions.id, params.id));
+
+      const [updated] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      return ok(updated);
+    },
+    {
+      body: t.Object({
+        file: t.File({ type: "application/pdf", maxSize: 50 * 1024 * 1024 }),
+        fileType: t.Union([t.Literal("abstract"), t.Literal("full_paper")]),
+      }),
+    }
+  )
+
+  // Upload camera-ready full paper PDF (only after acceptance)
   .post(
     "/:id/upload-paper",
     async ({ params, body, user, set }) => {
@@ -367,6 +447,10 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       if (sub.authorId !== user!.id) {
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
+      }
+      if (sub.status !== "accepted") {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "อัปโหลดบทความฉบับสมบูรณ์ได้หลังจากผลงานผ่านการพิจารณาแล้วเท่านั้น");
       }
 
       const fileUrl = await saveFile(body.file, `paper-${params.id}`);

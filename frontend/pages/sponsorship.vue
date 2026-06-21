@@ -3,53 +3,26 @@ const tiers = [
   {
     name: "Bronze",
     nameTh: "บรอนซ์",
-    price: 10000,
     color: "neutral",
     featured: false,
-    perks: [
-      "Logo บนเว็บไซต์งาน",
-      "ระบุชื่อใน Proceedings",
-      "ใบประกาศนียบัตรขอบคุณ",
-    ],
   },
   {
     name: "Silver",
     nameTh: "ซิลเวอร์",
-    price: 30000,
     color: "primary",
     featured: true,
-    perks: [
-      "ทุกอย่างใน Bronze",
-      "Logo บน Backdrop งาน",
-      "Logo ในสื่อประชาสัมพันธ์",
-      "ลงทะเบียนฟรี 2 ท่าน",
-    ],
   },
   {
     name: "Gold",
     nameTh: "โกลด์",
-    price: 60000,
     color: "amber",
     featured: false,
-    perks: [
-      "ทุกอย่างใน Silver",
-      "Booth ขนาด 2×3 ม.",
-      "ลงทะเบียนฟรี 4 ท่าน",
-      "พาดหัวข่าวบน Social Media",
-    ],
   },
   {
     name: "Platinum",
     nameTh: "แพลทินัม",
-    price: 100000,
     color: "blue",
     featured: false,
-    perks: [
-      "ทุกอย่างใน Gold",
-      "Booth ใหญ่ 3×4 ม. (มุม)",
-      "ลงทะเบียนฟรี 8 ท่าน",
-      "กล่าวเปิด 5 นาที",
-    ],
   },
 ];
 
@@ -91,12 +64,6 @@ const colorMap: Record<string, { text: string; border: string; bg: string }> = {
     border: "border-blue-100",
     bg: "bg-gradient-to-b from-blue-50/40 to-white",
   },
-};
-
-const priceLabel: Record<string, string> = {
-  Bronze: "เริ่มต้น",
-  Gold: "คุ้มค่า",
-  Platinum: "พรีเมียม",
 };
 </script>
 
@@ -230,25 +197,12 @@ const priceLabel: Record<string, string> = {
               class="border-t my-4"
               :class="colorMap[tier.color].border"
             ></div>
-            <div class="text-xs text-gray-500">
-              {{ priceLabel[tier.name] || "" }}
-            </div>
             <div
-              class="text-3xl font-extrabold mt-1"
-              :class="colorMap[tier.color].text"
+              class="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full"
             >
-              ฿{{ tier.price.toLocaleString() }}
+              <span>⏳</span>
+              <span>อยู่ระหว่างอัพเดทข้อมูล</span>
             </div>
-            <ul class="mt-4 space-y-2 text-xs text-gray-700 leading-relaxed">
-              <li
-                v-for="(perk, j) in tier.perks"
-                :key="j"
-                class="flex gap-2"
-              >
-                <span class="text-primary-600 flex-shrink-0">✓</span>
-                <span>{{ perk }}</span>
-              </li>
-            </ul>
           </UCard>
         </div>
       </div>

@@ -59,10 +59,11 @@ interface ReviewAssignmentData {
   dueDate: string;
   reviewLink: string;
   setupLink?: string;
+  roundNumber: number;
 }
 
 export function buildReviewAssignmentEmail(data: ReviewAssignmentData): { subject: string; htmlBody: string } {
-  const { reviewerName, title, dueDate, reviewLink, setupLink } = data;
+  const { reviewerName, title, dueDate, reviewLink, setupLink, roundNumber } = data;
 
   const setupHtml = setupLink ? `
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef3c7;border:1px solid #fcd34d;border-radius:6px;margin:24px 0">
@@ -93,6 +94,10 @@ export function buildReviewAssignmentEmail(data: ReviewAssignmentData): { subjec
             <td style="font-size:14px;color:#111827;font-weight:500;padding:4px 0;line-height:1.6">${escapeHtml(title)}</td>
           </tr>
           <tr>
+            <td style="font-size:13px;color:#6b7280;padding:4px 0 4px;vertical-align:top">รอบการพิจารณา</td>
+            <td style="font-size:14px;color:#111827;font-weight:600;padding:4px 0 4px">รอบที่ ${roundNumber}</td>
+          </tr>
+          <tr>
             <td style="font-size:13px;color:#6b7280;padding:8px 0 4px;vertical-align:top">กำหนดส่งผล</td>
             <td style="font-size:14px;color:#dc2626;font-weight:600;padding:8px 0 4px">${escapeHtml(dueDate)}</td>
           </tr>
@@ -118,7 +123,7 @@ export function buildReviewAssignmentEmail(data: ReviewAssignmentData): { subjec
   `;
 
   return {
-    subject: `มอบหมายประเมินผลงาน: ${title}`,
+    subject: `มอบหมายประเมินผลงาน (รอบที่ ${roundNumber}): ${title}`,
     htmlBody: emailLayout(body),
   };
 }
@@ -130,6 +135,7 @@ interface AuthorResultData {
   decision: "accept" | "reject" | "revise";
   adminNote?: string | null;
   reviewerComments: { reviewerIndex: number; comment: string }[];
+  roundNumber: number;
 }
 
 function emailLayout(body: string): string {
@@ -180,7 +186,7 @@ function emailLayout(body: string): string {
 }
 
 export function buildAuthorResultEmail(data: AuthorResultData): { subject: string; htmlBody: string } {
-  const { authorName, title, submissionId, decision, adminNote, reviewerComments } = data;
+  const { authorName, title, submissionId, decision, adminNote, reviewerComments, roundNumber } = data;
 
   const decisionText =
     decision === "accept" ? "ผ่านการพิจารณา" :
@@ -208,7 +214,7 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
     </div>
   ` : "";
 
-  const subject = `ผลการพิจารณาผลงาน: ${title} — ${decisionText}`;
+  const subject = `ผลการพิจารณาผลงาน (รอบที่ ${roundNumber}): ${title} — ${decisionText}`;
 
   const body = `
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 16px">
@@ -227,6 +233,10 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
           <tr>
             <td style="font-size:13px;color:#6b7280;padding:4px 0">เลขที่ผลงาน</td>
             <td style="font-size:14px;color:#111827;padding:4px 0"><code style="background:#e5e7eb;padding:2px 6px;border-radius:3px;font-size:12px">${escapeHtml(submissionId)}</code></td>
+          </tr>
+          <tr>
+            <td style="font-size:13px;color:#6b7280;padding:4px 0">รอบการพิจารณา</td>
+            <td style="font-size:14px;color:#111827;font-weight:600;padding:4px 0">รอบที่ ${roundNumber}</td>
           </tr>
           <tr>
             <td style="font-size:13px;color:#6b7280;padding:4px 0">ผลการพิจารณา</td>

@@ -573,6 +573,18 @@ watch(() => props.modelValue, (open) => {
                   {{ round.status === 'released' ? decisionLabel(round.decision) : 'กำลังดำเนินการ' }}
                 </UBadge>
               </div>
+              <div v-if="round.submissionVersion?.fileUrl" class="text-xs">
+                <span class="text-gray-500">ไฟล์รอบนี้: </span>
+                <a
+                  v-if="round.submissionVersion.fileAvailable"
+                  :href="fileLink(round.submissionVersion.fileUrl)"
+                  target="_blank"
+                  class="text-primary-600 hover:underline"
+                >
+                  ดาวน์โหลด PDF
+                </a>
+                <span v-else class="text-red-600">ไม่พบไฟล์</span>
+              </div>
               <p v-if="round.releasedAt" class="text-xs text-gray-500">แจ้งผลเมื่อ {{ formatDate(round.releasedAt) }}</p>
               <p v-if="round.adminNote" class="text-sm whitespace-pre-line">
                 <span class="text-gray-500">หมายเหตุจากเจ้าหน้าที่:</span> {{ round.adminNote }}

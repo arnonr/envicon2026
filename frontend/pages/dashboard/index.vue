@@ -14,6 +14,7 @@ interface Submission {
   fullPaperFileUrl: string | null;
   submittedAt: string | null;
   updatedAt: string;
+  currentRoundNumber: number;
 }
 
 const config = useRuntimeConfig();
@@ -172,6 +173,7 @@ onMounted(async () => {
                 </p>
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
+                <SubmissionRoundIndicator v-if="sub.currentRoundNumber > 0" :round-number="sub.currentRoundNumber" />
                 <SubmissionStatusBadge :status="sub.status" />
                 <UButton
                   v-if="sub.status === 'revision_requested'"

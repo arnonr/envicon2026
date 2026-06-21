@@ -14,6 +14,7 @@ interface Submission {
   educationLevel: string;
   presentationFormat: string;
   status: string;
+  round1FileType: "abstract" | "full_paper" | null;
 }
 
 const route = useRoute();
@@ -27,6 +28,7 @@ const loadFailed = ref(false);
 const saving = ref(false);
 const initialCreators = ref<Creator[]>([]);
 const submissionFormRef = ref<{ creators: Creator[] } | null>(null);
+const round1FileType = ref<"abstract" | "full_paper" | null>(null);
 const form = ref<SubmissionFormData>({
   title: '',
   title_en: '',
@@ -95,6 +97,7 @@ onMounted(async () => {
     presentationFormat: submission.presentationFormat,
   };
   initialCreators.value = parseCreators(submission.creators);
+  round1FileType.value = submission.round1FileType;
   loading.value = false;
 });
 
@@ -204,6 +207,9 @@ const submitRevision = async () => {
 
         <div>
           <p class="text-sm font-medium text-gray-700 mb-2">ไฟล์ผลงานที่แก้ไข (PDF) <span class="text-red-500">*</span></p>
+          <p v-if="round1FileType === 'abstract'" class="text-xs text-orange-700 bg-orange-50 border border-orange-200 rounded-md px-3 py-2 mb-3">
+            รอบนี้ต้องส่ง<strong>บทความฉบับสมบูรณ์ (Full Paper)</strong>เท่านั้น
+          </p>
           <CommonFileUpload
             :loading="uploading"
             :max-size-mb="50"

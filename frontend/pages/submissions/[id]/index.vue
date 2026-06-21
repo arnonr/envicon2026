@@ -10,6 +10,15 @@ interface Revision {
   fileAvailable: boolean;
 }
 
+interface RoundSummary {
+  id: string;
+  roundNumber: number;
+  status: "assigning" | "in_review" | "ready_for_decision" | "released";
+  decision: "accept" | "reject" | "revise" | null;
+  adminNote: string | null;
+  releasedAt: string | null;
+}
+
 interface ReleasedResult {
   decision: "accept" | "reject" | "revise";
   adminNote: string | null;
@@ -27,9 +36,13 @@ interface Submission {
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  round1FileUrl: string | null;
+  round1FileType: "abstract" | "full_paper" | null;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
+  rounds: RoundSummary[];
+  currentRoundNumber: number;
   canReplaceLatestRevisionFile: boolean;
   releasedResult: ReleasedResult | null;
 }
@@ -134,7 +147,10 @@ onMounted(fetchSubmission);
           <h1 class="text-xl font-bold text-gray-900 leading-snug">{{ submission.title }}</h1>
           <p v-if="submission.titleEn" class="text-sm text-gray-500 mt-0.5">{{ submission.titleEn }}</p>
         </div>
-        <SubmissionStatusBadge :status="submission.status" />
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <SubmissionRoundIndicator v-if="submission.currentRoundNumber > 0" :round-number="submission.currentRoundNumber" />
+          <SubmissionStatusBadge :status="submission.status" />
+        </div>
       </div>
 
       <!-- Info Card -->
@@ -168,15 +184,19 @@ onMounted(fetchSubmission);
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 text-sm">
               <UIcon name="i-heroicons-document" class="w-4 h-4 text-gray-400" />
-              <span class="text-gray-700">บทคัดย่อ (Abstract)</span>
+              <span class="text-gray-700">
+                ไฟล์รอบที่ 1
+                <span v-if="submission.round1FileType === 'abstract'" class="text-xs text-gray-500 ml-1">(เฉพาะบทคัดย่อ)</span>
+                <span v-else-if="submission.round1FileType === 'full_paper'" class="text-xs text-gray-500 ml-1">(บทความฉบับสมบูรณ์)</span>
+              </span>
             </div>
             <UButton
-              v-if="submission.abstractFileUrl"
+              v-if="submission.round1FileUrl"
               size="xs"
               color="gray"
               variant="soft"
               icon="i-heroicons-arrow-down-tray"
-              :to="submission.abstractFileUrl"
+              :to="submission.round1FileUrl"
               target="_blank"
             >
               ดาวน์โหลด
@@ -184,13 +204,12 @@ onMounted(fetchSubmission);
             <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
           </div>
 
-          <div class="flex items-center justify-between">
+          <div v-if="submission.fullPaperFileUrl" class="flex items-center justify-between">
             <div class="flex items-center gap-2 text-sm">
               <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-gray-400" />
               <span class="text-gray-700">บทความฉบับสมบูรณ์ (Full Paper)</span>
             </div>
             <UButton
-              v-if="submission.fullPaperFileUrl"
               size="xs"
               color="gray"
               variant="soft"
@@ -200,7 +219,6 @@ onMounted(fetchSubmission);
             >
               ดาวน์โหลด
             </UButton>
-            <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
           </div>
         </div>
       </UCard>
@@ -284,7 +302,7 @@ onMounted(fetchSubmission);
             class="flex items-start justify-between text-sm"
           >
             <div>
-              <span class="font-medium">ครั้งที่ {{ rev.version }}</span>
+              <span class="font-medium">ผลงานฉบับแก้ไขครั้งที่ {{ rev.version }}</span>
               <span class="text-gray-400 ml-2">{{ formatDate(rev.submittedAt) }}</span>
               <p v-if="rev.changelog" class="text-gray-500 text-xs mt-0.5">{{ rev.changelog }}</p>
               <p v-if="!rev.fileAvailable" class="text-red-600 text-xs mt-0.5">ไม่พบไฟล์ กรุณาแนบใหม่ก่อนส่งพิจารณา</p>
@@ -300,6 +318,38 @@ onMounted(fetchSubmission);
             />
           </li>
         </ul>
+      </UCard>
+
+      <!-- Review rounds timeline -->
+      <UCard v-if="submission.rounds.length > 0" class="mb-6">
+        <template #header>
+          <h3 class="font-semibold text-sm">รอบการพิจารณา</h3>
+        </template>
+        <ol class="space-y-3">
+          <li
+            v-for="round in submission.rounds"
+            :key="round.id"
+            class="flex items-start gap-3 text-sm border-l-2 pl-3"
+            :class="round.status === 'released' ? 'border-primary-400' : 'border-yellow-400'"
+          >
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-medium">รอบที่ {{ round.roundNumber }}</span>
+                <UBadge
+                  :color="round.status === 'released' ? (round.decision === 'accept' ? 'green' : round.decision === 'reject' ? 'red' : 'orange') : 'yellow'"
+                  variant="soft"
+                  size="xs"
+                >
+                  {{ round.status === 'released'
+                    ? (round.decision === 'accept' ? 'ผ่านการพิจารณา' : round.decision === 'reject' ? 'ไม่ผ่าน' : 'ขอแก้ไข')
+                    : 'กำลังดำเนินการ' }}
+                </UBadge>
+              </div>
+              <p v-if="round.releasedAt" class="text-xs text-gray-400 mt-0.5">แจ้งผลเมื่อ {{ formatDate(round.releasedAt) }}</p>
+              <p v-if="round.adminNote" class="text-xs text-gray-600 mt-1 whitespace-pre-line">{{ round.adminNote }}</p>
+            </div>
+          </li>
+        </ol>
       </UCard>
     </template>
   </div>

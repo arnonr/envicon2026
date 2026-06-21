@@ -88,61 +88,221 @@ const committees: CommitteeGroup[] = [
   },
 ];
 
-function getInitials(m: Member): string {
-  const first = m.firstName?.charAt(0) ?? "";
-  const last = m.lastName?.charAt(0) ?? "";
-  return (first + last).toUpperCase();
+const totalMembers = committees.reduce((sum, g) => sum + g.members.length, 0);
+
+const romanNumerals = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+
+function pad(n: number, width = 2): string {
+  return String(n).padStart(width, "0");
 }
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto px-4 py-16">
-    <!-- Page header -->
-    <header class="text-center mb-16">
-      <h1 class="text-3xl font-bold text-gray-900 mb-3">คณะกรรมการ</h1>
-      <p class="text-gray-500 text-lg">Organizing Committee</p>
-      <div class="w-24 h-1 bg-primary-500 mx-auto mt-4 rounded-full"></div>
+  <div class="min-h-screen bg-stone-50 text-stone-900">
+    <!-- ===== Editorial Header ===== -->
+    <header class="border-b border-stone-300/80">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12 pt-16 lg:pt-24 pb-12 lg:pb-16">
+        <!-- Top meta row -->
+        <div class="flex items-center gap-4 mb-10 lg:mb-14">
+          <span class="font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] text-stone-500">
+            ENVICON · MMXXVI
+          </span>
+          <div class="flex-1 h-px bg-stone-300"></div>
+          <span class="font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em] text-stone-500">
+            Vol. 03 / Issue 2026
+          </span>
+        </div>
+
+        <!-- Display title -->
+        <h1 class="font-sarabun font-light text-stone-900 leading-[0.92] tracking-tight text-6xl sm:text-7xl lg:text-[7.5rem]">
+          คณะกรรมการ
+        </h1>
+        <div class="mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2">
+          <span class="font-mono text-xs uppercase tracking-[0.3em] text-stone-500">
+            Organizing Committee Directory
+          </span>
+          <span class="hidden sm:inline-block w-10 h-px bg-stone-400"></span>
+          <span class="font-mono text-xs uppercase tracking-[0.3em] text-stone-500">
+            {{ totalMembers }} members · {{ committees.length }} committees
+          </span>
+        </div>
+
+        <!-- Stats grid -->
+        <dl class="mt-14 lg:mt-20 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 border-t border-stone-300">
+          <div
+            v-for="(g, i) in committees"
+            :key="g.id"
+            class="group relative px-5 py-6 lg:py-8 border-b lg:border-b-0 border-stone-200"
+            :class="[
+              i < committees.length - 1 ? 'lg:border-r' : '',
+              i % 2 === 0 ? 'border-r sm:border-r' : '',
+              i < 3 ? 'sm:border-b lg:border-b-0' : '',
+            ]"
+          >
+            <dt class="flex items-baseline gap-2">
+              <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-400">
+                {{ pad(i + 1) }}
+              </span>
+              <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-400 truncate">
+                — {{ g.titleEn.split(" ")[0] }}
+              </span>
+            </dt>
+            <dd class="mt-3 flex items-baseline gap-2">
+              <span class="font-sarabun font-light text-stone-900 leading-none text-5xl lg:text-6xl tabular-nums">
+                {{ g.members.length }}
+              </span>
+              <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-500">
+                {{ g.members.length === 1 ? "member" : "members" }}
+              </span>
+            </dd>
+            <p class="mt-3 font-sarabun text-sm text-stone-600 leading-snug line-clamp-2">
+              {{ g.title }}
+            </p>
+          </div>
+        </dl>
+      </div>
     </header>
 
-    <!-- Sections -->
-    <section
-      v-for="(group, gi) in committees"
-      :key="group.id"
-      :class="gi > 0 ? 'mt-16' : ''"
-    >
-      <div class="flex items-center gap-4 mb-6">
-        <div class="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0">
-          <UIcon :name="group.icon" class="w-6 h-6 text-primary-600" aria-hidden="true" />
-        </div>
-        <div>
-          <h2 class="text-xl font-bold text-gray-900">{{ group.title }}</h2>
-          <p class="text-sm text-gray-500">{{ group.titleEn }}</p>
-        </div>
-      </div>
-      <div class="h-px bg-gray-200 mb-8"></div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <UCard
-          v-for="(m, mi) in group.members"
-          :key="group.id + '-' + mi"
-          class="p-4 transition-shadow hover:shadow-md"
-        >
-          <div class="flex items-center gap-4">
-            <div
-              class="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-semibold text-lg flex-shrink-0"
-              aria-hidden="true"
-            >
-              {{ getInitials(m) }}
+    <!-- ===== Main: sidebar nav + sections ===== -->
+    <div class="max-w-7xl mx-auto px-6 lg:px-12 py-14 lg:py-20">
+      <div class="lg:grid lg:grid-cols-[220px_1fr] lg:gap-x-16 xl:gap-x-20">
+        <!-- Sticky sidebar nav -->
+        <aside class="hidden lg:block">
+          <div class="sticky top-8">
+            <div class="font-mono text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-4">
+              Contents
             </div>
-            <div class="min-w-0">
-              <h3 class="text-base font-semibold text-gray-900 leading-snug">
-                {{ m.prefix }} {{ m.firstName }} {{ m.lastName }}
-              </h3>
-              <p class="text-sm text-gray-500 mt-0.5 truncate">{{ m.affiliation }}</p>
+            <nav class="border-t border-stone-300">
+              <a
+                v-for="(g, i) in committees"
+                :key="g.id"
+                :href="`#${g.id}`"
+                class="group flex items-baseline gap-3 py-3 border-b border-stone-200 hover:border-stone-900 transition-colors"
+              >
+                <span class="font-mono text-[10px] text-stone-400 group-hover:text-primary-600 transition-colors tabular-nums w-6">
+                  {{ pad(i + 1) }}
+                </span>
+                <span class="flex-1 font-sarabun text-sm text-stone-700 group-hover:text-stone-900 truncate">
+                  {{ g.title }}
+                </span>
+                <span class="font-mono text-[10px] text-stone-400 group-hover:text-stone-700 tabular-nums">
+                  {{ g.members.length }}
+                </span>
+              </a>
+            </nav>
+
+            <div class="mt-6 pt-6 border-t border-stone-300">
+              <div class="font-mono text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2">
+                Total
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span class="font-sarabun font-light text-3xl text-stone-900 tabular-nums">{{ totalMembers }}</span>
+                <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-500">members</span>
+              </div>
             </div>
           </div>
-        </UCard>
+        </aside>
+
+        <!-- Sections -->
+        <main class="space-y-20 lg:space-y-28">
+          <section
+            v-for="(group, gi) in committees"
+            :id="group.id"
+            :key="group.id"
+            class="scroll-mt-12"
+          >
+            <!-- Section header -->
+            <div class="border-t-2 border-stone-900 pt-5 mb-8 lg:mb-10">
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-3">
+                <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-stone-500">
+                  Section {{ pad(gi + 1) }} · {{ romanNumerals[gi] }}
+                </span>
+                <span class="font-mono text-[10px] uppercase tracking-[0.25em] text-stone-400">
+                  {{ group.titleEn }}
+                </span>
+              </div>
+              <h2 class="font-sarabun font-light text-stone-900 leading-[1.05] tracking-tight text-3xl sm:text-4xl lg:text-5xl">
+                {{ group.title }}
+              </h2>
+              <div class="mt-4 flex items-center gap-3">
+                <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-primary-700">
+                  {{ group.members.length }} {{ group.members.length === 1 ? "Member" : "Members" }}
+                </span>
+                <span class="flex-1 h-px bg-stone-200"></span>
+              </div>
+            </div>
+
+            <!-- Member directory (2 columns) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 md:gap-x-10 lg:gap-x-14">
+              <div
+                v-for="(m, mi) in group.members"
+                :key="`${group.id}-${mi}`"
+                class="member-row group flex items-baseline gap-4 py-4 lg:py-5 border-b border-stone-200 hover:border-stone-900 transition-colors duration-300 cursor-default"
+                :style="{ '--delay': `${mi * 40}ms` }"
+              >
+                <!-- Index number -->
+                <span class="font-mono text-xs text-stone-300 group-hover:text-primary-600 transition-colors duration-300 tabular-nums w-7 flex-shrink-0">
+                  {{ pad(mi + 1) }}
+                </span>
+                <!-- Name + affiliation -->
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-sarabun leading-snug">
+                    <span class="block text-[11px] font-normal text-stone-500 uppercase tracking-[0.15em] mb-0.5">
+                      {{ m.prefix }}
+                    </span>
+                    <span class="block font-medium text-stone-900 text-base lg:text-[17px]">
+                      {{ m.firstName }} {{ m.lastName }}
+                    </span>
+                  </h3>
+                  <p class="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-stone-500 truncate">
+                    {{ m.affiliation }}
+                  </p>
+                </div>
+                <!-- Hover indicator -->
+                <span class="hidden sm:block w-1.5 h-1.5 rounded-full bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-shrink-0 self-center"></span>
+              </div>
+            </div>
+          </section>
+        </main>
       </div>
-    </section>
+    </div>
+
+    <!-- Footer note -->
+    <footer class="border-t border-stone-300">
+      <div class="max-w-7xl mx-auto px-6 lg:px-12 py-8 flex flex-wrap items-center justify-between gap-4">
+        <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-stone-500">
+          End of directory — {{ totalMembers }} entries
+        </span>
+        <span class="font-mono text-[10px] uppercase tracking-[0.3em] text-stone-400">
+          ENVICON 2026 · Kasetsart University
+        </span>
+      </div>
+    </footer>
   </div>
 </template>
+
+<style scoped>
+@keyframes rowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.member-row {
+  animation: rowFadeIn 0.5s ease-out backwards;
+  animation-delay: var(--delay);
+}
+
+/* Subtle paper grain texture */
+.bg-stone-50 {
+  background-color: #faf8f4;
+  background-image:
+    radial-gradient(at 8% 0%, rgba(120, 113, 108, 0.04) 0px, transparent 50%),
+    radial-gradient(at 92% 100%, rgba(120, 113, 108, 0.04) 0px, transparent 50%);
+}
+</style>

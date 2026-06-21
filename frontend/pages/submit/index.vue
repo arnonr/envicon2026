@@ -91,6 +91,7 @@ const createSubmission = async () => {
 };
 
 const selectedFile = ref<File | null>(null);
+const round1FileType = ref<'abstract' | 'full_paper'>('abstract');
 
 const onFileSelected = (file: File) => {
   selectedFile.value = file;
@@ -102,9 +103,10 @@ const uploadAbstract = async () => {
 
   const formData = new FormData();
   formData.append('file', selectedFile.value);
+  formData.append('fileType', round1FileType.value);
 
   const { data, error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/submissions/${submissionId.value}/upload-abstract`, {
+    $fetch(`${apiBase}/submissions/${submissionId.value}/upload-round1-file`, {
       method: 'POST',
       headers: headers.value,
       body: formData,
@@ -118,7 +120,9 @@ const uploadAbstract = async () => {
     return;
   }
 
-  showSuccess('ส่งบทคัดย่อเรียบร้อยแล้ว');
+  showSuccess(round1FileType.value === 'abstract'
+    ? 'ส่งบทคัดย่อเรียบร้อยแล้ว'
+    : 'ส่งบทความฉบับสมบูรณ์เรียบร้อยแล้ว');
   step.value = 3;
 };
 </script>
@@ -171,14 +175,58 @@ const uploadAbstract = async () => {
     <!-- Step 2: Upload -->
     <UCard v-else-if="step === 2">
       <template #header>
-        <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 2: อัปโหลดไฟล์บทคัดย่อ</h2>
+        <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 2: อัปโหลดไฟล์ผลงาน</h2>
       </template>
 
-      <div class="space-y-4">
-        <p class="text-sm text-gray-600">
-          กรุณาอัปโหลดไฟล์ PDF บทคัดย่อ (Abstract) ขนาดไม่เกิน 50 MB
-        </p>
-        <CommonFileUpload :loading="uploading" :max-size-mb="50" @change="onFileSelected" />
+      <div class="space-y-5">
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">ประเภทไฟล์ที่ส่ง <span class="text-red-500">*</span></p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label
+              class="cursor-pointer border-2 rounded-lg p-4 transition-colors"
+              :class="round1FileType === 'abstract' ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-gray-300'"
+            >
+              <input type="radio" v-model="round1FileType" value="abstract" class="sr-only" />
+              <div class="flex items-start gap-3">
+                <UIcon
+                  :name="round1FileType === 'abstract' ? 'i-heroicons-check-circle' : 'i-heroicons-document'"
+                  class="w-5 h-5 mt-0.5 flex-shrink-0"
+                  :class="round1FileType === 'abstract' ? 'text-primary-600' : 'text-gray-400'"
+                />
+                <div>
+                  <p class="font-medium text-sm text-gray-900">เฉพาะบทคัดย่อ (Abstract)</p>
+                  <p class="text-xs text-gray-500 mt-1">ส่งเอกสารบทคัดย่อเพื่อให้คณะกรรมการพิจารณาเบื้องต้น</p>
+                </div>
+              </div>
+            </label>
+            <label
+              class="cursor-pointer border-2 rounded-lg p-4 transition-colors"
+              :class="round1FileType === 'full_paper' ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-gray-300'"
+            >
+              <input type="radio" v-model="round1FileType" value="full_paper" class="sr-only" />
+              <div class="flex items-start gap-3">
+                <UIcon
+                  :name="round1FileType === 'full_paper' ? 'i-heroicons-check-circle' : 'i-heroicons-document-text'"
+                  class="w-5 h-5 mt-0.5 flex-shrink-0"
+                  :class="round1FileType === 'full_paper' ? 'text-primary-600' : 'text-gray-400'"
+                />
+                <div>
+                  <p class="font-medium text-sm text-gray-900">บทความฉบับสมบูรณ์ (Full Paper)</p>
+                  <p class="text-xs text-gray-500 mt-1">ส่งบทความฉบับเต็มตั้งแต่รอบแรก</p>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <UDivider />
+
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">
+            ไฟล์ {{ round1FileType === 'abstract' ? 'บทคัดย่อ' : 'บทความฉบับสมบูรณ์' }} (PDF) <span class="text-red-500">*</span>
+          </p>
+          <CommonFileUpload :loading="uploading" :max-size-mb="50" @change="onFileSelected" />
+        </div>
       </div>
 
       <template #footer>
@@ -211,7 +259,9 @@ const uploadAbstract = async () => {
         <div class="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center">
           <UIcon name="i-heroicons-check-circle" class="w-10 h-10 text-primary-600" />
         </div>
-        <h3 class="text-xl font-semibold text-gray-900">ส่งบทคัดย่อเรียบร้อยแล้ว!</h3>
+        <h3 class="text-xl font-semibold text-gray-900">
+          ส่ง{{ round1FileType === 'abstract' ? 'บทคัดย่อ' : 'บทความฉบับสมบูรณ์' }}เรียบร้อยแล้ว!
+        </h3>
         <p class="text-gray-500 text-sm max-w-sm">
           ขณะนี้ผลงานของคุณอยู่ในสถานะ<strong>ส่งแล้ว</strong> รอคณะกรรมการพิจารณา (สามารถชำระเงินภายหลังได้จากหน้ารายละเอียดผลงาน)
         </p>

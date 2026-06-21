@@ -44,6 +44,8 @@ export const submissions = mysqlTable("submissions", {
   ]).notNull().default("draft"),
   abstractFileUrl: varchar("abstract_file_url", { length: 500 }),
   fullPaperFileUrl: varchar("full_paper_file_url", { length: 500 }),
+  round1FileUrl: varchar("round1_file_url", { length: 500 }),
+  round1FileType: mysqlEnum("round1_file_type", ["abstract", "full_paper"]),
   paymentSlipUrl: varchar("payment_slip_url", { length: 500 }),
   paymentStatus: mysqlEnum("payment_status", [
     "unpaid",
