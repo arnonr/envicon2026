@@ -4,7 +4,7 @@ import { fail } from "../utils/response";
 
 export const requireRole = (roles: string[]) =>
   new Elysia({ name: `role:${roles.join(",")}` })
-    .onBeforeHandle(async ({ headers, set }) => {
+    .onBeforeHandle({ as: "scoped" }, async ({ headers, set }) => {
       const user = await getUserFromHeaders(headers.authorization);
       if (!user) {
         set.status = 401;

@@ -64,6 +64,13 @@
       "when": 1781900000000,
       "tag": "0008_round1_file",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1782017383104,
+      "tag": "0009_small_patriot",
+      "breakpoints": true
     }
   ]
 }

@@ -113,9 +113,15 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       ),
     });
   })
-  .get("/submissions", async ({ query }) => {
+  .get("/submissions", async ({ query, set }) => {
     const conditions = [];
-    if (query.status) conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    if (query.status) {
+      if (!(query.status in STATUS_NAMES)) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", `Invalid status: ${query.status}`);
+      }
+      conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    }
     if (query.paymentStatus) conditions.push(eq(submissions.paymentStatus, query.paymentStatus as typeof submissions.paymentStatus.enumValues[number]));
     if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
 
@@ -211,9 +217,15 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       limit: t.Optional(t.String()),
     }),
   })
-  .get("/submissions/export", async ({ query, request }) => {
+  .get("/submissions/export", async ({ query, request, set }) => {
     const conditions = [];
-    if (query.status) conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    if (query.status) {
+      if (!(query.status in STATUS_NAMES)) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", `Invalid status: ${query.status}`);
+      }
+      conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    }
     if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
 
     const where = conditions.length ? and(...conditions) : undefined;
