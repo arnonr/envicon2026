@@ -367,14 +367,14 @@ const stats: Stat[] = [
             class="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white text-meadow-700 font-semibold shadow-xl hover:bg-meadow-50 hover:shadow-2xl transition-all duration-300"
           >
             <UIcon name="i-heroicons-envelope" class="w-4 h-4" />
-            sponsor@envicon2026.ac.th
+            fiit@technopark.kmutnb.ac.th
           </a>
           <a
             href="tel:025552000"
             class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-white/30 bg-white/10 backdrop-blur-md text-white font-semibold hover:bg-white/20 transition-all duration-300"
           >
             <UIcon name="i-heroicons-phone" class="w-4 h-4" />
-            02-555-2000
+            02-555-2000 ต่อ 1789
           </a>
         </div>
       </div>
