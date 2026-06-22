@@ -23,10 +23,10 @@ const contactMethods: ContactMethod[] = [
     id: "phone",
     label: "โทรศัพท์",
     labelEn: "Phone",
-    value: "02-555-2000 ต่อ 2401",
+    value: "02-555-2000 ต่อ 1789",
     href: "tel:025552000",
     icon: "i-heroicons-phone",
-    hint: "จันทร์–ศุกร์ · 09:00–17:00 น.",
+    hint: "จันทร์–ศุกร์ · 08:00–16:00 น.",
   },
   {
     id: "web",
@@ -87,7 +87,7 @@ const socialLinks = [
           <!-- Photo side -->
           <div class="relative h-64 lg:h-96 rounded-2xl overflow-hidden shadow-lg">
             <img
-              src="https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=1200&q=80&auto=format&fit=crop"
+              src="https://www.geodesicdesign.co.th/admin/img_large/2779544.jpg"
               alt="Bangkok cityscape"
               class="absolute inset-0 w-full h-full object-cover contact-hero-img"
               loading="eager"
@@ -103,7 +103,7 @@ const socialLinks = [
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="text-[10px] font-semibold uppercase tracking-[0.2em] text-meadow-700 mb-0.5">
-                      Location · Bangkok
+                      Location · KMUTNB
                     </div>
                     <p class="text-xs text-stone-700 leading-relaxed">
                       อาคาร 99 อุทยานเทคโนโลยี มจพ. · ถ.ประชาราษฎร์ 1 · บางซื่อ · กรุงเทพฯ 10800
@@ -214,7 +214,7 @@ const socialLinks = [
                   Hours
                 </div>
                 <div class="text-sm font-semibold text-stone-900">
-                  Mon–Fri · 09:00
+                  Mon–Fri · 08:00–16:00
                 </div>
               </div>
             </div>
@@ -234,7 +234,7 @@ const socialLinks = [
           <!-- Photo map -->
           <div class="relative h-80 lg:h-auto min-h-[400px] rounded-2xl overflow-hidden border border-stone-200 shadow-sm">
             <img
-              src="https://images.unsplash.com/photo-1545569310-3f5f7b5e8b87?w=1600&q=80&auto=format&fit=crop"
+              src="https://www.geodesicdesign.co.th/admin/img_large/6761665.jpg"
               alt="KMUTNB Technopark"
               class="absolute inset-0 w-full h-full object-cover"
               loading="lazy"

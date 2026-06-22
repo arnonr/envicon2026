@@ -237,7 +237,7 @@
         <div class="grid md:grid-cols-2 gap-6 items-stretch">
           <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-meadow-200/40 aspect-[4/3] md:aspect-auto md:min-h-[360px]">
             <img
-              src="https://images.unsplash.com/photo-1562774053-701939374585?w=1400&q=80&auto=format&fit=crop"
+              src="https://www.geodesicdesign.co.th/admin/img_large/8907637.jpg"
               alt="Modern university building"
               class="w-full h-full object-cover"
             />

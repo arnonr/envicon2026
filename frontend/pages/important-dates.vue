@@ -44,7 +44,7 @@ const hotels = [
     rating: 4.2,
     distance: "1.2 กม.",
     transport: "MRT วงศ์สว่าง",
-    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&h=450&q=80",
+    imageUrl: "http://bellabhotel.com/wp-content/uploads/2017/12/lobby.jpg",
     url: "https://www.agoda.com/th-th/bella-b-hotel_45/hotel/all/bangkok-th.html?countryId=106&finalPriceView=1&isShowMobileAppPrice=false&cid=1919460&numberOfBedrooms=&familyMode=false&adults=1&children=0&rooms=1&maxRooms=0&checkIn=2026-06-28&isCalendarCallout=false&childAges=&numberOfGuest=0&missingChildAges=false&travellerType=-1&showReviewSubmissionEntry=false&currencyCode=THB&isFreeOccSearch=false&tag=d939ef00-30f1-40e2-865a-42748734786e&tspTypes=16&los=1&searchrequestid=18d073c2-dc02-4765-b624-604ea37b374d&ds=WTt2YJdyiq4sZZ%2BP",
   },
   {
@@ -53,7 +53,7 @@ const hotels = [
     rating: 4.5,
     distance: "2.5 กม.",
     transport: "ใกล้ MRT",
-    imageUrl: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&h=450&q=80",
+    imageUrl: "https://pix8.agoda.net/hotelImages/301485/-1/46f59077574a2447ecd51bf1cb38e219.jpg",
     url: "https://www.agoda.com/th-th/the-loft-resort-bangkok/hotel/bangkok-th.html?cid=1844104&ds=S3lYkdED1k3hoXBO",
   },
 ];
