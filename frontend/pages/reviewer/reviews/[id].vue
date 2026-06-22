@@ -16,6 +16,8 @@ interface ReviewDetail {
   track: number;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  round1FileUrl: string | null;
+  round1FileType: "abstract" | "full_paper" | null;
   authorName?: string | null;
   authorEmail?: string | null;
   authorAffiliation?: string | null;
@@ -156,7 +158,10 @@ onMounted(fetchReview);
           <div v-if="review.abstract" class="sm:col-span-2"><dt class="text-gray-500">บทคัดย่อ</dt><dd class="mt-1 whitespace-pre-line">{{ review.abstract }}</dd></div>
         </dl>
         <div class="flex gap-2 mt-4">
-          <UButton v-if="review.abstractFileUrl" :to="fileLink(review.abstractFileUrl)" target="_blank" size="xs" color="gray" variant="soft">ไฟล์บทคัดย่อ</UButton>
+          <UButton v-if="review.round1FileUrl" :to="fileLink(review.round1FileUrl)" target="_blank" size="xs" color="gray" variant="soft">
+            {{ review.round1FileType === 'full_paper' ? 'ไฟล์บทความ (รอบที่ 1)' : 'ไฟล์บทคัดย่อ (รอบที่ 1)' }}
+          </UButton>
+          <UButton v-else-if="review.abstractFileUrl" :to="fileLink(review.abstractFileUrl)" target="_blank" size="xs" color="gray" variant="soft">ไฟล์บทคัดย่อ</UButton>
           <UButton v-if="review.fullPaperFileUrl" :to="fileLink(review.fullPaperFileUrl)" target="_blank" size="xs" color="gray" variant="soft">ไฟล์ฉบับแก้ไข/ฉบับเต็ม</UButton>
         </div>
       </UCard>

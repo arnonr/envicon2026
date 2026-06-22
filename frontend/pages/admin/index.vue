@@ -13,6 +13,7 @@ interface Submission {
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  round1FileUrl: string | null;
   paymentSlipUrl: string | null;
   submittedAt: string | null;
   updatedAt: string;

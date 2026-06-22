@@ -28,6 +28,8 @@ interface Submission {
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  round1FileUrl: string | null;
+  round1FileType: "abstract" | "full_paper" | null;
   paymentSlipUrl: string | null;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   paymentNote: string | null;
@@ -257,26 +259,33 @@ watch(() => props.modelValue, (open) => {
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
                 <UIcon name="i-heroicons-document" class="w-4 h-4 text-gray-400" />
-                <span class="text-gray-700">บทคัดย่อ (Abstract)</span>
+                <span class="text-gray-700">
+                  บทคัดย่อ
+                  <span v-if="submission.round1FileType === 'full_paper'" class="text-xs text-gray-500">(บทความฉบับสมบูรณ์)</span>
+                </span>
               </div>
-              <a v-if="submission.abstractFileUrl" :href="fileLink(submission.abstractFileUrl)" target="_blank"
+              <a v-if="submission.round1FileUrl" :href="fileLink(submission.round1FileUrl)" target="_blank"
+                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
+                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
+                ดาวน์โหลด
+              </a>
+              <a v-else-if="submission.abstractFileUrl" :href="fileLink(submission.abstractFileUrl)" target="_blank"
                 class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
                 <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
                 ดาวน์โหลด
               </a>
               <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
             </div>
-            <div class="flex items-center justify-between text-sm">
+            <div v-if="submission.fullPaperFileUrl" class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
                 <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-gray-400" />
                 <span class="text-gray-700">บทความฉบับสมบูรณ์ (Full Paper)</span>
               </div>
-              <a v-if="submission.fullPaperFileUrl" :href="fileLink(submission.fullPaperFileUrl)" target="_blank"
+              <a :href="fileLink(submission.fullPaperFileUrl)" target="_blank"
                 class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
                 <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
                 ดาวน์โหลด
               </a>
-              <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ interface Submission {
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  round1FileUrl: string | null;
   submittedAt: string | null;
   updatedAt: string;
   currentRoundNumber: number;
