@@ -32,8 +32,13 @@ const selectedSubmissionId = ref<string | null>(null);
 const modalOpen = ref(false);
 
 const openSubmission = (submission: Submission) => {
-  if (submission.status === 'revision_requested') {
+  if (submission.status === 'passed_round1_with_revisions' || submission.status === 'passed_round2_with_revisions') {
     navigateTo(`/submissions/${submission.id}/revise`);
+    return;
+  }
+
+  if (submission.status === 'draft') {
+    navigateTo(`/submit?id=${submission.id}`);
     return;
   }
 
@@ -177,7 +182,7 @@ onMounted(async () => {
                 <SubmissionRoundIndicator v-if="sub.currentRoundNumber > 0" :round-number="sub.currentRoundNumber" />
                 <SubmissionStatusBadge :status="sub.status" />
                 <UButton
-                  v-if="sub.status === 'revision_requested'"
+                  v-if="sub.status === 'passed_round1_with_revisions' || sub.status === 'passed_round2_with_revisions'"
                   size="xs"
                   color="orange"
                   variant="soft"

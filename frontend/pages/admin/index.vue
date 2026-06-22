@@ -14,6 +14,7 @@ interface Submission {
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
   round1FileUrl: string | null;
+  round1FileType: "abstract" | "full_paper" | null;
   paymentSlipUrl: string | null;
   submittedAt: string | null;
   updatedAt: string;
@@ -78,20 +79,30 @@ const TRACK_NAMES: Record<number, string> = {
 const STATUS_OPTIONS = [
   { value: "", label: "ทั้งหมด" },
   { value: "draft", label: "ร่าง" },
-  { value: "submitted", label: "ส่งแล้ว" },
-  { value: "under_review", label: "กำลังพิจารณา" },
-  { value: "accepted", label: "ผ่านการพิจารณา" },
-  { value: "rejected", label: "ไม่ผ่าน" },
-  { value: "revision_requested", label: "ขอแก้ไข" },
+  { value: "submitted_round1", label: "ส่งรอบที่ 1 แล้ว" },
+  { value: "under_review_round1", label: "อยู่ระหว่างรีวิวรอบที่ 1" },
+  { value: "passed_round1", label: "ผ่านรอบที่ 1" },
+  { value: "passed_round1_with_revisions", label: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข" },
+  { value: "rejected_round1", label: "ไม่ผ่านรอบที่ 1" },
+  { value: "submitted_round2", label: "ส่งรอบที่ 2 แล้ว" },
+  { value: "under_review_round2", label: "อยู่ระหว่างรีวิวรอบที่ 2" },
+  { value: "passed_round2", label: "ผ่านรอบที่ 2" },
+  { value: "passed_round2_with_revisions", label: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข" },
+  { value: "rejected_round2", label: "ไม่ผ่านรอบที่ 2" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "gray",
-  submitted: "blue",
-  under_review: "yellow",
-  accepted: "green",
-  rejected: "red",
-  revision_requested: "orange",
+  submitted_round1: "blue",
+  under_review_round1: "amber",
+  passed_round1: "green",
+  passed_round1_with_revisions: "teal",
+  rejected_round1: "red",
+  submitted_round2: "blue",
+  under_review_round2: "amber",
+  passed_round2: "emerald",
+  passed_round2_with_revisions: "teal",
+  rejected_round2: "red",
 };
 
 function formatDate(iso: string | null) {
@@ -109,6 +120,18 @@ function educationLabel(v: string): string {
 
 function presentationFormatLabel(v: string): string {
   return ({ oral: 'แบบบรรยาย', poster: 'โปสเตอร์' } as Record<string, string>)[v] ?? v;
+}
+
+function fileHref(url: string | null): string | null {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  try { return new URL(apiBase).origin + url; } catch { return url; }
+}
+
+function abstractFileHref(sub: Submission): string | null {
+  if (sub.abstractFileUrl) return fileHref(sub.abstractFileUrl);
+  if (sub.round1FileUrl && sub.round1FileType === "abstract") return fileHref(sub.round1FileUrl);
+  return null;
 }
 
 function reviewProgressLabel(submission: Submission) {
@@ -190,6 +213,10 @@ function goToPage(page: number) {
   fetchSubmissions();
 }
 
+async function refreshOnFocus() {
+  await Promise.all([fetchSubmissions(), fetchStats()]);
+}
+
 watch([filterStatus, filterTrack, paymentStatusFilter], () => {
   currentPage.value = 1;
   fetchSubmissions();
@@ -197,6 +224,10 @@ watch([filterStatus, filterTrack, paymentStatusFilter], () => {
 onMounted(() => {
   fetchStats();
   fetchSubmissions();
+  window.addEventListener("focus", refreshOnFocus);
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("focus", refreshOnFocus);
 });
 </script>
 
@@ -314,6 +345,16 @@ onMounted(() => {
           พบผลงาน <span class="font-semibold text-gray-700">{{ totalItems.toLocaleString() }}</span> รายการ
         </p>
         <UButton
+          color="gray"
+          variant="soft"
+          size="sm"
+          icon="i-heroicons-arrow-path"
+          :loading="loading"
+          @click="refreshOnFocus"
+        >
+          รีเฟรช
+        </UButton>
+        <UButton
           color="green"
           variant="soft"
           size="sm"
@@ -351,6 +392,8 @@ onMounted(() => {
             <th class="py-3 px-3 text-center">รูปแบบการนำเสนอ</th>
             <th class="py-3 px-3 text-center">การรีวิวของกรรมการ</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
+            <th class="py-3 px-3 text-center">ไฟล์บทคัดย่อ</th>
+            <th class="py-3 px-3 text-center">ไฟล์ฉบับสมบูรณ์</th>
             <th class="py-3 px-3 text-center">การชำระเงิน</th>
           </tr>
         </thead>
@@ -392,6 +435,32 @@ onMounted(() => {
               <UBadge :color="(STATUS_COLORS[sub.status] || 'gray') as any" variant="soft" size="xs">
                 {{ STATUS_OPTIONS.find((s) => s.value === sub.status)?.label || sub.status }}
               </UBadge>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <a
+                v-if="abstractFileHref(sub)"
+                :href="abstractFileHref(sub) ?? '#'"
+                target="_blank"
+                class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 hover:underline"
+                title="ดาวน์โหลดบทคัดย่อ"
+              >
+                <UIcon name="i-heroicons-document-text" class="w-4 h-4" />
+                <span class="text-xs">บทคัดย่อ</span>
+              </a>
+              <span v-else class="text-xs text-gray-300">—</span>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <a
+                v-if="sub.fullPaperFileUrl"
+                :href="fileHref(sub.fullPaperFileUrl) ?? '#'"
+                target="_blank"
+                class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 hover:underline"
+                title="ดาวน์โหลดบทความฉบับสมบูรณ์"
+              >
+                <UIcon name="i-heroicons-document-arrow-down" class="w-4 h-4" />
+                <span class="text-xs">ฉบับสมบูรณ์</span>
+              </a>
+              <span v-else class="text-xs text-gray-300">—</span>
             </td>
             <td class="py-3 px-3 text-center">
               <SubmissionPaymentStatusBadge :status="sub.paymentStatus" />

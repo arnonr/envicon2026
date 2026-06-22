@@ -1,76 +1,61 @@
 <template>
   <div class="overflow-hidden bg-gradient-to-b from-sky-100 via-meadow-50 to-white">
-    <!-- ═══════════ HERO — Sunlit Meadow ═══════════ -->
-    <section class="relative min-h-[95vh] flex items-center justify-center overflow-hidden">
-      <!-- Sky gradient -->
-      <div class="absolute inset-0 bg-gradient-to-b from-sky-200 via-sky-100 to-meadow-100" />
+    <!-- ═══════════ HERO — Forest Canopy Photo ═══════════ -->
+    <section class="relative min-h-[95vh] flex items-center justify-center overflow-hidden bg-meadow-950">
+      <!-- Background photo: sun-dappled forest canopy -->
+      <div class="absolute inset-0">
+        <img
+          src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=2400&q=80&auto=format&fit=crop"
+          alt="Sun-dappled forest canopy"
+          class="w-full h-full object-cover hero-photo"
+        />
+      </div>
 
-      <!-- Sun glow -->
-      <div
-        class="absolute top-[-10%] right-[10%] w-[500px] h-[500px] rounded-full bg-gradient-radial from-amber-200/60 via-amber-100/30 to-transparent animate-sun-pulse" />
-      <div
-        class="absolute top-[-5%] right-[15%] w-[300px] h-[300px] rounded-full bg-gradient-radial from-yellow-100/80 via-amber-50/40 to-transparent" />
+      <!-- Layered overlays -->
+      <div class="absolute inset-0 bg-gradient-to-b from-meadow-950/45 via-meadow-900/30 to-meadow-950/75" />
+      <div class="absolute inset-0 bg-gradient-to-tr from-meadow-900/45 via-transparent to-sky-900/25" />
+      <div class="absolute inset-0 hero-vignette" />
 
-      <!-- Clouds -->
-      <div class="cloud cloud--1" />
-      <div class="cloud cloud--2" />
-      <div class="cloud cloud--3" />
-
-      <!-- Distant hills -->
-      <svg class="absolute bottom-[12%] left-0 w-full h-[70%] text-meadow-200/60" viewBox="0 0 1440 320"
-        preserveAspectRatio="none">
-        <path fill="currentColor" d="M0,224 C360,160 720,280 1080,200 C1260,170 1380,190 1440,200 L1440,320 L0,320 Z" />
-      </svg>
-      <svg class="absolute bottom-[8%] left-0 w-full h-[65%] text-meadow-300/50" viewBox="0 0 1440 320"
-        preserveAspectRatio="none">
-        <path fill="currentColor" d="M0,256 C240,180 480,280 720,240 C960,200 1200,260 1440,220 L1440,320 L0,320 Z" />
-      </svg>
-
-      <!-- Meadow ground -->
-      <div class="absolute bottom-0 left-0 right-0 h-[28%]"
-        style="background: linear-gradient(to top, #4ade80 0%, #65e292 15%, #86efac 35%, #a8f3c0 55%, #bbf7d0 72%, #d4fae3 87%, transparent 100%)" />
-
-
-      <!-- Bubbles -->
+      <!-- Floating particles -->
       <div class="bubbles-container">
-        <div v-for="i in 25" :key="'b' + i" class="bubble" :style="bubbleStyle(i)" />
+        <div v-for="i in 30" :key="'b' + i" class="bubble bubble--hero" :style="bubbleStyle(i)" />
       </div>
 
       <!-- Content -->
       <div class="relative z-10 max-w-5xl mx-auto px-6 text-center mt-[-5vh]">
         <div
-          class="inline-flex items-center gap-2.5 bg-white/70 backdrop-blur-md border border-meadow-200 rounded-full px-6 py-2.5 mb-8 hero-fade hero-fade--1 shadow-sm shadow-meadow-200/50">
-          <span class="w-2.5 h-2.5 rounded-full bg-meadow-500 animate-pulse shadow-sm shadow-meadow-400" />
-          <span class="text-sm font-semibold tracking-wide text-meadow-700">The 5th National Conference</span>
+          class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-full px-6 py-2.5 mb-8 hero-fade hero-fade--1 shadow-lg shadow-meadow-950/30">
+          <span class="w-2.5 h-2.5 rounded-full bg-meadow-400 animate-pulse shadow-sm shadow-meadow-300" />
+          <span class="text-sm font-semibold tracking-wide text-white">The 5th National Conference</span>
         </div>
 
         <h1
           class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[0.95] mb-6 hero-fade hero-fade--2">
-          <span class="block text-meadow-800 drop-shadow-sm">Innovative</span>
+          <span class="block text-white drop-shadow-2xl">Innovative</span>
           <span
-            class="block bg-gradient-to-r from-amber-500 via-orange-400 to-rose-400 bg-clip-text text-transparent mt-1 drop-shadow-sm">Environmental</span>
+            class="block bg-gradient-to-r from-amber-300 via-orange-200 to-rose-200 bg-clip-text text-transparent mt-1 drop-shadow-lg">Environmental</span>
           <span
-            class="block bg-gradient-to-r from-sky-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent mt-1 drop-shadow-sm pb-2">Technologies</span>
+            class="block bg-gradient-to-r from-sky-300 via-cyan-200 to-blue-200 bg-clip-text text-transparent mt-1 drop-shadow-lg pb-2">Technologies</span>
         </h1>
 
-        <p class="text-lg sm:text-xl text-meadow-700/80 font-medium max-w-2xl mx-auto mb-3 hero-fade hero-fade--3 mt-3">
+        <p class="text-lg sm:text-xl text-white/90 font-medium max-w-2xl mx-auto mb-3 hero-fade hero-fade--3 mt-3 drop-shadow-md">
           for a Sustainable and Low-Carbon Future
         </p>
-        <p class="text-base text-meadow-600/60 max-w-xl mx-auto mb-10 hero-fade hero-fade--4">
+        <p class="text-base text-white/75 max-w-xl mx-auto mb-10 hero-fade hero-fade--4 drop-shadow-md">
           เทคโนโลยีสิ่งแวดล้อมเชิงนวัตกรรมเพื่ออนาคตที่ยั่งยืนและสังคมคาร์บอนต่ำ
         </p>
 
         <!-- Countdown -->
         <div class="flex items-center justify-center gap-3 sm:gap-5 mb-10 hero-fade hero-fade--5">
-          <div v-for="unit in countdown" :key="unit.label" class="countdown-unit">
-            <div class="countdown-value">{{ unit.value }}</div>
-            <div class="countdown-label">{{ unit.label }}</div>
+          <div v-for="unit in countdown" :key="unit.label" class="countdown-unit countdown-unit--hero">
+            <div class="countdown-value countdown-value--hero">{{ unit.value }}</div>
+            <div class="countdown-label countdown-label--hero">{{ unit.label }}</div>
           </div>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-4 justify-center hero-fade hero-fade--6">
           <button @click="goToAuthorDashboard"
-            class="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-meadow-500 to-meadow-600 font-bold text-white text-lg shadow-lg shadow-meadow-300/40 hover:shadow-meadow-400/60 hover:scale-[1.04] hover:-translate-y-0.5 transition-all duration-300">
+            class="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-meadow-500 to-meadow-600 font-bold text-white text-lg shadow-2xl shadow-meadow-500/40 hover:shadow-meadow-400/60 hover:scale-[1.04] hover:-translate-y-0.5 transition-all duration-300">
             ส่งบทคัดย่อ
             <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor"
               viewBox="0 0 24 24">
@@ -78,11 +63,11 @@
             </svg>
           </button>
           <NuxtLink to="/about"
-            class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border-2 border-meadow-300 bg-white/60 backdrop-blur-sm text-meadow-700 font-semibold text-lg hover:bg-white/80 hover:border-meadow-400 hover:scale-[1.02] transition-all duration-300">
+            class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border-2 border-white/40 bg-white/10 backdrop-blur-md text-white font-semibold text-lg hover:bg-white/20 hover:border-white/60 hover:scale-[1.02] transition-all duration-300">
             เกี่ยวกับงาน
           </NuxtLink>
           <button @click="showRegModal = true"
-            class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border-2 border-sky-300 bg-white/60 backdrop-blur-sm text-sky-700 font-semibold text-lg hover:bg-white/80 hover:border-sky-400 hover:scale-[1.02] transition-all duration-300">
+            class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border-2 border-sky-300/60 bg-sky-400/15 backdrop-blur-md text-white font-semibold text-lg hover:bg-sky-400/25 hover:border-sky-300 hover:scale-[1.02] transition-all duration-300">
             ลงทะเบียนเข้าร่วมงาน
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -93,9 +78,9 @@
 
       <!-- Scroll hint -->
       <div
-        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-meadow-500/40 hero-fade hero-fade--7">
+        class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/50 hero-fade hero-fade--7">
         <span class="text-xs tracking-[0.2em] uppercase font-medium">Scroll</span>
-        <div class="w-px h-8 bg-gradient-to-b from-meadow-400/40 to-transparent scroll-line" />
+        <div class="w-px h-8 bg-gradient-to-b from-white/60 to-transparent scroll-line" />
       </div>
     </section>
 
@@ -115,23 +100,32 @@
       </div>
     </section>
 
-    <!-- ═══════════ CTA BANNER — Fresh Green Wave ═══════════ -->
+    <!-- ═══════════ CTA BANNER — Solar Field Photo ═══════════ -->
     <section class="py-4 bg-meadow-50">
       <div class="max-w-5xl mx-auto px-6">
-        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-meadow-500 via-meadow-400 to-sky-400">
+        <div class="relative overflow-hidden rounded-3xl shadow-2xl shadow-meadow-200/40">
+          <!-- Background photo -->
+          <div class="absolute inset-0">
+            <img
+              src="https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1800&q=80&auto=format&fit=crop"
+              alt="Solar panels at sunset"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="absolute inset-0 bg-gradient-to-r from-meadow-900/85 via-meadow-800/70 to-meadow-900/80" />
           <!-- Bubble decorations -->
           <div v-for="i in 8" :key="'cb' + i" class="absolute rounded-full border border-white/20 bg-white/[0.07]"
             :style="ctaBubbleStyle(i)" />
 
-          <div class="relative px-8 py-10 sm:py-12 text-center text-white">
+          <div class="relative px-8 py-12 sm:py-16 text-center text-white">
             <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 mb-5">
               <span class="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
               <span class="text-xs font-semibold tracking-wide">กำลังเปิดรับผลงาน</span>
             </div>
-            <h2 class="font-display text-2xl sm:text-3xl font-bold mb-3">
-              เปิดรับบทคัดย่อถึง <span class="text-amber-100 drop-shadow-sm">30 กันยายน 2569</span>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
+              เปิดรับบทคัดย่อถึง <span class="text-amber-200 drop-shadow-md">30 กันยายน 2569</span>
             </h2>
-            <p class="text-white/75 mb-6 max-w-lg mx-auto">ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอในการประชุมวิชาการ</p>
+            <p class="text-white/80 mb-7 max-w-lg mx-auto">ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอในการประชุมวิชาการ</p>
             <button @click="goToAuthorDashboard"
               class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-meadow-700 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-lg transition-all duration-300">
               ส่งบทคัดย่อเลย →
@@ -154,27 +148,31 @@
           <div class="w-16 h-1.5 bg-gradient-to-r from-meadow-400 to-sky-400 rounded-full mx-auto mt-5" />
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="(track, i) in tracks" :key="i"
-            class="group relative rounded-2xl p-6 bg-white/80 backdrop-blur-sm border border-meadow-100 shadow-sm hover:shadow-xl hover:shadow-meadow-100/50 transition-all duration-500 hover:scale-[1.02] overflow-hidden">
-            <!-- Accent top -->
-            <div class="absolute top-0 left-0 right-0 h-1 rounded-t-2xl transition-all duration-500"
-              :class="trackColors[i % trackColors.length]" />
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div v-for="(track, i) in tracks" :key="track.th"
+            class="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl hover:shadow-meadow-900/30 transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 min-h-[280px] flex flex-col">
+            <div class="absolute inset-0 overflow-hidden">
+              <img :src="track.bg" :alt="track.en"
+                class="w-full h-full object-cover transition-transform duration-[1100ms] ease-out group-hover:scale-110"
+                loading="lazy" />
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-t from-meadow-950/95 via-meadow-900/70 to-meadow-900/25" />
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-meadow-400 via-sky-400 to-cyan-400" />
 
-            <!-- Hover glow -->
-            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              :class="trackGlows[i % trackGlows.length]" />
-
-            <UIcon :name="track.icon"
-              class="absolute -bottom-2 -right-2 w-20 h-20 text-meadow-50 group-hover:text-meadow-100 transition-colors duration-500 select-none" />
-
-            <div class="relative">
-              <div class="inline-flex items-center justify-center w-11 h-11 rounded-xl mb-4 shadow-sm"
-                :class="trackBadges[i % trackBadges.length]">
-                <UIcon :name="track.icon" class="w-5 h-5" />
+            <div class="relative p-6 flex flex-col h-full text-white">
+              <div class="flex items-center justify-between mb-6">
+                <div
+                  class="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 shadow-lg">
+                  <UIcon :name="track.icon" class="w-5 h-5" />
+                </div>
+                <div class="text-[10px] font-bold text-white/80 tracking-[0.2em] uppercase">Track {{ String(i + 1).padStart(2, '0') }}</div>
               </div>
-              <h3 class="font-semibold text-meadow-800 mb-2 leading-snug">{{ track.th }}</h3>
-              <p class="text-sm text-gray-400 leading-relaxed">{{ track.en }}</p>
+
+              <div class="mt-auto">
+                <div class="text-[10px] font-bold text-meadow-300 tracking-[0.2em] uppercase mb-2">{{ track.tag }}</div>
+                <h3 class="font-semibold text-lg mb-1.5 leading-snug drop-shadow-lg">{{ track.th }}</h3>
+                <p class="text-sm text-white/85 font-medium leading-snug">{{ track.en }}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -227,22 +225,70 @@
       </div>
     </section>
 
-    <!-- ═══════════ VENUE — Fresh Light ═══════════ -->
+    <!-- ═══════════ VENUE — Building Photo Card ═══════════ -->
     <section class="py-24 bg-gradient-to-b from-white to-meadow-50/50">
-      <div class="max-w-4xl mx-auto px-6 text-center">
-        <span class="text-xs font-bold tracking-[0.2em] uppercase text-sky-600 mb-3 block">Venue</span>
-        <h2 class="font-display text-3xl sm:text-4xl font-bold text-meadow-900 mb-8">สถานที่จัดงาน</h2>
+      <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-12">
+          <span class="text-xs font-bold tracking-[0.2em] uppercase text-sky-600 mb-3 block">Venue</span>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-meadow-900">สถานที่จัดงาน</h2>
+          <div class="w-16 h-1.5 bg-gradient-to-r from-meadow-400 to-sky-400 rounded-full mx-auto mt-5" />
+        </div>
 
-        <div
-          class="inline-block rounded-3xl border-2 border-meadow-100 bg-white/80 backdrop-blur-sm shadow-lg shadow-meadow-100/30 px-10 py-8">
-          <div class="font-display text-xl font-bold text-meadow-800 mb-2">อาคาร 99 อุทยานเทคโนโลยี มจพ.</div>
-          <div class="text-gray-500">KMUTNB Technopark</div>
-          <div class="flex items-center justify-center gap-2 mt-4 text-meadow-600 font-semibold">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>12 — 13 พฤศจิกายน 2569</span>
+        <div class="grid md:grid-cols-2 gap-6 items-stretch">
+          <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-meadow-200/40 aspect-[4/3] md:aspect-auto md:min-h-[360px]">
+            <img
+              src="https://images.unsplash.com/photo-1562774053-701939374585?w=1400&q=80&auto=format&fit=crop"
+              alt="Modern university building"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-meadow-950/60 via-transparent to-transparent" />
+            <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+              <div class="text-xs font-semibold tracking-wider uppercase text-meadow-200 mb-1">Conference Hall</div>
+              <div class="font-display text-2xl font-bold">อาคาร 99</div>
+            </div>
+          </div>
+
+          <div class="rounded-3xl border border-meadow-100 bg-white shadow-xl shadow-meadow-100/30 p-8 md:p-10 flex flex-col justify-center">
+            <div class="font-display text-2xl font-bold text-meadow-800 mb-2">อุทยานเทคโนโลยี มจพ.</div>
+            <div class="text-sm text-sky-600 font-semibold mb-6">KMUTNB Technopark</div>
+
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-meadow-100 text-meadow-700 flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wider text-gray-500 font-semibold">สถานที่</div>
+                  <div class="text-meadow-800 font-semibold">อาคาร 99 อุทยานเทคโนโลยี มจพ.</div>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-3">
+                <div class="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs uppercase tracking-wider text-gray-500 font-semibold">วันจัดงาน</div>
+                  <div class="text-meadow-800 font-semibold">12 — 13 พฤศจิกายน 2569</div>
+                </div>
+              </div>
+            </div>
+
+            <NuxtLink to="/venue"
+              class="mt-8 inline-flex items-center gap-2 self-start px-6 py-3 rounded-2xl bg-meadow-50 text-meadow-700 font-semibold hover:bg-meadow-100 hover:scale-[1.02] transition-all duration-300 border border-meadow-200">
+              ดูแผนที่และการเดินทาง
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -315,44 +361,56 @@ const stats = [
   },
 ];
 
-const trackColors = [
-  "bg-meadow-500",
-  "bg-sky-500",
-  "bg-amber-500",
-  "bg-rose-400",
-  "bg-violet-500",
-  "bg-cyan-500",
-  "bg-orange-500",
-];
-
-const trackGlows = [
-  "bg-gradient-to-br from-meadow-50 to-transparent",
-  "bg-gradient-to-br from-sky-50 to-transparent",
-  "bg-gradient-to-br from-amber-50 to-transparent",
-  "bg-gradient-to-br from-rose-50 to-transparent",
-  "bg-gradient-to-br from-violet-50 to-transparent",
-  "bg-gradient-to-br from-cyan-50 to-transparent",
-  "bg-gradient-to-br from-orange-50 to-transparent",
-];
-
-const trackBadges = [
-  "bg-meadow-100 text-meadow-700",
-  "bg-sky-100 text-sky-700",
-  "bg-amber-100 text-amber-700",
-  "bg-rose-100 text-rose-700",
-  "bg-violet-100 text-violet-700",
-  "bg-cyan-100 text-cyan-700",
-  "bg-orange-100 text-orange-700",
-];
-
 const tracks = [
-  { th: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ", en: "Environmental Science and Pollution Control", icon: "i-heroicons-beaker" },
-  { th: "การจัดการระบบนิเวศและทรัพยากรธรรมชาติ", en: "Ecosystem and Natural Resource Management", icon: "i-heroicons-globe-alt" },
-  { th: "เศรษฐกิจหมุนเวียนและการใช้ทรัพยากรอย่างคุ้มค่า", en: "Circular Economy and Resource Efficiency", icon: "i-heroicons-arrow-path" },
-  { th: "การเปลี่ยนแปลงสภาพภูมิอากาศและเทคโนโลยีคาร์บอนต่ำ", en: "Climate Change and Low-Carbon Technology", icon: "i-heroicons-cloud" },
-  { th: "เทคโนโลยีดิจิทัลและระบบอัจฉริยะเพื่อการติดตามสิ่งแวดล้อม", en: "Digital Technology and Intelligent Systems for Environmental Monitoring", icon: "i-heroicons-cpu-chip" },
-  { th: "เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม", en: "Sustainable Cities, Green Industry, and Environmental Management", icon: "i-heroicons-building-office-2" },
-  { th: "สิ่งแวดล้อมและสุขภาพ", en: "Environment and Health", icon: "i-heroicons-heart" },
+  {
+    th: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
+    en: "Environmental Science and Pollution Control",
+    icon: "i-heroicons-beaker",
+    tag: "Pollution Control",
+    bg: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    th: "การจัดการระบบนิเวศและทรัพยากรธรรมชาติ",
+    en: "Ecosystem and Natural Resource Management",
+    icon: "i-heroicons-globe-alt",
+    tag: "Ecosystem",
+    bg: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    th: "เศรษฐกิจหมุนเวียนและการใช้ทรัพยากรอย่างคุ้มค่า",
+    en: "Circular Economy and Resource Efficiency",
+    icon: "i-heroicons-arrow-path",
+    tag: "Circular Economy",
+    bg: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    th: "การเปลี่ยนแปลงสภาพภูมิอากาศและเทคโนโลยีคาร์บอนต่ำ",
+    en: "Climate Change and Low-Carbon Technology",
+    icon: "i-heroicons-cloud",
+    tag: "Climate Action",
+    bg: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    th: "เทคโนโลยีดิจิทัลและระบบอัจฉริยะเพื่อการติดตามสิ่งแวดล้อม",
+    en: "Digital Technology and Intelligent Systems for Environmental Monitoring",
+    icon: "i-heroicons-cpu-chip",
+    tag: "Smart Monitoring",
+    bg: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    th: "เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม",
+    en: "Sustainable Cities, Green Industry, and Environmental Management",
+    icon: "i-heroicons-building-office-2",
+    tag: "Green City",
+    bg: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1200&q=80&auto=format&fit=crop",
+  },
+  {
+    th: "สิ่งแวดล้อมและสุขภาพ",
+    en: "Environment and Health",
+    icon: "i-heroicons-heart",
+    tag: "Well-being",
+    bg: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=1200&q=80&auto=format&fit=crop",
+  },
 ];
 
 const timeline = [
@@ -451,6 +509,26 @@ const timelineBubbleStyle = (i: number) => {
 </script>
 
 <style scoped>
+/* ── Hero photo ── */
+.hero-photo {
+  animation: kenBurns 28s ease-in-out infinite alternate;
+}
+
+@keyframes kenBurns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+
+  100% {
+    transform: scale(1.08) translate(-1%, -1%);
+  }
+}
+
+.hero-vignette {
+  background: radial-gradient(ellipse at 50% 45%, transparent 25%, rgba(2, 44, 34, 0.55) 100%);
+  pointer-events: none;
+}
+
 /* ── Bubbles ── */
 .bubbles-container {
   position: absolute;
@@ -467,6 +545,12 @@ const timelineBubbleStyle = (i: number) => {
   border: 1px solid rgba(255, 255, 255, 0.3);
   animation: bubbleRise linear infinite;
   box-shadow: inset -2px -2px 6px rgba(255, 255, 255, 0.2), 0 0 8px rgba(134, 239, 172, 0.1);
+}
+
+.bubble--hero {
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.05) 60%, transparent);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: inset -1px -1px 4px rgba(255, 255, 255, 0.15), 0 0 12px rgba(255, 255, 255, 0.06);
 }
 
 @keyframes bubbleRise {
@@ -771,6 +855,13 @@ const timelineBubbleStyle = (i: number) => {
   box-shadow: 0 4px 16px rgba(5, 150, 105, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
+.countdown-unit--hero {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(2, 44, 34, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
 .countdown-value {
   font-family: 'Outfit', sans-serif;
   font-size: clamp(1.75rem, 5vw, 2.75rem);
@@ -783,6 +874,14 @@ const timelineBubbleStyle = (i: number) => {
   font-variant-numeric: tabular-nums;
 }
 
+.countdown-value--hero {
+  background: linear-gradient(135deg, #ffffff, #bbf7d0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 2px 8px rgba(2, 44, 34, 0.35));
+}
+
 .countdown-label {
   font-size: 0.65rem;
   font-weight: 600;
@@ -790,6 +889,10 @@ const timelineBubbleStyle = (i: number) => {
   text-transform: uppercase;
   color: #6b7280;
   margin-top: 0.25rem;
+}
+
+.countdown-label--hero {
+  color: rgba(255, 255, 255, 0.85);
 }
 
 /* ── Scroll indicator ── */

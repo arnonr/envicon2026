@@ -74,6 +74,8 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           submitterType: submissions.submitterType,
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
+          round1FileUrl: submissions.round1FileUrl,
+          round1FileType: submissions.round1FileType,
           submittedAt: submissions.submittedAt,
           authorName: users.name,
           authorEmail: users.email,
@@ -118,7 +120,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         keywords: hasSnapshot ? assignment.versionKeywords : assignment.keywords,
         track: hasSnapshot ? assignment.versionTrack : assignment.track,
         submitterType: hasSnapshot ? assignment.versionSubmitterType : assignment.submitterType,
-        fullPaperFileUrl: hasSnapshot ? assignment.versionFileUrl : assignment.fullPaperFileUrl,
+        fullPaperFileUrl: assignment.versionFileUrl ?? assignment.fullPaperFileUrl,
         submittedAt: hasSnapshot ? assignment.versionSubmittedAt : assignment.submittedAt,
         revisions: revisionList,
       };

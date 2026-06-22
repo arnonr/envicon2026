@@ -140,6 +140,20 @@ const adminNote = ref("");
 const rejectModalOpen = ref(false);
 const rejectNote = ref('');
 const rejectSubmitting = ref(false);
+const reReviewConfirmOpen = ref(false);
+
+function requestCreateRound() {
+  if (submission.value && TERMINAL_STATUSES.includes(submission.value.status)) {
+    reReviewConfirmOpen.value = true;
+    return;
+  }
+  createRound();
+}
+
+async function confirmCreateRound() {
+  await createRound();
+  reReviewConfirmOpen.value = false;
+}
 
 const isOpen = computed({
   get: () => props.modelValue,
@@ -188,6 +202,11 @@ const parsedKeywords = computed(() => {
 
 const decisionLabel = (decision: WorkflowRound["decision"]) =>
   ({ accept: "ผ่านการพิจารณา", reject: "ไม่ผ่าน", revise: "ขอแก้ไข" }[decision ?? ""] ?? "ยังไม่มีผลตัดสิน");
+
+const statusLabel = (status: string) =>
+  ({ draft: "ร่าง", submitted_round1: "ส่งรอบที่ 1 แล้ว", under_review_round1: "อยู่ระหว่างรีวิวรอบที่ 1", passed_round1: "ผ่านรอบที่ 1", passed_round1_with_revisions: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข", rejected_round1: "ไม่ผ่านรอบที่ 1", submitted_round2: "ส่งรอบที่ 2 แล้ว", under_review_round2: "อยู่ระหว่างรีวิวรอบที่ 2", passed_round2: "ผ่านรอบที่ 2", passed_round2_with_revisions: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข", rejected_round2: "ไม่ผ่านรอบที่ 2" }[status] ?? status);
+
+const TERMINAL_STATUSES = ["passed_round1", "passed_round1_with_revisions", "rejected_round1", "passed_round2", "passed_round2_with_revisions", "rejected_round2"];
 
 const versionLabel = (version: SubmissionVersion) =>
   version.kind === "initial" ? "ฉบับเริ่มต้น" : `ฉบับแก้ไข ครั้งที่ ${version.version - 1}`;
@@ -641,11 +660,42 @@ watch(() => props.modelValue, (open) => {
         </div>
 
         <!-- Review workflow -->
-        <div v-if="['submitted', 'under_review'].includes(submission.status)" class="border border-emerald-200 rounded-lg p-4 bg-emerald-50/30 space-y-4">
+        <div
+          v-if="['submitted_round1', 'under_review_round1'].includes(submission.status) && workflow?.rounds.length && !workflow?.currentRound"
+          class="border border-amber-300 rounded-lg p-3 bg-amber-50"
+        >
+          <p class="font-medium text-sm text-amber-800">
+            <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 inline -mt-0.5" />
+            ผลงานนี้มีการส่งฉบับแก้ไขแล้ว — พร้อมเริ่มรอบพิจารณาใหม่
+          </p>
+          <p class="text-xs text-amber-700 mt-1">
+            รอบที่ {{ workflow.rounds.length }} ผลตัดสิน: {{ decisionLabel(workflow.rounds[workflow.rounds.length - 1].decision) }}
+            — กดปุ่ม "เริ่มรอบที่ {{ workflow.rounds.length + 1 }}" ด้านล่างเพื่อส่งฉบับแก้ไขให้ผู้รีวิวประเมิน
+          </p>
+        </div>
+        <div
+          v-else-if="TERMINAL_STATUSES.includes(submission.status) && !workflow?.currentRound"
+          class="border border-rose-300 rounded-lg p-3 bg-rose-50"
+        >
+          <p class="font-medium text-sm text-rose-800">
+            <UIcon name="i-heroicons-shield-exclamation" class="w-4 h-4 inline -mt-0.5" />
+            ผลงานนี้อยู่ในสถานะ {{ statusLabel(submission.status) }} แล้ว — สามารถเริ่มรอบพิจารณาใหม่ได้
+          </p>
+          <p class="text-xs text-rose-700 mt-1">
+            การเริ่มรอบใหม่จะส่งผลงานกลับเข้ากระบวนการรีวิวอีกครั้ง และเจ้าของผลงานจะได้รับอีเมลแจ้งผลเมื่อกด "แจ้งผลเจ้าของผลงาน"
+          </p>
+        </div>
+        <div v-if="['submitted_round1', 'under_review_round1', 'submitted_round2', 'under_review_round2', 'passed_round1', 'passed_round1_with_revisions', 'rejected_round1', 'passed_round2', 'passed_round2_with_revisions', 'rejected_round2'].includes(submission.status)" class="border border-emerald-200 rounded-lg p-4 bg-emerald-50/30 space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="font-semibold text-sm text-emerald-800">ผู้รีวิวและรอบพิจารณา</h3>
-            <UButton v-if="!workflow?.currentRound && !workflowLoading" size="xs" color="primary" :loading="updating" @click="createRound">
-              เริ่มรอบพิจารณา
+            <UButton
+              v-if="!workflow?.currentRound && !workflowLoading"
+              size="xs"
+              :color="TERMINAL_STATUSES.includes(submission.status) ? 'rose' : 'primary'"
+              :loading="updating"
+              @click="requestCreateRound"
+            >
+              เริ่มรอบที่ {{ (workflow?.rounds.length ?? 0) + 1 }}
             </UButton>
           </div>
           <div v-if="workflowLoading" class="flex justify-center py-4">
@@ -744,6 +794,29 @@ watch(() => props.modelValue, (open) => {
         <div class="flex justify-end gap-2">
           <UButton color="gray" variant="ghost" @click="rejectModalOpen = false">ยกเลิก</UButton>
           <UButton color="red" :loading="rejectSubmitting" :disabled="!rejectNote.trim()" @click="submitReject">ปฏิเสธ</UButton>
+        </div>
+      </template>
+    </UCard>
+  </UModal>
+
+  <UModal v-model="reReviewConfirmOpen" :ui="{ width: 'sm:max-w-md' }">
+    <UCard>
+      <template #header>
+        <h3 class="font-semibold text-sm">ยืนยันการเริ่มรอบพิจารณาใหม่</h3>
+      </template>
+      <div class="space-y-2 text-sm text-gray-600">
+        <p>ผลงานนี้อยู่ในสถานะ <b>{{ statusLabel(submission?.status ?? '') }}</b> แล้ว</p>
+        <p>การเริ่มรอบที่ {{ (workflow?.rounds.length ?? 0) + 1 }} จะ:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>เปลี่ยนสถานะกลับเป็น "อยู่ระหว่างพิจารณา" เมื่อกด "ส่งพิจารณา"</li>
+          <li>สร้างงานใหม่ให้ผู้รีวิวที่เลือก</li>
+          <li>ส่งอีเมลแจ้งผลอีกครั้งเมื่อกด "แจ้งผลเจ้าของผลงาน"</li>
+        </ul>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton color="gray" variant="ghost" @click="reReviewConfirmOpen = false">ยกเลิก</UButton>
+          <UButton color="rose" :loading="updating" @click="confirmCreateRound">ยืนยันเริ่มรอบใหม่</UButton>
         </div>
       </template>
     </UCard>

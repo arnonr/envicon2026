@@ -7,6 +7,8 @@ import { requireAdmin } from "../middleware/roles";
 import { getUserFromHeaders } from "../middleware/auth";
 import { ok, fail, paginated } from "../utils/response";
 import { calculateFee } from "../utils/fees";
+import { STATUS_LABEL, type SubmissionStatus } from "../db/schema";
+import { ALL_NON_DRAFT, RE_REVIEW_STATUSES } from "../utils/submission-status";
 
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
@@ -18,14 +20,7 @@ const TRACK_NAMES: Record<number, string> = {
   7: "สิ่งแวดล้อมและสุขภาพ",
 };
 
-const STATUS_NAMES: Record<string, string> = {
-  draft: "ร่าง",
-  submitted: "ส่งแล้ว",
-  under_review: "กำลังพิจารณา",
-  accepted: "ผ่านการพิจารณา",
-  rejected: "ไม่ผ่าน",
-  revision_requested: "ขอแก้ไข",
-};
+const STATUS_NAMES: Record<string, string> = STATUS_LABEL;
 
 const PAYMENT_STATUS_NAMES: Record<string, string> = {
   unpaid: "ยังไม่ชำระ",
@@ -144,6 +139,8 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           status: submissions.status,
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
+          round1FileUrl: submissions.round1FileUrl,
+          round1FileType: submissions.round1FileType,
           paymentSlipUrl: submissions.paymentSlipUrl,
           paymentStatus: submissions.paymentStatus,
           submittedAt: submissions.submittedAt,
@@ -244,6 +241,8 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         status: submissions.status,
         abstractFileUrl: submissions.abstractFileUrl,
         fullPaperFileUrl: submissions.fullPaperFileUrl,
+        round1FileUrl: submissions.round1FileUrl,
+        round1FileType: submissions.round1FileType,
         paymentSlipUrl: submissions.paymentSlipUrl,
         paymentStatus: submissions.paymentStatus,
         submittedAt: submissions.submittedAt,
@@ -414,7 +413,12 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         set.status = 404;
         return fail("NOT_FOUND", "ไม่พบข้อมูลการส่งบทความ");
       }
-      if (body.status === "under_review" || ["accepted", "rejected", "revision_requested"].includes(body.status)) {
+      const forbiddenStatuses: SubmissionStatus[] = [
+        "under_review_round1",
+        "under_review_round2",
+        ...ALL_NON_DRAFT.filter((s) => s !== "submitted_round1" && s !== "submitted_round2"),
+      ] as SubmissionStatus[];
+      if (forbiddenStatuses.includes(body.status as SubmissionStatus)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "กรุณาเริ่มพิจารณา ตัดสิน และแจ้งผลผ่านกระบวนการรีวิว");
       }
@@ -439,11 +443,8 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       body: t.Object({
         status: t.Union([
           t.Literal("draft"),
-          t.Literal("submitted"),
-          t.Literal("under_review"),
-          t.Literal("accepted"),
-          t.Literal("rejected"),
-          t.Literal("revision_requested"),
+          t.Literal("submitted_round1"),
+          t.Literal("submitted_round2"),
         ]),
       }),
     },

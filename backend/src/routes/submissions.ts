@@ -5,6 +5,7 @@ import { and, eq, desc, inArray, ne, sql } from "drizzle-orm";
 import { requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
 import { saveFile, storedFileExists } from "../services/storage";
+import { canEdit, canRevise, canCameraReady, canReplaceFile, statusAfterReviseUpload } from "../utils/submission-status";
 
 const MAX_CREATORS = 20;
 
@@ -115,7 +116,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       : 0;
 
     const latestRevision = revisionList[0] ?? null;
-    const dispatchedInOpenRound = latestRevision && sub.status === "submitted"
+    const dispatchedInOpenRound = latestRevision && canReplaceFile(sub.status)
       ? await db
         .select({ id: reviews.id })
         .from(reviews)
@@ -135,7 +136,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       rounds: roundSummaries,
       canReplaceLatestRevisionFile: user!.role === "author"
         && sub.authorId === user!.id
-        && sub.status === "submitted"
+        && canReplaceFile(sub.status)
         && Boolean(latestRevision && !latestRevision.fileAvailable)
         && dispatchedInOpenRound.length === 0,
       releasedResult: releasedRound?.releasedAt
@@ -223,7 +224,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }
-      if (sub.status !== "submitted") {
+      if (!canReplaceFile(sub.status)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "Submission is not awaiting review");
       }
@@ -292,7 +293,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }
-      if (!["draft", "revision_requested"].includes(sub.status)) {
+      if (!canEdit(sub.status)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "Cannot edit in current status");
       }
@@ -309,6 +310,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.submitterType && { submitterType: body.submitterType }),
           ...(body.educationLevel && { educationLevel: body.educationLevel }),
           ...(body.presentationFormat && { presentationFormat: body.presentationFormat }),
+          ...(body.round1FileType && { round1FileType: body.round1FileType }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -331,6 +333,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         submitterType: t.Optional(t.Union([t.Literal("student"), t.Literal("general")])),
         educationLevel: t.Optional(t.Union([t.Literal("bachelor"), t.Literal("master"), t.Literal("doctorate")])),
         presentationFormat: t.Optional(t.Union([t.Literal("oral"), t.Literal("poster")])),
+        round1FileType: t.Optional(t.Union([t.Literal("abstract"), t.Literal("full_paper")])),
       }),
     }
   )
@@ -362,7 +365,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       await db
         .update(submissions)
-        .set({ abstractFileUrl: fileUrl, status: "submitted", submittedAt: new Date() })
+        .set({ abstractFileUrl: fileUrl, status: "submitted_round1", submittedAt: new Date() })
         .where(eq(submissions.id, params.id));
 
       const [updated] = await db
@@ -409,7 +412,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         .set({
           round1FileUrl: fileUrl,
           round1FileType: body.fileType,
-          status: "submitted",
+          status: "submitted_round1",
           submittedAt: new Date(),
         })
         .where(eq(submissions.id, params.id));
@@ -448,7 +451,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }
-      if (sub.status !== "accepted") {
+      if (!canCameraReady(sub.status)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "อัปโหลดบทความฉบับสมบูรณ์ได้หลังจากผลงานผ่านการพิจารณาแล้วเท่านั้น");
       }
@@ -538,7 +541,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 403;
         return fail("FORBIDDEN", "Access denied");
       }
-      if (sub.status !== "revision_requested") {
+      if (!canRevise(sub.status)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "Submission is not awaiting revision");
       }
@@ -590,9 +593,11 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         submittedAt: new Date(),
       });
 
+      const nextStatus = statusAfterReviseUpload(sub.status) ?? "submitted_round2";
+
       await db
         .update(submissions)
-        .set({ status: "submitted", fullPaperFileUrl: fileUrl })
+        .set({ status: nextStatus, fullPaperFileUrl: fileUrl })
         .where(eq(submissions.id, params.id));
 
       return ok({ message: "Revision submitted successfully", version: nextVersion });

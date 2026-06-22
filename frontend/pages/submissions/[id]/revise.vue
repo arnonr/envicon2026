@@ -80,7 +80,7 @@ onMounted(async () => {
     showError(error);
     return;
   }
-  if (data!.data.status !== 'revision_requested') {
+  if (data!.data.status !== 'passed_round1_with_revisions' && data!.data.status !== 'passed_round2_with_revisions') {
     await navigateTo(`/submissions/${route.params.id}`);
     return;
   }

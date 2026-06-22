@@ -1,19 +1,39 @@
 <script setup lang="ts">
-import type { SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
+import type { Creator, SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
 
 definePageMeta({ middleware: ['auth', 'role'] });
+
+interface DraftSubmission {
+  id: string;
+  status: string;
+  title: string;
+  titleEn: string | null;
+  abstract: string | null;
+  keywords: string | null;
+  creators: string | null;
+  track: number;
+  submitterType: string;
+  educationLevel: string;
+  presentationFormat: string;
+  round1FileType: 'abstract' | 'full_paper' | null;
+}
 
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
 const authStore = useAuthStore();
 const { handleApiCall, showError, showSuccess } = useApiError();
+const route = useRoute();
 
 const step = ref<1 | 2 | 3>(1);
 const submissionId = ref<string | null>(null);
 const submitting = ref(false);
 const uploading = ref(false);
+const savingDraft = ref(false);
+const loadingDraft = ref(false);
+const loadFailed = ref(false);
 
-const submissionFormRef = ref<{ creators: { firstName: string; lastName: string }[] } | null>(null);
+const submissionFormRef = ref<{ creators: Creator[] } | null>(null);
+const initialCreators = ref<Creator[]>([]);
 
 const form = ref<SubmissionFormData>({
   title: '',
@@ -29,9 +49,19 @@ const form = ref<SubmissionFormData>({
 const isStep1Valid = computed(() => {
   const f = form.value;
   if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track || !f.submitterType || !f.educationLevel || !f.presentationFormat) return false;
-  const creators = submissionFormRef.value?.creators ?? [];
+  const creators = submissionFormRef.value?.creators ?? initialCreators.value;
   return creators.some(c => c.firstName.trim() && c.lastName.trim());
 });
+
+const parseCreators = (raw: string | null): Creator[] => {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
 
 const checkExisting = async () => {
   const { data } = await handleApiCall(() =>
@@ -48,8 +78,52 @@ const headers = computed(() => ({
   Authorization: `Bearer ${authStore.token}`,
 }));
 
-onMounted(() => {
-  checkExisting();
+const loadDraft = async (id: string) => {
+  loadingDraft.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: DraftSubmission }>(`${apiBase}/submissions/${id}`, {
+      headers: headers.value,
+    })
+  );
+  loadingDraft.value = false;
+
+  if (error || !data) {
+    loadFailed.value = true;
+    if (error) showError(error);
+    return;
+  }
+
+  const draft = data.data;
+  if (draft.status !== 'draft') {
+    await navigateTo(`/submissions/${id}`);
+    return;
+  }
+
+  submissionId.value = draft.id;
+  form.value = {
+    title: draft.title ?? '',
+    title_en: draft.titleEn ?? '',
+    abstract: draft.abstract ?? '',
+    keywords: draft.keywords ?? '',
+    track: String(draft.track ?? ''),
+    submitterType: (draft.submitterType as 'student' | 'general') ?? 'student',
+    educationLevel: draft.educationLevel ?? '',
+    presentationFormat: draft.presentationFormat ?? '',
+  };
+  initialCreators.value = parseCreators(draft.creators);
+  if (draft.round1FileType) {
+    round1FileType.value = draft.round1FileType;
+    step.value = 2;
+  }
+};
+
+onMounted(async () => {
+  const draftId = route.query.id;
+  if (typeof draftId === 'string' && draftId) {
+    await loadDraft(draftId);
+    return;
+  }
+  await checkExisting();
 });
 
 const createSubmission = async () => {
@@ -88,6 +162,56 @@ const createSubmission = async () => {
 
   submissionId.value = data!.data.id;
   step.value = 2;
+};
+
+const saveDraft = async () => {
+  savingDraft.value = true;
+
+  const creators = submissionFormRef.value?.creators ?? [];
+  const creatorsJson = JSON.stringify(
+    creators.filter(c => c.firstName.trim() && c.lastName.trim())
+  );
+  const baseBody = {
+    title: form.value.title.trim(),
+    titleEn: form.value.title_en.trim(),
+    abstract: form.value.abstract.trim(),
+    keywords: form.value.keywords.trim() || undefined,
+    creators: creatorsJson,
+    track: parseInt(form.value.track),
+    submitterType: form.value.submitterType,
+    educationLevel: form.value.educationLevel,
+    presentationFormat: form.value.presentationFormat,
+  };
+
+  try {
+    if (!submissionId.value) {
+      const { data, error } = await handleApiCall(() =>
+        $fetch<{ success: true; data: { id: string } }>(`${apiBase}/submissions`, {
+          method: 'POST',
+          headers: headers.value,
+          body: baseBody,
+        })
+      );
+      if (error) { showError(error); return; }
+      submissionId.value = data!.data.id;
+    } else {
+      const { error } = await handleApiCall(() =>
+        $fetch(`${apiBase}/submissions/${submissionId.value}`, {
+          method: 'PUT',
+          headers: headers.value,
+          body: {
+            ...baseBody,
+            ...(step.value === 2 && { round1FileType: round1FileType.value }),
+          },
+        })
+      );
+      if (error) { showError(error); return; }
+    }
+    showSuccess('บันทึกแบบร่างเรียบร้อย');
+    await navigateTo('/dashboard');
+  } finally {
+    savingDraft.value = false;
+  }
 };
 
 const selectedFile = ref<File | null>(null);
@@ -154,16 +278,33 @@ const uploadAbstract = async () => {
       <span>เสร็จสิ้น</span>
     </div>
 
+    <!-- Loading draft -->
+    <div v-if="loadingDraft" class="flex justify-center py-20">
+      <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 text-gray-400 animate-spin" />
+    </div>
+
+    <UCard v-else-if="loadFailed">
+      <div class="text-center py-8 space-y-4">
+        <p class="text-sm text-gray-500">ไม่สามารถโหลดข้อมูลผลงานเพื่อทำต่อได้</p>
+        <UButton color="gray" variant="soft" to="/dashboard">กลับแดชบอร์ด</UButton>
+      </div>
+    </UCard>
+
+    <template v-else>
     <!-- Step 1: Form -->
     <UCard v-if="step === 1">
       <template #header>
         <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 1: ข้อมูลผลงาน</h2>
       </template>
 
-      <SubmissionForm ref="submissionFormRef" v-model="form" />
+      <SubmissionForm ref="submissionFormRef" v-model="form" :initial-creators="initialCreators" />
 
       <template #footer>
-        <div class="flex justify-end">
+        <div class="flex justify-between">
+          <UButton color="gray" variant="ghost" :loading="savingDraft" @click="saveDraft">
+            <UIcon name="i-heroicons-bookmark" class="w-4 h-4 mr-1" />
+            บันทึกแบบร่าง
+          </UButton>
           <UButton color="primary" :loading="submitting" :disabled="!isStep1Valid" @click="createSubmission">
             ถัดไป: อัปโหลด PDF
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
@@ -231,20 +372,28 @@ const uploadAbstract = async () => {
 
       <template #footer>
         <div class="flex justify-between">
-          <UButton color="gray" variant="ghost" @click="step = 1">
-            <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
-            ย้อนกลับ
-          </UButton>
-          <UButton
-            v-if="selectedFile"
-            color="primary"
-            :loading="uploading"
-            @click="uploadAbstract"
-          >
-            บันทึก
-            <UIcon name="i-heroicons-check" class="w-4 h-4 ml-1" />
-          </UButton>
-          <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึก</p>
+          <div class="flex items-center gap-2">
+            <UButton color="gray" variant="ghost" @click="step = 1">
+              <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-1" />
+              ย้อนกลับ
+            </UButton>
+            <UButton color="gray" variant="ghost" :loading="savingDraft" @click="saveDraft">
+              <UIcon name="i-heroicons-bookmark" class="w-4 h-4 mr-1" />
+              บันทึกแบบร่าง
+            </UButton>
+          </div>
+          <div class="flex items-center gap-2">
+            <p v-if="!selectedFile" class="text-xs text-gray-400">เลือกไฟล์ก่อนส่ง</p>
+            <UButton
+              v-else
+              color="primary"
+              :loading="uploading"
+              @click="uploadAbstract"
+            >
+              ส่งผลงาน
+              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 ml-1" />
+            </UButton>
+          </div>
         </div>
       </template>
     </UCard>
@@ -278,5 +427,6 @@ const uploadAbstract = async () => {
         </div>
       </template>
     </UCard>
+    </template>
   </div>
 </template>

@@ -189,11 +189,13 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
   const { authorName, title, submissionId, decision, adminNote, reviewerComments, roundNumber } = data;
 
   const decisionText =
-    decision === "accept" ? "ผ่านการพิจารณา" :
-    decision === "reject" ? "ไม่ผ่านการพิจารณา" :
-    "ขอให้แก้ไขผลงาน";
+    decision === "accept" ? `ผ่านการพิจารณารอบที่ ${roundNumber}` :
+    decision === "reject" ? `ไม่ผ่านการพิจารณารอบที่ ${roundNumber}` :
+    `ผ่านการพิจารณารอบที่ ${roundNumber} แบบมีข้อแก้ไข`;
 
   const mainContent = mainContentByDecision(data);
+
+  const ctaHtml = renderCta(data);
 
   const commentsHtml = reviewerComments.length > 0 ? `
     <div style="background-color:#f0fdf4;border-left:4px solid #059669;padding:16px;margin:24px 0;border-radius:4px">
@@ -214,7 +216,7 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
     </div>
   ` : "";
 
-  const subject = `ผลการพิจารณาผลงาน (รอบที่ ${roundNumber}): ${title} — ${decisionText}`;
+  const subject = `ผลการพิจารณารอบที่ ${roundNumber}: ${title}`;
 
   const body = `
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 16px">
@@ -240,7 +242,7 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
           </tr>
           <tr>
             <td style="font-size:13px;color:#6b7280;padding:4px 0">ผลการพิจารณา</td>
-            <td style="font-size:14px;padding:4px 0"><span style="color:${decision === 'accept' ? '#059669' : decision === 'reject' ? '#dc2626' : '#d97706'};font-weight:600">${escapeHtml(decisionText)}</span></td>
+            <td style="font-size:14px;padding:4px 0"><span style="color:${decision === 'accept' ? '#059669' : decision === 'reject' ? '#dc2626' : '#0d9488'};font-weight:600">${escapeHtml(decisionText)}</span></td>
           </tr>
         </table>
       </td></tr>
@@ -249,7 +251,9 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
     ${commentsHtml}
     ${adminNoteHtml}
 
-    <div style="text-align:center;margin:28px 0 8px">
+    ${ctaHtml}
+
+    <div style="text-align:center;margin:8px 0">
       <a href="${appUrl(`/submissions/${submissionId}`)}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600">
         ดูรายละเอียดและข้อเสนอแนะทั้งหมด
       </a>
@@ -259,16 +263,53 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
   return { subject, htmlBody: emailLayout(body) };
 }
 
+function renderCta(data: AuthorResultData): string {
+  const { decision, submissionId, roundNumber } = data;
+  if (decision === "revise") {
+    return `
+      <div style="text-align:center;margin:28px 0 8px">
+        <a href="${appUrl(`/submissions/${submissionId}/revise`)}" style="display:inline-block;background-color:#0d9488;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600">
+          แก้ไขและส่งผลงานฉบับปรับปรุง
+        </a>
+        <div style="font-size:12px;color:#6b7280;margin-top:8px">ส่งได้จนถึงก่อนการประชุมวิชาการ</div>
+      </div>
+    `;
+  }
+  if (decision === "accept" && roundNumber === 1) {
+    return `
+      <div style="text-align:center;margin:28px 0 8px">
+        <a href="${appUrl(`/submissions/${submissionId}`)}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600">
+          อัปโหลดบทความฉบับสมบูรณ์เพื่อเข้าสู่รอบที่ 2
+        </a>
+        <div style="font-size:12px;color:#6b7280;margin-top:8px">ผลงานที่ผ่านรอบที่ 1 ต้องส่งฉบับสมบูรณ์เพื่อเข้าสู่การพิจารณารอบที่ 2</div>
+      </div>
+    `;
+  }
+  if (decision === "accept" && roundNumber === 2) {
+    return `
+      <div style="text-align:center;margin:28px 0 8px">
+        <a href="${appUrl(`/submissions/${submissionId}`)}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600">
+          อัปโหลดบทความฉบับ Camera-ready
+        </a>
+        <div style="font-size:12px;color:#6b7280;margin-top:8px">สำหรับใช้ในการจัดพิมพ์และนำเสนอ</div>
+      </div>
+    `;
+  }
+  return "";
+}
+
 function mainContentByDecision(data: AuthorResultData): string {
-  const { decision } = data;
+  const { decision, roundNumber } = data;
 
   if (decision === "accept") {
     return `
       <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 8px">
-        ขอแสดงความยินดี ผลงานของท่านได้รับการตอบรับให้เข้าร่วมนำเสนอในการประชุมวิชาการ <strong>ENVICON 2026</strong>
+        ขอแสดงความยินดี ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber}</strong>ของการประชุมวิชาการ <strong>ENVICON 2026</strong>
       </p>
       <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:0">
-        กรุณาตรวจสอบข้อเสนอแนะจากผู้พิจารณา และดำเนินการตามขั้นตอนที่ระบุไว้ในระบบเพื่อยืนยันการเข้าร่วมนำเสนอผลงาน
+        ${roundNumber === 1
+          ? "กรุณาตรวจสอบข้อเสนอแนะจากผู้พิจารณา และอัปโหลดบทความฉบับสมบูรณ์เพื่อเข้าสู่การพิจารณา<strong>รอบที่ 2</strong>"
+          : "กรุณาตรวจสอบข้อเสนอแนะจากผู้พิจารณา และอัปโหลดบทความฉบับ Camera-ready สำหรับการจัดพิมพ์และนำเสนอ"}
       </p>
     `;
   }
@@ -279,7 +320,7 @@ function mainContentByDecision(data: AuthorResultData): string {
         คณะกรรมการขอขอบคุณสำหรับการส่งผลงานเข้าร่วมการประชุมวิชาการ <strong>ENVICON 2026</strong>
       </p>
       <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:0">
-        หลังจากการพิจารณาอย่างละเอียดแล้ว คณะกรรมการขอเรียนให้ทราบว่าผลงานของท่าน<strong>ไม่ผ่านการพิจารณา</strong>ในครั้งนี้
+        หลังจากการพิจารณาอย่างละเอียดแล้ว คณะกรรมการขอเรียนให้ทราบว่าผลงานของท่าน<strong>ไม่ผ่านการพิจารณารอบที่ ${roundNumber}</strong>
         ทั้งนี้ ท่านสามารถศึกษาข้อเสนอแนะจากผู้พิจารณาเพื่อนำไปพัฒนาและปรับปรุงผลงานของท่านต่อไป
       </p>
     `;
@@ -287,12 +328,10 @@ function mainContentByDecision(data: AuthorResultData): string {
 
   return `
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 8px">
-      ผลงานของท่านมีศักยภาพที่จะได้รับการตอบรับให้เข้าร่วมนำเสนอในการประชุมวิชาการ <strong>ENVICON 2026</strong>
-      อย่างไรก็ตาม คณะกรรมการขอให้ท่าน<strong>ปรับปรุงแก้ไขผลงาน</strong>ตามข้อเสนอแนะจากผู้พิจารณา
+      ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber} แบบมีข้อแก้ไข</strong>ในการประชุมวิชาการ <strong>ENVICON 2026</strong>
     </p>
     <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:8px 0 0">
-      กรุณาดำเนินการแก้ไขและส่งผลงานที่ปรับปรุงแล้วผ่านระบบภายในระยะเวลาที่กำหนด
-      หากมีข้อสงสัยประการใด สามารถติดต่อคณะกรรมการได้ตามข้อมูลด้านล่าง
+      คณะกรรมการมีข้อเสนอแนะบางประการที่ต้องการให้ท่านปรับปรุง กรุณาดำเนินการแก้ไขและส่งผลงานฉบับปรับปรุงผ่านระบบเพื่อเข้าสู่<strong>รอบที่ ${roundNumber === 1 ? 2 : "ถัดไป"}</strong>
     </p>
   `;
 }

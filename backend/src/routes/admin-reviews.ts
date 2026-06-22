@@ -13,6 +13,7 @@ import {
 } from "../db/schema";
 import { getUserFromHeaders } from "../middleware/auth";
 import { requireAdmin } from "../middleware/roles";
+import { ALL_NON_DRAFT, RE_REVIEW_STATUSES, statusAfterDecision, statusAfterSendReview } from "../utils/submission-status";
 import { appUrl, escapeHtml, retryTrackedEmail, sendTrackedEmail } from "../services/email";
 import { buildAuthorResultEmail, buildReviewerInvitationEmail, buildReviewAssignmentEmail } from "../services/email-templates";
 import { issuePasswordSetupToken } from "../services/password-setup";
@@ -321,10 +322,11 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
     "/submissions/:id/review-rounds",
     async ({ params, set }) => {
       const [submission] = await db.select().from(submissions).where(eq(submissions.id, params.id)).limit(1);
-      if (!submission || !["submitted", "under_review"].includes(submission.status)) {
+      if (!submission || (!ALL_NON_DRAFT.includes(submission.status) && !RE_REVIEW_STATUSES.includes(submission.status as never))) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "ผลงานยังไม่พร้อมเริ่มรอบพิจารณา");
       }
+      const isReReview = RE_REVIEW_STATUSES.includes(submission.status as never);
       const [openRound] = await db
         .select({ id: reviewRounds.id })
         .from(reviewRounds)
@@ -348,7 +350,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         submissionVersionId: version.id,
         roundNumber: (latest?.roundNumber ?? 0) + 1,
       });
-      return ok({ id });
+      return ok({ id, isReReview });
     },
     { params: t.Object({ id: t.String() }) },
   )
@@ -479,7 +481,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .set({ status: "sent", dueAt: new Date(body.dueAt), sentAt: new Date() })
         .where(eq(reviews.id, assignment.id));
       await db.update(reviewRounds).set({ status: "in_review" }).where(eq(reviewRounds.id, assignment.roundId));
-      await db.update(submissions).set({ status: "under_review" }).where(eq(submissions.id, assignment.submissionId));
+      await db.update(submissions).set({ status: statusAfterSendReview(assignment.roundNumber ?? 1) }).where(eq(submissions.id, assignment.submissionId));
       return ok({ sent: true });
     },
     {
@@ -543,7 +545,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "ยังไม่มีผลตัดสินที่พร้อมแจ้ง");
       }
-      const status = round.decision === "accept" ? "accepted" : round.decision === "reject" ? "rejected" : "revision_requested";
+      const status = statusAfterDecision(round.roundNumber, round.decision ?? "accept");
       await db.update(reviewRounds).set({ status: "released", releasedAt: new Date() }).where(eq(reviewRounds.id, round.id));
       await db.update(submissions).set({ status }).where(eq(submissions.id, round.submissionId));
 

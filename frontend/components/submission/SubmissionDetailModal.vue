@@ -390,8 +390,8 @@ watch(() => props.modelValue, (open) => {
           </UCard>
         </UModal>
 
-        <!-- Upload full paper (accepted, no file yet) -->
-        <div v-if="submission.status === 'accepted' && !submission.fullPaperFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
+        <!-- Upload full paper (passed round 1, no file yet) -->
+        <div v-if="submission.status === 'passed_round1' && !submission.fullPaperFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
           <div class="flex items-center gap-2 mb-3">
             <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
             <h3 class="text-sm font-semibold text-green-700">บทคัดย่อได้รับการอนุมัติ — กรุณาส่งบทความฉบับสมบูรณ์</h3>
@@ -400,7 +400,7 @@ watch(() => props.modelValue, (open) => {
         </div>
 
         <!-- Revision requested -->
-        <div v-if="submission.status === 'revision_requested'" class="border border-orange-200 rounded-lg p-4 bg-orange-50/50">
+        <div v-if="submission.status === 'passed_round1_with_revisions' || submission.status === 'passed_round2_with_revisions'" class="border border-orange-200 rounded-lg p-4 bg-orange-50/50">
           <div class="flex items-center gap-2 mb-3">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-orange-500" />
             <h3 class="text-sm font-semibold text-orange-700">คณะกรรมการขอให้แก้ไขผลงาน</h3>

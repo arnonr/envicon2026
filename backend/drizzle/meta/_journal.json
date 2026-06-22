@@ -71,6 +71,13 @@
       "when": 1782017383104,
       "tag": "0009_small_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1782140832882,
+      "tag": "0010_chilly_butterfly",
+      "breakpoints": true
     }
   ]
 }

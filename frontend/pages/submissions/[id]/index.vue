@@ -223,8 +223,8 @@ onMounted(fetchSubmission);
         </div>
       </UCard>
 
-      <!-- Upload Full Paper (when accepted) -->
-      <UCard v-if="submission.status === 'accepted' && !submission.fullPaperFileUrl" class="mb-6">
+      <!-- Upload Full Paper (when passed round 1) -->
+      <UCard v-if="submission.status === 'passed_round1' && !submission.fullPaperFileUrl" class="mb-6">
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
@@ -239,7 +239,7 @@ onMounted(fetchSubmission);
       </UCard>
 
       <!-- Revision requested -->
-      <UCard v-if="submission.status === 'revision_requested'" class="mb-6 border-orange-200">
+      <UCard v-if="submission.status === 'passed_round1_with_revisions' || submission.status === 'passed_round2_with_revisions'" class="mb-6 border-orange-200">
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-orange-500" />
