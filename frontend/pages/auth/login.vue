@@ -140,7 +140,7 @@ async function handleSubmit() {
         <h1 class="text-2xl font-bold text-gray-900">
           {{ isRegisterMode ? "ลงทะเบียนเพื่อส่งผลงาน" : "เข้าสู่ระบบ" }}
         </h1>
-        <p class="text-gray-500 mt-2">ENVICON 2026</p>
+        <p class="text-gray-500 mt-2">TSHE-CON 2026</p>
       </div>
 
       <UCard>

@@ -32,7 +32,7 @@ All content is **draft** and hardcoded in the page component. Editing text later
 Full-width banner with `linear-gradient(135deg, primary-800 → primary-700 → teal-700)` background, white text, centered. Contents:
 
 - Eyebrow label: `SPONSORSHIP OPPORTUNITY` (uppercase, letter-spacing 3px, small, opacity 0.7)
-- Title: `ร่วมสนับสนุน ENVICON 2026` (text-4xl/5xl, font-extrabold)
+- Title: `ร่วมสนับสนุน TSHE-CON 2026` (text-4xl/5xl, font-extrabold)
 - Subtitle: `งานประชุมวิชาการระดับชาติด้านสิ่งแวดล้อม ครั้งที่ 5` + newline + `12–13 พฤศจิกายน 2569 • มจพ.` (text-base, opacity 0.85)
 - 2 buttons side by side: `ดูแพ็กเกจ` (solid white → scroll to tier section via anchor) and `ติดต่อเรา` (ghost, links to /contact)
 

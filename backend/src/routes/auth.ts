@@ -15,13 +15,13 @@ function passwordResetEmailHtml(user: { name: string }, link: string) {
       <div style="max-width:640px;margin:0 auto;padding:32px 16px;">
         <div style="background:#ffffff;border:1px solid #e6ebf2;border-radius:12px;overflow:hidden;">
           <div style="background:#0f766e;padding:24px 28px;color:#ffffff;">
-            <div style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.9;">ENVICON 2026</div>
+            <div style="font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.9;">TSHE-CON 2026</div>
             <h1 style="margin:8px 0 0;font-size:24px;line-height:1.35;font-weight:700;">ตั้งรหัสผ่านใหม่</h1>
           </div>
           <div style="padding:28px;">
             <p style="margin:0 0 16px;font-size:16px;line-height:1.75;">เรียน ${escapeHtml(user.name)}</p>
             <p style="margin:0 0 20px;font-size:16px;line-height:1.75;">
-              เราได้รับคำขอตั้งรหัสผ่านใหม่สำหรับบัญชี ENVICON 2026 ของท่าน
+              เราได้รับคำขอตั้งรหัสผ่านใหม่สำหรับบัญชี TSHE-CON 2026 ของท่าน
               กรุณากดปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่
             </p>
             <p style="margin:28px 0;text-align:center;">
@@ -37,7 +37,7 @@ function passwordResetEmailHtml(user: { name: string }, link: string) {
             </p>
           </div>
           <div style="border-top:1px solid #e6ebf2;padding:18px 28px;background:#fbfcfe;color:#738095;font-size:12px;line-height:1.6;">
-            อีเมลนี้ส่งจากระบบ ENVICON 2026 กรุณาอย่าตอบกลับอีเมลฉบับนี้
+            อีเมลนี้ส่งจากระบบ TSHE-CON 2026 กรุณาอย่าตอบกลับอีเมลฉบับนี้
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
           type: "password_reset",
           recipientEmail: user.email,
           relatedId: user.id,
-          subject: "ตั้งรหัสผ่านใหม่ ENVICON 2026",
+          subject: "ตั้งรหัสผ่านใหม่ TSHE-CON 2026",
           htmlBody: passwordResetEmailHtml(user, link),
         });
       }

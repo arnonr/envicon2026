@@ -257,7 +257,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       .orderBy(desc(submissions.updatedAt));
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "ENVICON 2026";
+    workbook.creator = "TSHE-CON 2026";
     workbook.created = new Date();
     const worksheet = workbook.addWorksheet("ผลงาน", {
       views: [{ state: "frozen", ySplit: 1 }],

@@ -1,12 +1,12 @@
 <template>
   <div class="overflow-hidden bg-gradient-to-b from-sky-100 via-meadow-50 to-white">
-    <!-- ═══════════ HERO — Forest Canopy Photo ═══════════ -->
-    <section class="relative min-h-[95vh] flex items-center justify-center overflow-hidden bg-meadow-950">
-      <!-- Background photo: sun-dappled forest canopy -->
+    <!-- ═══════════ HERO — Low-Carbon Technology Photo ═══════════ -->
+    <section class="relative min-h-[95vh] flex items-start sm:items-center justify-center overflow-hidden bg-meadow-950">
+      <!-- Background photo: low-carbon environmental technology campus -->
       <div class="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=2400&q=80&auto=format&fit=crop"
-          alt="Sun-dappled forest canopy"
+          :src="heroImage"
+          alt="Low-carbon environmental technology campus with solar panels and smart monitoring systems"
           class="w-full h-full object-cover hero-photo"
         />
       </div>
@@ -22,26 +22,27 @@
       </div>
 
       <!-- Content -->
-      <div class="relative z-10 max-w-5xl mx-auto px-6 text-center mt-[-5vh]">
+      <div class="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 text-center pt-8 sm:pt-0 sm:mt-[-5vh]">
         <div
-          class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-full px-6 py-2.5 mb-8 hero-fade hero-fade--1 shadow-lg shadow-meadow-950/30">
+          class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-full px-5 sm:px-6 py-2.5 mb-5 sm:mb-6 hero-fade hero-fade--1 shadow-lg shadow-meadow-950/30">
           <span class="w-2.5 h-2.5 rounded-full bg-meadow-400 animate-pulse shadow-sm shadow-meadow-300" />
-          <span class="text-sm font-semibold tracking-wide text-white">The 5th National Conference</span>
+          <span class="text-sm font-semibold tracking-wide text-white">TSHE-CON 2026</span>
         </div>
 
         <h1
-          class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[0.95] mb-6 hero-fade hero-fade--2">
-          <span class="block text-white drop-shadow-2xl">Innovative</span>
-          <span
-            class="block bg-gradient-to-r from-amber-300 via-orange-200 to-rose-200 bg-clip-text text-transparent mt-1 drop-shadow-lg">Environmental</span>
-          <span
-            class="block bg-gradient-to-r from-sky-300 via-cyan-200 to-blue-200 bg-clip-text text-transparent mt-1 drop-shadow-lg pb-2">Technologies</span>
+          class="font-display flex flex-col items-center gap-2 sm:gap-3 md:gap-4 text-[1.65rem] sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-5 hero-fade hero-fade--2 text-white drop-shadow-2xl">
+          <span class="block leading-[1.35]">การประชุมวิชาการระดับชาติ</span>
+          <span class="block leading-[1.35]">สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</span>
+          <span class="block leading-[1.35]">ครั้งที่ 5</span>
         </h1>
 
-        <p class="text-lg sm:text-xl text-white/90 font-medium max-w-2xl mx-auto mb-3 hero-fade hero-fade--3 mt-3 drop-shadow-md">
-          for a Sustainable and Low-Carbon Future
+        <p class="text-sm sm:text-xl md:text-2xl text-sky-100 font-bold max-w-5xl mx-auto mb-4 sm:mb-5 hero-fade hero-fade--3 drop-shadow-lg leading-snug">
+          The 5th National Academic Conference of Thai Society of Higher Education Institutes on Environment
         </p>
-        <p class="text-base text-white/75 max-w-xl mx-auto mb-10 hero-fade hero-fade--4 drop-shadow-md">
+
+        <p class="text-xs sm:text-base md:text-lg text-white/80 max-w-3xl mx-auto mb-6 sm:mb-10 hero-fade hero-fade--4 drop-shadow-md leading-relaxed">
+          <span class="font-semibold text-meadow-200">Theme:</span>
+          Innovative Environmental Technologies for a Sustainable and Low-Carbon Future<br class="hidden sm:block" />
           เทคโนโลยีสิ่งแวดล้อมเชิงนวัตกรรมเพื่ออนาคตที่ยั่งยืนและสังคมคาร์บอนต่ำ
         </p>
 
@@ -88,7 +89,7 @@
     <section class="relative py-20 bg-white">
       <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-meadow-300 to-transparent" />
 
-      <div class="max-w-5xl mx-auto px-6">
+      <div class="max-w-6xl mx-auto px-6">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div v-for="(stat, i) in stats" :key="i"
             class="group relative rounded-3xl p-8 text-center border-2 transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1"
@@ -170,7 +171,9 @@
 
               <div class="mt-auto">
                 <div class="text-[10px] font-bold text-meadow-300 tracking-[0.2em] uppercase mb-2">{{ track.tag }}</div>
-                <h3 class="font-semibold text-lg mb-1.5 leading-snug drop-shadow-lg">{{ track.th }}</h3>
+                <h3 class="font-semibold text-lg mb-1.5 leading-[1.45] drop-shadow-lg">
+                  <span v-for="line in track.thLines ?? [track.th]" :key="line" class="block">{{ line }}</span>
+                </h3>
                 <p class="text-sm text-white/85 font-medium leading-snug">{{ track.en }}</p>
               </div>
             </div>
@@ -180,13 +183,14 @@
     </section>
 
     <!-- ═══════════ TIMELINE — Meadow Path ═══════════ -->
-    <section class="py-24 bg-gradient-to-br from-meadow-500 via-meadow-600 to-sky-600 relative overflow-hidden">
+    <section class="py-24 bg-gradient-to-br from-meadow-950 via-teal-900 to-sky-950 relative overflow-hidden">
       <!-- Texture dots -->
       <div
         class="absolute inset-0 opacity-[0.06] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIgZmlsbD0id2hpdGUiLz48L3N2Zz4=')]" />
       <!-- Glow -->
-      <div class="absolute top-0 right-1/4 w-96 h-96 bg-white/10 rounded-full blur-[120px]" />
-      <div class="absolute bottom-0 left-1/4 w-72 h-72 bg-sky-300/20 rounded-full blur-[100px]" />
+      <div class="absolute inset-0 bg-black/20" />
+      <div class="absolute top-0 right-1/4 w-96 h-96 bg-meadow-400/15 rounded-full blur-[120px]" />
+      <div class="absolute bottom-0 left-1/4 w-72 h-72 bg-sky-300/15 rounded-full blur-[100px]" />
       <!-- Bubbles -->
       <div v-for="i in 10" :key="'tlb' + i"
         class="absolute rounded-full border border-white/10 bg-white/[0.03] bubble-timeline"
@@ -194,9 +198,9 @@
 
       <div class="relative max-w-3xl mx-auto px-6">
         <div class="text-center mb-14">
-          <span class="text-xs font-bold tracking-[0.2em] uppercase text-meadow-200/80 mb-3 block">Important
+          <span class="text-xs font-bold tracking-[0.2em] uppercase text-meadow-100 mb-3 block drop-shadow-md">Important
             Dates</span>
-          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">กำหนดการที่สำคัญ</h2>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white drop-shadow-lg">กำหนดการที่สำคัญ</h2>
           <div class="w-16 h-1.5 bg-gradient-to-r from-meadow-300 to-amber-300 rounded-full mx-auto mt-5" />
         </div>
 
@@ -208,15 +212,19 @@
           <div class="space-y-3">
             <div v-for="(item, i) in timeline" :key="i" class="relative flex items-start gap-6">
               <div
-                class="relative z-10 flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300"
+                class="relative z-10 flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 shadow-lg"
                 :class="item.highlight
-                  ? 'bg-amber-400/15 border-amber-400 shadow-lg shadow-amber-400/20'
-                  : 'bg-white/[0.08] border-white/40'">
-                <UIcon :name="item.icon" class="w-5 h-5" :class="item.highlight ? 'text-amber-300' : 'text-white/60'" />
+                  ? 'bg-amber-300 border-amber-100 text-meadow-950 shadow-amber-900/20'
+                  : 'bg-white border-meadow-100 text-meadow-800 shadow-meadow-950/15'">
+                <UIcon :name="item.icon" class="w-5 h-5" />
               </div>
-              <div class="flex-1 pb-6 pt-2">
-                <div class="font-semibold text-white/90 mb-0.5">{{ item.title }}</div>
-                <div class="text-sm" :class="item.highlight ? 'text-amber-200' : 'text-white/60'">{{ item.date
+              <div
+                class="flex-1 mb-3 rounded-2xl border px-5 py-4 shadow-xl backdrop-blur-md"
+                :class="item.highlight
+                  ? 'border-amber-200/70 bg-amber-50/95 shadow-amber-950/20'
+                  : 'border-white/70 bg-white/[0.92] shadow-meadow-950/15'">
+                <div class="font-bold text-meadow-950 mb-1">{{ item.title }}</div>
+                <div class="text-sm font-semibold" :class="item.highlight ? 'text-amber-800' : 'text-sky-900'">{{ item.date
                 }}</div>
               </div>
             </div>
@@ -234,22 +242,23 @@
           <div class="w-16 h-1.5 bg-gradient-to-r from-meadow-400 to-sky-400 rounded-full mx-auto mt-5" />
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6 items-stretch">
-          <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-meadow-200/40 aspect-[4/3] md:aspect-auto md:min-h-[360px]">
+        <div class="grid lg:grid-cols-[1.12fr_0.88fr] gap-8 lg:gap-12 items-start">
+          <div class="relative rounded-3xl overflow-hidden shadow-2xl shadow-meadow-200/40 aspect-[16/10] lg:aspect-[4/3]">
             <img
-              src="https://www.geodesicdesign.co.th/admin/img_large/8907637.jpg"
-              alt="Modern university building"
+              src="/images/technopark-building.jpg"
+              alt="อาคาร 99 อุทยานเทคโนโลยี มจพ."
               class="w-full h-full object-cover"
             />
-            <div class="absolute inset-0 bg-gradient-to-t from-meadow-950/60 via-transparent to-transparent" />
-            <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-meadow-950/75 via-meadow-950/20 to-transparent p-5 sm:p-6 text-white">
               <div class="text-xs font-semibold tracking-wider uppercase text-meadow-200 mb-1">Conference Hall</div>
               <div class="font-display text-2xl font-bold">อาคาร 99</div>
             </div>
           </div>
 
-          <div class="rounded-3xl border border-meadow-100 bg-white shadow-xl shadow-meadow-100/30 p-8 md:p-10 flex flex-col justify-center">
-            <div class="font-display text-2xl font-bold text-meadow-800 mb-2">อุทยานเทคโนโลยี มจพ.</div>
+          <div class="rounded-3xl border border-meadow-100 bg-white shadow-xl shadow-meadow-100/30 p-8 md:p-10 lg:p-12 flex flex-col justify-center lg:min-h-[420px]">
+            <div class="font-display text-2xl font-bold text-meadow-800 mb-2 leading-snug">
+              อุทยานเทคโนโลยี มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
+            </div>
             <div class="text-sm text-sky-600 font-semibold mb-6">KMUTNB Technopark</div>
 
             <div class="space-y-4">
@@ -264,7 +273,9 @@
                 </div>
                 <div>
                   <div class="text-xs uppercase tracking-wider text-gray-500 font-semibold">สถานที่</div>
-                  <div class="text-meadow-800 font-semibold">อาคาร 99 อุทยานเทคโนโลยี มจพ.</div>
+                  <div class="text-meadow-800 font-semibold">
+                    อาคาร 99 อุทยานเทคโนโลยี มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
+                  </div>
                 </div>
               </div>
 
@@ -294,11 +305,106 @@
       </div>
     </section>
 
+    <!-- ═══════════ PARTNERS — Organizers & Sponsors ═══════════ -->
+    <section class="py-20 bg-white border-y border-meadow-100">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-2xl mx-auto text-center mb-12">
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-meadow-900 leading-tight">
+            ผู้จัดงานและผู้สนับสนุน
+          </h2>
+          <p class="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+            เครือข่ายความร่วมมือที่สนับสนุนการประชุมวิชาการ TSHE-CON 2026
+          </p>
+        </div>
+
+        <div class="space-y-12">
+          <div>
+            <div class="mb-5 flex items-center gap-3">
+              <h3 class="text-sm font-bold text-meadow-900">ผู้จัดงาน</h3>
+              <div class="h-px flex-1 bg-meadow-100" />
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+              <div
+                v-for="organizer in organizers"
+                :key="organizer.name"
+                class="group flex min-h-[132px] flex-col items-center justify-center rounded-2xl border border-meadow-100 bg-white px-4 py-5 text-center shadow-sm shadow-meadow-100/40 transition-all duration-300 hover:-translate-y-0.5 hover:border-meadow-300 hover:shadow-lg"
+              >
+                <div
+                  class="mb-3 flex items-center justify-center"
+                  :class="organizer.logoSize === 'large' ? 'h-20 w-32' : 'h-14 w-24'"
+                >
+                  <img
+                    v-if="organizer.logo"
+                    :src="organizer.logo"
+                    :alt="`${organizer.name} logo`"
+                    class="object-contain"
+                    :class="organizer.logoSize === 'large' ? 'max-h-20 max-w-32' : 'max-h-14 max-w-24'"
+                    loading="lazy"
+                    referrerpolicy="no-referrer"
+                  />
+                  <div
+                    v-else
+                    class="flex h-14 w-14 items-center justify-center rounded-xl border bg-gradient-to-br text-sm font-black leading-none"
+                    :class="organizer.logoClass"
+                  >
+                    {{ organizer.mark }}
+                  </div>
+                </div>
+                <div class="text-sm font-bold leading-snug text-meadow-950">
+                  {{ organizer.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="mb-5 flex items-center gap-3">
+              <h3 class="text-sm font-bold text-meadow-900">ผู้สนับสนุน</h3>
+              <div class="h-px flex-1 bg-meadow-100" />
+            </div>
+
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-white to-transparent" />
+              <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-white to-transparent" />
+
+              <div class="-mx-6 overflow-x-auto px-6 pb-4 snap-x snap-mandatory [scrollbar-width:thin]">
+                <div class="flex min-w-max gap-3">
+                  <div
+                    v-for="(sponsor, i) in supportingSponsors"
+                    :key="'supporting-sponsor-' + i"
+                    class="group flex h-24 w-40 flex-shrink-0 snap-start items-center justify-center rounded-2xl border border-stone-200 bg-white px-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-lg"
+                    :aria-label="sponsor.name"
+                  >
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="flex h-9 w-9 items-center justify-center rounded-lg border bg-gradient-to-br text-[11px] font-black leading-none"
+                        :class="sponsor.logoClass"
+                      >
+                        {{ sponsor.mark }}
+                      </div>
+                      <div class="max-w-[5.8rem] text-left text-xs font-black leading-tight text-stone-700">
+                        {{ sponsor.name }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <HomeRegistrationModal v-model="showRegModal" />
   </div>
 </template>
 
 <script setup lang="ts">
+const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+const heroImage = `${appBaseUrl}/images/tshe-con-low-carbon-tech-hero-20260811.png`;
+const wellbeingImage = `${appBaseUrl}/images/tshe-con-wellbeing-family-20260811.png`;
+
 const authStore = useAuthStore();
 const showRegModal = ref(false);
 
@@ -364,6 +470,7 @@ const stats = [
 const tracks = [
   {
     th: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
+    thLines: ["วิทยาศาสตร์สิ่งแวดล้อม", "และการควบคุมมลพิษ"],
     en: "Environmental Science and Pollution Control",
     icon: "i-heroicons-beaker",
     tag: "Pollution Control",
@@ -371,13 +478,15 @@ const tracks = [
   },
   {
     th: "การจัดการระบบนิเวศและทรัพยากรธรรมชาติ",
+    thLines: ["การจัดการระบบนิเวศ", "และทรัพยากรธรรมชาติ"],
     en: "Ecosystem and Natural Resource Management",
     icon: "i-heroicons-globe-alt",
     tag: "Ecosystem",
-    bg: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80&auto=format&fit=crop",
+    bg: heroImage,
   },
   {
     th: "เศรษฐกิจหมุนเวียนและการใช้ทรัพยากรอย่างคุ้มค่า",
+    thLines: ["เศรษฐกิจหมุนเวียน", "และการใช้ทรัพยากรอย่างคุ้มค่า"],
     en: "Circular Economy and Resource Efficiency",
     icon: "i-heroicons-arrow-path",
     tag: "Circular Economy",
@@ -385,6 +494,7 @@ const tracks = [
   },
   {
     th: "การเปลี่ยนแปลงสภาพภูมิอากาศและเทคโนโลยีคาร์บอนต่ำ",
+    thLines: ["การเปลี่ยนแปลงสภาพภูมิอากาศ", "และเทคโนโลยีคาร์บอนต่ำ"],
     en: "Climate Change and Low-Carbon Technology",
     icon: "i-heroicons-cloud",
     tag: "Climate Action",
@@ -392,6 +502,7 @@ const tracks = [
   },
   {
     th: "เทคโนโลยีดิจิทัลและระบบอัจฉริยะเพื่อการติดตามสิ่งแวดล้อม",
+    thLines: ["เทคโนโลยีดิจิทัลและระบบอัจฉริยะ", "เพื่อการติดตามสิ่งแวดล้อม"],
     en: "Digital Technology and Intelligent Systems for Environmental Monitoring",
     icon: "i-heroicons-cpu-chip",
     tag: "Smart Monitoring",
@@ -399,6 +510,7 @@ const tracks = [
   },
   {
     th: "เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม",
+    thLines: ["เมืองยั่งยืน อุตสาหกรรมสีเขียว", "และการจัดการสิ่งแวดล้อม"],
     en: "Sustainable Cities, Green Industry, and Environmental Management",
     icon: "i-heroicons-building-office-2",
     tag: "Green City",
@@ -409,7 +521,7 @@ const tracks = [
     en: "Environment and Health",
     icon: "i-heroicons-heart",
     tag: "Well-being",
-    bg: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=1200&q=80&auto=format&fit=crop",
+    bg: wellbeingImage,
   },
 ];
 
@@ -419,6 +531,126 @@ const timeline = [
   { title: "เปิดรับบทความฉบับสมบูรณ์", date: "7 — 24 ตุลาคม 2569", highlight: false, icon: "i-heroicons-document-text" },
   { title: "ประกาศโปรแกรมการนำเสนอผลงาน", date: "31 ตุลาคม 2569", highlight: false, icon: "i-heroicons-calendar-days" },
   { title: "วันจัดงานประชุม", date: "12 — 13 พฤศจิกายน 2569", highlight: true, icon: "i-heroicons-academic-cap" },
+];
+
+const organizers = [
+  {
+    mark: "TSHE",
+    name: "สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย",
+    role: "Host Association",
+    logo: `${appBaseUrl}/images/tshe-logo.png`,
+    logoClass: "from-meadow-600 to-sky-600 text-white",
+  },
+  {
+    mark: "KMUTNB",
+    name: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ",
+    role: "Host University",
+    logo: "https://www.kmutnb.ac.th/getattachment/about/symbols/logo_kmutnb_invention_to_innovation_2020-(2).jpg.aspx",
+    logoSize: "large",
+    logoClass: "from-amber-300 to-orange-400 text-meadow-950",
+  },
+  {
+    mark: "TP",
+    name: "อุทยานเทคโนโลยี",
+    role: "Technology Park",
+    logo: "https://technopark.kmutnb.ac.th/static/uploads/froala/images/2023-8-22-t-1695347183511.png",
+    logoSize: "large",
+    logoClass: "from-sky-500 to-cyan-400 text-white",
+  },
+  {
+    mark: "สสส",
+    name: "สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ",
+    role: "Health Promotion Partner",
+    logo: "https://www.thaihealth.or.th/logo.png",
+    logoClass: "from-orange-400 to-emerald-400 text-white",
+  },
+];
+
+const supportingSponsors = [
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-sky-500 to-cyan-400 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-meadow-500 to-emerald-400 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-stone-700 to-slate-500 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-amber-300 to-yellow-200 text-meadow-950",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-cyan-500 to-sky-400 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-emerald-500 to-teal-400 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-lime-400 to-green-500 text-meadow-950",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-indigo-500 to-sky-500 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-amber-400 to-orange-300 text-meadow-950",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-slate-700 to-sky-600 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-blue-500 to-cyan-300 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-meadow-600 to-emerald-400 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-violet-500 to-fuchsia-400 text-white",
+  },
+  {
+    mark: "Soon",
+    name: "Coming soon",
+    tier: "Coming soon",
+    logoClass: "from-stone-600 to-amber-400 text-white",
+  },
 ];
 
 // Stable decoration positions keep SSR and hydration output identical.

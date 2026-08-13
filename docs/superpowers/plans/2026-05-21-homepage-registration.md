@@ -228,7 +228,7 @@ function close() {
           <UIcon name="i-heroicons-check-circle" class="w-10 h-10 text-meadow-600" />
         </div>
         <h4 class="text-lg font-semibold text-meadow-800 mb-2">ลงทะเบียนสำเร็จ!</h4>
-        <p class="text-gray-500">ขอบคุณที่สนใจเข้าร่วมงาน ENVICON 2026</p>
+        <p class="text-gray-500">ขอบคุณที่สนใจเข้าร่วมงาน TSHE-CON 2026</p>
       </div>
 
       <!-- Form -->

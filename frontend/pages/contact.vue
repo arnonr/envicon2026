@@ -23,8 +23,8 @@ const contactMethods: ContactMethod[] = [
     id: "phone",
     label: "โทรศัพท์",
     labelEn: "Phone",
-    value: "02-555-2000 ต่อ 1789",
-    href: "tel:025552000",
+    value: "064-787-9444 คุณรมณ",
+    href: "tel:0647879444",
     icon: "i-heroicons-phone",
     hint: "จันทร์–ศุกร์ · 08:00–16:00 น.",
   },
@@ -39,11 +39,6 @@ const contactMethods: ContactMethod[] = [
   },
 ];
 
-const socialLinks = [
-  { name: "Facebook", icon: "i-simple-icons-facebook", href: "#" },
-  { name: "YouTube", icon: "i-simple-icons-youtube", href: "#" },
-  { name: "Line", icon: "i-simple-icons-line", href: "#" },
-];
 </script>
 
 <template>
@@ -59,36 +54,19 @@ const socialLinks = [
               Get in Touch
             </div>
             <h1 class="mt-5 text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight text-stone-900">
-              ติดต่อ
-              <span class="block mt-1 text-stone-500">คณะกรรมการ</span>
+              ติดต่อเจ้าหน้าที่
             </h1>
             <p class="mt-5 text-base sm:text-lg text-stone-600 leading-relaxed max-w-xl">
               หากมีข้อสงสัยเกี่ยวกับการส่งบทความ การลงทะเบียน หรือการเป็นสปอนเซอร์
-              สามารถติดต่อคณะกรรมการจัดงานได้ตามช่องทางด้านล่าง
+              สามารถติดต่อเจ้าหน้าที่ได้ตามช่องทางด้านล่าง
             </p>
-
-            <!-- Social quick row -->
-            <div class="mt-7 flex items-center gap-2">
-              <span class="text-[10px] font-semibold uppercase tracking-[0.25em] text-stone-400 mr-1">
-                Follow
-              </span>
-              <a
-                v-for="s in socialLinks"
-                :key="s.name"
-                :href="s.href"
-                :aria-label="s.name"
-                class="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-stone-100 text-stone-600 hover:bg-meadow-100 hover:text-meadow-700 transition-colors duration-300"
-              >
-                <UIcon :name="s.icon" class="w-4 h-4" />
-              </a>
-            </div>
           </div>
 
           <!-- Photo side -->
           <div class="relative h-64 lg:h-96 rounded-2xl overflow-hidden shadow-lg">
             <img
-              src="https://www.geodesicdesign.co.th/admin/img_large/2779544.jpg"
-              alt="Bangkok cityscape"
+              src="/images/technopark-building.jpg"
+              alt="อาคาร 99 อุทยานเทคโนโลยี มจพ."
               class="absolute inset-0 w-full h-full object-cover contact-hero-img"
               loading="eager"
             />
@@ -106,7 +84,7 @@ const socialLinks = [
                       Location · KMUTNB
                     </div>
                     <p class="text-xs text-stone-700 leading-relaxed">
-                      อาคาร 99 อุทยานเทคโนโลยี มจพ. · ถ.ประชาราษฎร์ 1 · บางซื่อ · กรุงเทพฯ 10800
+                      อาคาร 99 อุทยานเทคโนโลยี มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ · ถ.ประชาราษฎร์ 1 · บางซื่อ · กรุงเทพฯ 10800
                     </p>
                   </div>
                 </div>
@@ -191,7 +169,7 @@ const socialLinks = [
               Headquarter
             </div>
             <h3 class="font-semibold text-xl sm:text-2xl text-stone-900 leading-tight mb-3">
-              อุทยานเทคโนโลยี มจพ.
+              อุทยานเทคโนโลยี มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
             </h3>
             <p class="text-sm text-stone-600 leading-relaxed">
               อาคาร 99 อุทยานเทคโนโลยี<br />
@@ -220,7 +198,7 @@ const socialLinks = [
             </div>
 
             <a
-              href="https://maps.google.com/?q=อาคาร+99+อุทยานเทคโนโลยี+มจพ"
+              href="https://maps.google.com/?q=อาคาร+99+อุทยานเทคโนโลยี+มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ"
               target="_blank"
               rel="noopener"
               class="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-meadow-600 text-white text-sm font-semibold hover:bg-meadow-700 transition-colors shadow-sm"
@@ -255,7 +233,7 @@ const socialLinks = [
             <!-- Bottom info -->
             <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
               <div class="text-[10px] font-semibold uppercase tracking-[0.25em] text-meadow-200 mb-1">
-                ENVICON 2026 · Venue
+                TSHE-CON 2026 · Venue
               </div>
               <div class="font-semibold text-lg leading-tight">
                 มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ

@@ -1,4 +1,4 @@
-# Database Schema — ENVICON 2026
+# Database Schema — TSHE-CON 2026
 
 ## ER Diagram (Mermaid)
 

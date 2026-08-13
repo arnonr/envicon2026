@@ -4,7 +4,7 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         <!-- About -->
         <div>
-          <h3 class="text-white font-bold text-lg mb-4">ENVICON 2026</h3>
+          <h3 class="text-white font-bold text-lg mb-4">TSHE-CON 2026</h3>
           <p class="text-sm leading-relaxed">
             การประชุมวิชาการระดับชาติ ครั้งที่ 5<br />
             สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย
@@ -18,7 +18,7 @@
           <ul class="space-y-2 text-sm">
             <li><NuxtLink to="/about" class="hover:text-primary-400 transition-colors">เกี่ยวกับการประชุม</NuxtLink></li>
             <li><NuxtLink to="/important-dates" class="hover:text-primary-400 transition-colors">กำหนดการและสถานที่</NuxtLink></li>
-            <li><NuxtLink to="/guidelines" class="hover:text-primary-400 transition-colors">แนวทางการเขียนบทความ</NuxtLink></li>
+            <li><NuxtLink to="/guidelines" class="hover:text-primary-400 transition-colors">ดาวน์โหลด</NuxtLink></li>
             <li><NuxtLink to="/registration" class="hover:text-primary-400 transition-colors">ลงทะเบียน</NuxtLink></li>
           </ul>
         </div>
@@ -28,14 +28,15 @@
           <h3 class="text-white font-bold text-lg mb-4">ติดต่อเรา</h3>
           <ul class="space-y-2 text-sm">
             <li>📧 fiit@technopark.kmutnb.ac.th</li>
-            <li>📍 อาคาร 99 อุทยานเทคโนโลยี มจพ.</li>
+            <li>☎ 064-787-9444 คุณรมณ</li>
+            <li>📍 อาคาร 99 อุทยานเทคโนโลยี มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</li>
             <li>🌐 technopark.kmutnb.ac.th/envicon2026</li>
           </ul>
         </div>
       </div>
 
       <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm">
-        <p>© 2569 ENVICON 2026 — สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</p>
+        <p>© 2569 TSHE-CON 2026 — สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</p>
       </div>
     </div>
   </footer>

@@ -1,10 +1,16 @@
 <script setup lang="ts">
+const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+const heroImage = `${appBaseUrl}/images/tshe-con-low-carbon-tech-hero-20260811.png`;
+const wellbeingImage = `${appBaseUrl}/images/tshe-con-wellbeing-family-20260811.png`;
+
 const tracks = [
   {
     id: 1,
     th: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
+    thLines: ["วิทยาศาสตร์สิ่งแวดล้อม", "และการควบคุมมลพิษ"],
     en: "Environmental Science and Pollution Control",
     desc: "ครอบคลุมงานวิจัยด้านคุณภาพน้ำ อากาศ ดิน การจัดการของเสีย และเทคโนโลยีบำบัดมลพิษ",
+    descParts: ["ครอบคลุมงานวิจัยด้านคุณภาพน้ำ", "อากาศ", "ดิน", "การจัดการของเสีย", "และเทคโนโลยีบำบัดมลพิษ"],
     icon: "i-heroicons-beaker",
     tag: "Pollution Control",
     bg: "https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=1200&q=80&auto=format&fit=crop",
@@ -12,17 +18,21 @@ const tracks = [
   {
     id: 2,
     th: "การจัดการระบบนิเวศและทรัพยากรธรรมชาติ",
+    thLines: ["การจัดการระบบนิเวศ", "และทรัพยากรธรรมชาติ"],
     en: "Ecosystem and Natural Resource Management",
     desc: "การอนุรักษ์ความหลากหลายทางชีวภาพ การจัดการป่าไม้ ทรัพยากรทางทะเล และพื้นที่ชุ่มน้ำ",
+    descParts: ["การอนุรักษ์ความหลากหลายทางชีวภาพ", "การจัดการป่าไม้", "ทรัพยากรทางทะเล", "และพื้นที่ชุ่มน้ำ"],
     icon: "i-heroicons-globe-alt",
     tag: "Ecosystem",
-    bg: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&q=80&auto=format&fit=crop",
+    bg: heroImage,
   },
   {
     id: 3,
     th: "เศรษฐกิจหมุนเวียนและการใช้ทรัพยากรอย่างคุ้มค่า",
+    thLines: ["เศรษฐกิจหมุนเวียน", "และการใช้ทรัพยากรอย่างคุ้มค่า"],
     en: "Circular Economy and Resource Efficiency",
     desc: "แนวคิดเศรษฐกิจหมุนเวียน การลดของเสีย การรีไซเคิล และการออกแบบผลิตภัณฑ์ที่ยั่งยืน",
+    descParts: ["แนวคิดเศรษฐกิจหมุนเวียน", "การลดของเสีย", "การรีไซเคิล", "และการออกแบบผลิตภัณฑ์ที่ยั่งยืน"],
     icon: "i-heroicons-arrow-path",
     tag: "Circular Economy",
     bg: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1200&q=80&auto=format&fit=crop",
@@ -30,8 +40,10 @@ const tracks = [
   {
     id: 4,
     th: "การเปลี่ยนแปลงสภาพภูมิอากาศและเทคโนโลยีคาร์บอนต่ำ",
+    thLines: ["การเปลี่ยนแปลงสภาพภูมิอากาศ", "และเทคโนโลยีคาร์บอนต่ำ"],
     en: "Climate Change and Low-Carbon Technology",
     desc: "การปรับตัวและลดผลกระทบจากการเปลี่ยนแปลงสภาพภูมิอากาศ พลังงานสะอาด และเทคโนโลยีคาร์บอนต่ำ",
+    descParts: ["การปรับตัวและลดผลกระทบจาก", "การเปลี่ยนแปลง", "สภาพภูมิอากาศ", "พลังงานสะอาด", "และเทคโนโลยีคาร์บอนต่ำ"],
     icon: "i-heroicons-sun",
     tag: "Climate Action",
     bg: "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&q=80&auto=format&fit=crop",
@@ -39,8 +51,10 @@ const tracks = [
   {
     id: 5,
     th: "เทคโนโลยีดิจิทัลและระบบอัจฉริยะเพื่อการติดตามสิ่งแวดล้อม",
+    thLines: ["เทคโนโลยีดิจิทัลและระบบอัจฉริยะ", "เพื่อการติดตามสิ่งแวดล้อม"],
     en: "Digital Technology and Intelligent Systems for Environmental Monitoring",
     desc: "IoT, AI, Remote Sensing, GIS และระบบสารสนเทศเพื่อการติดตามและจัดการสิ่งแวดล้อม",
+    descParts: ["IoT, AI, Remote Sensing, GIS", "และระบบสารสนเทศเพื่อการติดตามและจัดการสิ่งแวดล้อม"],
     icon: "i-heroicons-cpu-chip",
     tag: "Smart Monitoring",
     bg: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&auto=format&fit=crop",
@@ -48,8 +62,10 @@ const tracks = [
   {
     id: 6,
     th: "เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม",
+    thLines: ["เมืองยั่งยืน อุตสาหกรรมสีเขียว", "และการจัดการสิ่งแวดล้อม"],
     en: "Sustainable Cities, Green Industry, and Environmental Management",
     desc: "การวางผังเมือง การจัดการสิ่งแวดล้อมในภาคอุตสาหกรรม และการพัฒนาเมืองที่ยั่งยืน",
+    descParts: ["การวางผังเมือง", "การจัดการสิ่งแวดล้อมในภาคอุตสาหกรรม", "และการพัฒนาเมืองที่ยั่งยืน"],
     icon: "i-heroicons-building-office-2",
     tag: "Green City",
     bg: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1200&q=80&auto=format&fit=crop",
@@ -57,11 +73,13 @@ const tracks = [
   {
     id: 7,
     th: "สิ่งแวดล้อมและสุขภาพ",
+    thLines: ["สิ่งแวดล้อม", "และสุขภาพ"],
     en: "Environment and Health",
     desc: "ผลกระทบของสิ่งแวดล้อมต่อสุขภาพ พิษวิทยาสิ่งแวดล้อม และอาชีวอนามัย",
+    descParts: ["ผลกระทบของสิ่งแวดล้อมต่อสุขภาพ", "พิษวิทยาสิ่งแวดล้อม", "และอาชีวอนามัย"],
     icon: "i-heroicons-heart",
     tag: "Well-being",
-    bg: "https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=1200&q=80&auto=format&fit=crop",
+    bg: wellbeingImage,
   },
 ];
 
@@ -75,19 +93,18 @@ const goals = [
 const highlights = [
   { value: "7", label: "Research Tracks", sub: "หัวข้อการนำเสนอ" },
   { value: "2", label: "วัน", sub: "ของการประชุม" },
-  { value: "50+", label: "Sessions", sub: "บรรยายและนำเสนอ" },
-  { value: "1,000+", label: "ผู้เข้าร่วม", sub: "ทั่วประเทศ" },
 ];
+
 </script>
 
 <template>
   <div class="overflow-hidden">
-    <!-- ═══════════ HERO — Looking up at trees ═══════════ -->
+    <!-- ═══════════ HERO — Low-Carbon Technology Campus ═══════════ -->
     <section class="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-meadow-950">
       <div class="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=2400&q=80&auto=format&fit=crop"
-          alt="Forest canopy from below"
+          :src="heroImage"
+          alt="Low-carbon environmental technology campus with solar panels and smart monitoring systems"
           class="w-full h-full object-cover about-hero-photo"
         />
       </div>
@@ -107,9 +124,9 @@ const highlights = [
           <span class="text-sm font-semibold tracking-wide">About The Conference</span>
         </div>
         <h1 class="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold mb-6">
-          <span class="block text-white drop-shadow-2xl leading-[1.1] pb-2">เกี่ยวกับ</span>
+          <span class="block text-white drop-shadow-2xl leading-[1.22] py-1">เกี่ยวกับ</span>
           <span
-            class="block bg-gradient-to-r from-meadow-300 via-sky-200 to-cyan-200 bg-clip-text text-transparent drop-shadow-lg leading-[1.1]">การประชุมวิชาการ</span>
+            class="block text-cyan-100 drop-shadow-lg leading-[1.28] py-1">การประชุมวิชาการ</span>
         </h1>
         <p class="text-xl sm:text-2xl text-white/95 font-medium drop-shadow-md">
           Innovative Environmental Technologies
@@ -135,7 +152,7 @@ const highlights = [
     <section class="relative py-14 bg-meadow-900 text-white overflow-hidden">
       <div
         class="absolute inset-0 opacity-[0.08] pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIgZmlsbD0id2hpdGUiLz48L3N2Zz4=')]" />
-      <div class="relative max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div class="relative max-w-3xl mx-auto px-6 grid grid-cols-2 gap-6">
         <div v-for="(item, i) in highlights" :key="i" class="text-center">
           <div class="font-display text-4xl sm:text-5xl font-extrabold bg-gradient-to-br from-meadow-300 to-sky-300 bg-clip-text text-transparent">
             {{ item.value }}
@@ -156,7 +173,7 @@ const highlights = [
               การประชุมวิชาการระดับชาติ ครั้งที่ 5
             </h2>
             <p class="text-lg text-gray-700 leading-relaxed mb-5">
-              <strong class="text-meadow-700">ENVICON 2026</strong> จัดขึ้นภายใต้หัวข้อ
+              <strong class="text-meadow-700">TSHE-CON 2026</strong> จัดขึ้นภายใต้หัวข้อ
               <em class="text-meadow-800">"Innovative Environmental Technologies for a Sustainable and Low-Carbon Future"</em>
               เพื่อเป็นเวทีแลกเปลี่ยนความรู้ ผลงานวิจัย และนวัตกรรมด้านสิ่งแวดล้อม
               ระหว่างนักวิจัย อาจารย์ นิสิตนักศึกษา และผู้เชี่ยวชาญจากสถาบันอุดมศึกษาทั่วประเทศ
@@ -245,11 +262,11 @@ const highlights = [
               สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย
             </h2>
             <p class="text-meadow-700 italic font-semibold mb-6">
-              Association of Thai Higher Education Environmental Institutions
+              THE THAI SOCIETY OF HIGHER EDUCATION INSTITUTES ON THE ENVIRONMENT
             </p>
             <p class="text-gray-700 leading-relaxed mb-6">
               เป็นเครือข่ายความร่วมมือระหว่างสถาบันอุดมศึกษาที่มีการเรียนการสอนและวิจัยด้านสิ่งแวดล้อม
-              มุ่งเน้นการพัฒนาองค์ความรู้และสร้างบุคลากรด้านสิ่งแวดล้อมเพื่อการพัฒนาที่ยั่งยืน
+              <br />มุ่งเน้นการพัฒนาองค์ความรู้และสร้างบุคลากรด้านสิ่งแวดล้อมเพื่อการพัฒนาที่ยั่งยืน
             </p>
 
             <div class="space-y-3">
@@ -302,9 +319,16 @@ const highlights = [
 
               <div class="mt-auto">
                 <div class="text-[10px] font-bold text-meadow-300 tracking-[0.2em] uppercase mb-2">{{ track.tag }}</div>
-                <h3 class="font-semibold text-lg mb-1.5 leading-snug drop-shadow-lg">{{ track.th }}</h3>
+                <h3 class="font-semibold text-lg mb-1.5 leading-[1.45] drop-shadow-lg">
+                  <span v-for="line in track.thLines ?? [track.th]" :key="line" class="block">{{ line }}</span>
+                </h3>
                 <p class="text-sm text-white/85 font-medium mb-2 leading-snug">{{ track.en }}</p>
-                <p class="text-sm text-white/70 leading-relaxed">{{ track.desc }}</p>
+                <p class="text-sm text-white/70 leading-relaxed">
+                  <template v-for="(part, partIndex) in track.descParts" :key="part">
+                    <span class="whitespace-nowrap">{{ part }}</span>
+                    <span v-if="partIndex < track.descParts.length - 1">{{ ' ' }}</span>
+                  </template>
+                </p>
               </div>
             </div>
           </div>
@@ -312,43 +336,6 @@ const highlights = [
       </div>
     </section>
 
-    <!-- ═══════════ CTA — Photo banner ═══════════ -->
-    <section class="py-12 bg-meadow-50">
-      <div class="max-w-5xl mx-auto px-6">
-        <div class="relative overflow-hidden rounded-3xl shadow-2xl">
-          <div class="absolute inset-0">
-            <img
-              src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1800&q=80&auto=format&fit=crop"
-              alt="Ocean and sustainability"
-              class="w-full h-full object-cover"
-            />
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-r from-meadow-900/85 via-meadow-800/70 to-meadow-900/85" />
-
-          <div class="relative px-8 py-14 sm:py-16 text-center text-white">
-            <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
-              พร้อมร่วมขับเคลื่อนอนาคตสิ่งแวดล้อมไทยแล้วหรือยัง?
-            </h2>
-            <p class="text-white/80 mb-7 max-w-xl mx-auto">
-              ส่งผลงานวิจัยของคุณเข้าร่วมนำเสนอในการประชุมวิชาการระดับชาติ ENVICON 2026
-            </p>
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-              <NuxtLink to="/dashboard"
-                class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-white text-meadow-700 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-lg transition-all duration-300">
-                ส่งบทคัดย่อ
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </NuxtLink>
-              <NuxtLink to="/registration"
-                class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl border-2 border-white/40 bg-white/10 backdrop-blur-md text-white font-bold hover:bg-white/20 hover:border-white/60 hover:scale-[1.02] transition-all duration-300">
-                ลงทะเบียนเข้าร่วมงาน
-              </NuxtLink>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
   </div>
 </template>
 

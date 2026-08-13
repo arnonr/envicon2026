@@ -20,9 +20,9 @@ const committees: CommitteeGroup[] = [
   {
     id: "advisory",
     title: "คณะกรรมการอำนวยการ",
-    titleEn: "Advisory Committee",
+    titleEn: "คณะที่ปรึกษา",
     icon: "i-heroicons-user-group",
-    bg: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1600&q=80&auto=format&fit=crop",
+    bg: "/images/committee-assets/committee-advisory-modern-thai.png",
     accent: "from-meadow-400 via-emerald-400 to-teal-400",
     members: [
       { prefix: "รองศาสตราจารย์ ดร.", firstName: "รัฐชา", lastName: "ชัยชนะ", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
@@ -33,9 +33,9 @@ const committees: CommitteeGroup[] = [
   {
     id: "academic",
     title: "คณะกรรมการฝ่ายวิชาการ",
-    titleEn: "Academic Committee",
+    titleEn: "ฝ่ายวิชาการ",
     icon: "i-heroicons-academic-cap",
-    bg: "https://images.unsplash.com/photo-1562774053-701939374585?w=1600&q=80&auto=format&fit=crop",
+    bg: "/images/committee-assets/committee-academic-modern-thai.png",
     accent: "from-sky-400 via-cyan-400 to-blue-400",
     members: [
       { prefix: "รองศาสตราจารย์ ดร.", firstName: "อุมา", lastName: "ลางคุลเสน", affiliation: "มหาวิทยาลัยธรรมศาสตร์" },
@@ -60,9 +60,9 @@ const committees: CommitteeGroup[] = [
   {
     id: "registration",
     title: "ฝ่ายลงทะเบียน",
-    titleEn: "Registration Committee",
+    titleEn: "ฝ่ายลงทะเบียน",
     icon: "i-heroicons-clipboard-document-list",
-    bg: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1600&q=80&auto=format&fit=crop",
+    bg: "/images/committee-assets/committee-registration-modern-thai.png",
     accent: "from-amber-400 via-orange-400 to-rose-400",
     members: [
       { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
@@ -75,9 +75,9 @@ const committees: CommitteeGroup[] = [
   {
     id: "venue",
     title: "ฝ่ายสถานที่ พิธีการ และการศึกษาดูงาน",
-    titleEn: "Venue, Ceremony & Study Visit Committee",
+    titleEn: "ฝ่ายสถานที่",
     icon: "i-heroicons-map-pin",
-    bg: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=1600&q=80&auto=format&fit=crop",
+    bg: "/images/committee-assets/committee-venue-modern-thai.png",
     accent: "from-violet-400 via-purple-400 to-fuchsia-400",
     members: [
       { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
@@ -90,9 +90,9 @@ const committees: CommitteeGroup[] = [
   {
     id: "sponsorship",
     title: "ฝ่ายระดมทุนและสปอนเซอร์",
-    titleEn: "Fundraising & Sponsorship Committee",
+    titleEn: "ฝ่ายสปอนเซอร์",
     icon: "i-heroicons-currency-dollar",
-    bg: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1600&q=80&auto=format&fit=crop",
+    bg: "/images/committee-assets/committee-sponsorship-modern-thai.png",
     accent: "from-pink-400 via-rose-400 to-red-400",
     members: [
       { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
@@ -115,8 +115,8 @@ function pad(n: number, width = 2): string {
     <section class="relative overflow-hidden bg-meadow-950">
       <div class="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=2400&q=80&auto=format&fit=crop"
-          alt="Committee gathering"
+          src="/images/committee-assets/committee-hero-modern-thai.png"
+          alt="คณะกรรมการจัดงานประชุมวิชาการ"
           class="w-full h-full object-cover committee-hero-photo"
         />
       </div>
@@ -131,11 +131,11 @@ function pad(n: number, width = 2): string {
         <!-- Top meta row -->
         <div class="flex items-center gap-4 mb-8 lg:mb-12">
           <span class="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-white/80">
-            ENVICON · MMXXVI
+            TSHE-CON 2026
           </span>
           <div class="flex-1 h-px bg-white/30"></div>
           <span class="text-xs sm:text-sm font-semibold uppercase tracking-[0.3em] text-white/80">
-            Vol. 03 / Issue 2026
+            ปี 2569
           </span>
         </div>
 
@@ -145,11 +145,11 @@ function pad(n: number, width = 2): string {
         </h1>
         <div class="mt-5 flex flex-wrap items-baseline gap-x-6 gap-y-2">
           <span class="text-sm font-medium uppercase tracking-[0.3em] text-meadow-200">
-            Organizing Committee Directory
+            รายชื่อคณะกรรมการจัดงาน
           </span>
           <span class="hidden sm:inline-block w-10 h-px bg-white/40"></span>
           <span class="text-sm font-medium uppercase tracking-[0.3em] text-meadow-200">
-            {{ totalMembers }} members · {{ committees.length }} committees
+            {{ totalMembers }} คน · {{ committees.length }} คณะ
           </span>
         </div>
 
@@ -174,12 +174,12 @@ function pad(n: number, width = 2): string {
               </div>
               <div>
                 <div class="text-[11px] font-semibold uppercase tracking-[0.18em] text-meadow-200 mb-0.5">
-                  {{ g.titleEn.split(" ")[0] }}
+                  {{ g.titleEn }}
                 </div>
                 <div class="text-base font-bold leading-tight tabular-nums">
                   {{ g.members.length }}
                   <span class="text-[10px] font-medium text-white/70 tracking-[0.15em] uppercase ml-1">
-                    {{ g.members.length === 1 ? "member" : "members" }}
+                    คน
                   </span>
                 </div>
               </div>
@@ -201,7 +201,7 @@ function pad(n: number, width = 2): string {
         <aside class="hidden lg:block">
           <div class="sticky top-8">
             <div class="text-xs font-semibold uppercase tracking-[0.25em] text-stone-500 mb-4">
-              Contents
+              หมวดคณะกรรมการ
             </div>
             <nav class="border-t border-stone-300">
               <a
@@ -224,11 +224,11 @@ function pad(n: number, width = 2): string {
 
             <div class="mt-6 pt-6 border-t border-stone-300">
               <div class="text-xs font-semibold uppercase tracking-[0.25em] text-stone-500 mb-2">
-                Total
+                รวมทั้งหมด
               </div>
               <div class="flex items-baseline gap-2">
                 <span class="text-3xl font-bold text-meadow-700 tabular-nums">{{ totalMembers }}</span>
-                <span class="text-xs font-medium uppercase tracking-[0.2em] text-stone-500">members</span>
+                <span class="text-xs font-medium uppercase tracking-[0.2em] text-stone-500">คน</span>
               </div>
             </div>
           </div>
@@ -256,7 +256,7 @@ function pad(n: number, width = 2): string {
                 <!-- Icon + numbering -->
                 <div class="absolute top-5 right-5 lg:top-6 lg:right-7 flex items-center gap-2">
                   <span class="text-[11px] font-bold uppercase tracking-[0.25em] text-white/85">
-                    Section {{ pad(gi + 1) }}
+                    หมวด {{ pad(gi + 1) }}
                   </span>
                   <span class="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white/15 backdrop-blur-md border border-white/30 shadow-lg">
                     <UIcon :name="group.icon" class="w-5 h-5 text-white" />
@@ -277,10 +277,10 @@ function pad(n: number, width = 2): string {
               <!-- Member count strip -->
               <div class="px-6 lg:px-8 py-4 flex items-center gap-3 bg-gradient-to-r from-meadow-50/80 via-white to-stone-50 border-b border-stone-200/70">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-meadow-600 text-white text-xs font-semibold uppercase tracking-[0.15em] shadow-sm">
-                  {{ group.members.length }} {{ group.members.length === 1 ? "Member" : "Members" }}
+                  {{ group.members.length }} คน
                 </span>
                 <span class="text-xs font-medium uppercase tracking-[0.2em] text-stone-500">
-                  Section {{ romanNumerals[gi] }}
+                  หมวด {{ romanNumerals[gi] }}
                 </span>
                 <span class="flex-1 h-px bg-stone-200"></span>
                 <span class="text-xs font-semibold uppercase tracking-[0.2em] text-meadow-700">
@@ -328,10 +328,10 @@ function pad(n: number, width = 2): string {
     <footer class="border-t border-stone-300 bg-stone-50">
       <div class="max-w-7xl mx-auto px-6 lg:px-12 py-8 flex flex-wrap items-center justify-between gap-4">
         <span class="text-xs font-semibold uppercase tracking-[0.25em] text-stone-500">
-          End of directory — {{ totalMembers }} entries
+          สิ้นสุดรายชื่อคณะกรรมการ · รวม {{ totalMembers }} รายชื่อ
         </span>
         <span class="text-xs font-semibold uppercase tracking-[0.25em] text-meadow-700">
-          ENVICON 2026 · Kasetsart University
+          TSHE-CON 2026
         </span>
       </div>
     </footer>

@@ -38,7 +38,7 @@ async function deliver(notification: {
   try {
     const transporter = createTransport();
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || "ENVICON 2026 <no-reply@envicon.local>",
+      from: process.env.SMTP_FROM || "TSHE-CON 2026 <no-reply@envicon.local>",
       to: notification.recipientEmail,
       subject: notification.subject,
       html: notification.htmlBody,

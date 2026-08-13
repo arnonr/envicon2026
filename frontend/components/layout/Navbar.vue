@@ -8,7 +8,7 @@ const links = [
   { label: "กำหนดการ", to: "/important-dates" },
   { label: "ลงทะเบียน", to: "/registration" },
   { label: "สนับสนุน", to: "/sponsorship" },
-  { label: "แนวทาง", to: "/guidelines" },
+  { label: "ดาวน์โหลด", to: "/guidelines" },
   { label: "ติดต่อ", to: "/contact" },
 ];
 
@@ -25,7 +25,7 @@ const accountPath = computed(() =>
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <NuxtLink to="/" class="flex items-center gap-2">
-          <img src="~/assets/logo.png" alt="ENVICON 2026" class="h-10 w-auto" />
+          <img src="~/assets/logo.png" alt="TSHE-CON 2026" class="h-10 w-auto" />
         </NuxtLink>
 
         <!-- Desktop nav -->

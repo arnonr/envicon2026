@@ -47,6 +47,6 @@ const app = new Elysia({ prefix: "/envicon2026/api" })
   .use(publicRoutes)
   .listen(3001);
 
-console.log(`🌿 ENVICON 2026 API running at http://localhost:${app.server?.port}`);
+console.log(`🌿 TSHE-CON 2026 API running at http://localhost:${app.server?.port}`);
 
 export type App = typeof app;

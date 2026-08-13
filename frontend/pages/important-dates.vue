@@ -101,7 +101,9 @@ const hotels = [
 
       <UCard class="mb-8">
         <div class="text-center">
-          <h3 class="text-xl font-bold text-gray-900 mb-2">อาคาร 99 อุทยานเทคโนโลยี มจพ.</h3>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">
+            อาคาร 99 อุทยานเทคโนโลยี มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
+          </h3>
           <p class="text-lg text-accent-600 mb-4">KMUTNB Technopark</p>
           <p class="text-gray-600 mb-6">
             มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ<br />
@@ -149,7 +151,9 @@ const hotels = [
       <div class="text-center mb-10">
         <p class="text-[11px] tracking-[2px] text-primary-700 font-semibold uppercase mb-2">Nearby Accommodation</p>
         <h2 class="text-2xl font-bold text-gray-900 mb-2">ที่พักใกล้สถานที่จัดงาน</h2>
-        <p class="text-gray-500 text-sm">โรงแรมแนะนำใกล้ มจพ.</p>
+        <p class="text-gray-500 text-sm">
+          โรงแรมแนะนำใกล้มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
+        </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
@@ -166,7 +170,9 @@ const hotels = [
             <h3 class="text-lg font-bold text-gray-900">{{ hotel.name }}</h3>
             <p class="text-sm text-gray-500">{{ hotel.nameTh }}</p>
             <p class="text-sm text-gray-700 mt-2">⭐ {{ hotel.rating }}</p>
-            <p class="text-xs text-gray-500 mt-1">📍 {{ hotel.distance }} จาก มจพ. · 🚇 {{ hotel.transport }}</p>
+            <p class="text-xs text-gray-500 mt-1">
+              📍 {{ hotel.distance }} จากมหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ · 🚇 {{ hotel.transport }}
+            </p>
             <UButton
               color="primary"
               variant="solid"
@@ -182,9 +188,6 @@ const hotels = [
         </UCard>
       </div>
 
-      <p class="text-xs text-gray-400 text-center mt-4 max-w-2xl mx-auto">
-        * ลิงก์นี้เป็น affiliate link — ผู้จัดงานอาจได้รับค่าคอมมิชชั่นเล็กน้อยเมื่อท่านจองผ่านลิงก์ โดยไม่มีค่าใช้จ่ายเพิ่มเติมสำหรับผู้จอง
-      </p>
     </section>
   </div>
 </template>

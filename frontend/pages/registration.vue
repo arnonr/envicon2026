@@ -98,7 +98,7 @@ onMounted(() => {
               <th class="text-left py-3 px-4">ประเภท</th>
               <th class="text-center py-3 px-4">
                 <div>Early Bird</div>
-                <div class="text-xs text-gray-400 font-normal">ก่อน 14 ต.ค. 2569</div>
+                <div class="text-xs text-gray-400 font-normal">ภายใน 14 ต.ค. 2569</div>
               </th>
               <th class="text-center py-3 px-4">
                 <div>Regular</div>

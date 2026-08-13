@@ -1,4 +1,4 @@
-# ENVICON 2026 Conference Website — Implementation Plan
+# TSHE-CON 2026 Conference Website — Implementation Plan
 
 ## Context
 

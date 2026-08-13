@@ -1,8 +1,8 @@
-# ENVICON 2026 — Conference Website Design Spec
+# TSHE-CON 2026 — Conference Website Design Spec
 
 ## Context
 
-The 5th National Conference of the Thai Association of Higher Education Environmental Institutions (ENVICON 2026) needs a website that serves two purposes: (1) promote the event and provide information to potential attendees, and (2) manage the full paper submission and peer review workflow. The event is scheduled for 12-13 November 2569 (2026) at KMUTNB Technopark. The website will be hosted at `technopark.kmutnb.ac.th/envicon2026`.
+The 5th National Conference of the Thai Association of Higher Education Environmental Institutions (TSHE-CON 2026) needs a website that serves two purposes: (1) promote the event and provide information to potential attendees, and (2) manage the full paper submission and peer review workflow. The event is scheduled for 12-13 November 2569 (2026) at KMUTNB Technopark. The website will be hosted at `technopark.kmutnb.ac.th/envicon2026`.
 
 ## Theme & Branding
 

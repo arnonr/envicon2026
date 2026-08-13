@@ -14,7 +14,7 @@ export function buildReviewerInvitationEmail(data: ReviewerInvitationData): { su
     </p>
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 16px">
       คณะกรรมการจัดงานประชุมวิชาการนานาชาติด้านวิทยาศาสตร์และเทคโนโลยีสิ่งแวดล้อม
-      <strong>ENVICON 2026</strong>
+      <strong>TSHE-CON 2026</strong>
       มีความยินดีที่ได้เชิญท่านให้เกียรติเป็น <strong>ผู้ประเมินผลงานวิจัย</strong>
     </p>
 
@@ -48,7 +48,7 @@ export function buildReviewerInvitationEmail(data: ReviewerInvitationData): { su
   `;
 
   return {
-    subject: "คำเชิญเป็นผู้ประเมินผลงานวิจัย — ENVICON 2026",
+    subject: "คำเชิญเป็นผู้ประเมินผลงานวิจัย — TSHE-CON 2026",
     htmlBody: emailLayout(body),
   };
 }
@@ -83,7 +83,7 @@ export function buildReviewAssignmentEmail(data: ReviewAssignmentData): { subjec
       เรียน <strong>${escapeHtml(reviewerName)}</strong>
     </p>
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 16px">
-      ท่านได้รับมอบหมายให้เป็น <strong>ผู้ประเมินผลงานวิจัย</strong> สำหรับการประชุมวิชาการ ENVICON 2026
+      ท่านได้รับมอบหมายให้เป็น <strong>ผู้ประเมินผลงานวิจัย</strong> สำหรับการประชุมวิชาการ TSHE-CON 2026
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin:24px 0">
@@ -151,7 +151,7 @@ function emailLayout(body: string): string {
   <!-- Header -->
   <tr>
     <td style="background-color:#059669;padding:28px 32px;text-align:center">
-      <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px">ENVICON 2026</div>
+      <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px">TSHE-CON 2026</div>
       <div style="font-size:13px;color:#d1fae5;margin-top:4px">International Conference on Environmental Science and Technology</div>
     </td>
   </tr>
@@ -167,9 +167,12 @@ function emailLayout(body: string): string {
   <tr>
     <td style="background-color:#f9fafb;padding:20px 32px;border-top:1px solid #e5e7eb;text-align:center">
       <div style="font-size:14px;color:#6b7280;margin-bottom:4px">ขอแสดงความนับถือ</div>
-      <div style="font-size:14px;font-weight:600;color:#374151">คณะกรรมการจัดงาน ENVICON 2026</div>
+      <div style="font-size:14px;font-weight:600;color:#374151">คณะกรรมการจัดงาน TSHE-CON 2026</div>
       <div style="font-size:12px;color:#9ca3af;margin-top:6px">
         อีเมล: <a href="mailto:fiit@technopark.kmutnb.ac.th" style="color:#059669;text-decoration:none">fiit@technopark.kmutnb.ac.th</a>
+      </div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:4px">
+        โทร: <a href="tel:0647879444" style="color:#059669;text-decoration:none">064-787-9444 คุณรมณ</a>
       </div>
     </td>
   </tr>
@@ -304,7 +307,7 @@ function mainContentByDecision(data: AuthorResultData): string {
   if (decision === "accept") {
     return `
       <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 8px">
-        ขอแสดงความยินดี ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber}</strong>ของการประชุมวิชาการ <strong>ENVICON 2026</strong>
+        ขอแสดงความยินดี ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber}</strong>ของการประชุมวิชาการ <strong>TSHE-CON 2026</strong>
       </p>
       <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:0">
         ${roundNumber === 1
@@ -317,7 +320,7 @@ function mainContentByDecision(data: AuthorResultData): string {
   if (decision === "reject") {
     return `
       <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 8px">
-        คณะกรรมการขอขอบคุณสำหรับการส่งผลงานเข้าร่วมการประชุมวิชาการ <strong>ENVICON 2026</strong>
+        คณะกรรมการขอขอบคุณสำหรับการส่งผลงานเข้าร่วมการประชุมวิชาการ <strong>TSHE-CON 2026</strong>
       </p>
       <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:0">
         หลังจากการพิจารณาอย่างละเอียดแล้ว คณะกรรมการขอเรียนให้ทราบว่าผลงานของท่าน<strong>ไม่ผ่านการพิจารณารอบที่ ${roundNumber}</strong>
@@ -328,7 +331,7 @@ function mainContentByDecision(data: AuthorResultData): string {
 
   return `
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 8px">
-      ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber} แบบมีข้อแก้ไข</strong>ในการประชุมวิชาการ <strong>ENVICON 2026</strong>
+      ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber} แบบมีข้อแก้ไข</strong>ในการประชุมวิชาการ <strong>TSHE-CON 2026</strong>
     </p>
     <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:8px 0 0">
       คณะกรรมการมีข้อเสนอแนะบางประการที่ต้องการให้ท่านปรับปรุง กรุณาดำเนินการแก้ไขและส่งผลงานฉบับปรับปรุงผ่านระบบเพื่อเข้าสู่<strong>รอบที่ ${roundNumber === 1 ? 2 : "ถัดไป"}</strong>

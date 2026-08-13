@@ -1,5 +1,6 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
+  buildDir: process.env.NUXT_BUILD_DIR || ".nuxt",
   devtools: { enabled: true },
 
   modules: ["@nuxt/ui", "@pinia/nuxt"],
@@ -13,7 +14,7 @@ export default defineNuxtConfig({
   app: {
     baseURL: "/envicon2026",
     head: {
-      title: "ENVICON 2026 — การประชุมวิชาการระดับชาติ ครั้งที่ 5",
+      title: "TSHE-CON 2026 — การประชุมวิชาการระดับชาติ ครั้งที่ 5",
       meta: [
         { charset: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },

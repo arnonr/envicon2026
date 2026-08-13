@@ -149,7 +149,7 @@ const priceLabel: Record<string, string> = {
       <h1
         class="font-display text-4xl md:text-5xl font-extrabold leading-tight mt-3"
       >
-        ร่วมสนับสนุน ENVICON 2026
+        ร่วมสนับสนุน TSHE-CON 2026
       </h1>
       <p class="text-base opacity-85 mt-4 max-w-2xl mx-auto">
         งานประชุมวิชาการระดับชาติด้านสิ่งแวดล้อม ครั้งที่ 5<br />
@@ -405,7 +405,7 @@ Navigate to `http://localhost:3000/sponsorship` in a browser.
 Verify each of the following:
 
 1. **Navbar**: "สนับสนุน" appears between "ลงทะเบียน" and "แนวทาง" in the desktop nav. Mobile menu also has it.
-2. **Hero**: dark green gradient background, "SPONSORSHIP OPPORTUNITY" eyebrow visible, large title "ร่วมสนับสนุน ENVICON 2026", date/venue subtitle, two buttons "ดูแพ็กเกจ" (white) and "ติดต่อเรา" (ghost).
+2. **Hero**: dark green gradient background, "SPONSORSHIP OPPORTUNITY" eyebrow visible, large title "ร่วมสนับสนุน TSHE-CON 2026", date/venue subtitle, two buttons "ดูแพ็กเกจ" (white) and "ติดต่อเรา" (ghost).
 3. **Click "ดูแพ็กเกจ"**: page scrolls smoothly to the tier cards section (anchor `#packages`).
 4. **Click "ติดต่อเรา"**: navigates to `/contact`.
 5. **Stats**: 4 boxes side-by-side on desktop showing 500+ / 200+ / 40+ / 7 with the labels ผู้เข้าร่วมงาน / บทความวิจัย / สถาบันอุดมศึกษา / หัวข้อวิชาการ.

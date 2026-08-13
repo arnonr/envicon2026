@@ -44,7 +44,7 @@ async function submit() {
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-gray-900">ลืมรหัสผ่าน</h1>
-        <p class="text-gray-500 mt-2">ENVICON 2026</p>
+        <p class="text-gray-500 mt-2">TSHE-CON 2026</p>
       </div>
 
       <UCard>

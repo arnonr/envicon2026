@@ -1,15 +1,20 @@
 <script setup lang="ts">
+const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+const imagePath = (path: string) => `${appBaseUrl}${path}`;
+
 interface Tier {
   id: string;
   name: string;
   nameTh: string;
   subtitle: string;
+  price: number;
   icon: string;
   bg: string;
   accent: string;
   metallic: string;
   featured: boolean;
   badge?: string;
+  perks: string[];
 }
 
 const tiers: Tier[] = [
@@ -18,47 +23,83 @@ const tiers: Tier[] = [
     name: "Bronze",
     nameTh: "บรอนซ์",
     subtitle: "ระดับเริ่มต้น",
+    price: 10000,
     icon: "i-heroicons-shield-check",
-    bg: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/technopark-building.jpg"),
     accent: "from-amber-700 via-orange-700 to-amber-900",
     metallic: "from-amber-700 via-amber-500 to-amber-800",
     featured: false,
+    perks: [
+      "Logo บนเว็บไซต์งาน",
+      "ระบุชื่อใน Proceedings",
+      "ใบประกาศนียบัตรขอบคุณ",
+    ],
   },
   {
     id: "silver",
     name: "Silver",
     nameTh: "ซิลเวอร์",
     subtitle: "ระดับมาตรฐาน",
+    price: 30000,
     icon: "i-heroicons-sparkles",
-    bg: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/committee-assets/committee-registration-modern-thai.png"),
     accent: "from-slate-500 via-zinc-400 to-slate-700",
     metallic: "from-slate-400 via-zinc-300 to-slate-600",
     featured: false,
+    perks: [
+      "ทุกอย่างใน Bronze",
+      "Logo บน Backdrop งาน",
+      "Logo ในสื่อประชาสัมพันธ์",
+      "ลงทะเบียนฟรี 2 ท่าน",
+    ],
   },
   {
     id: "gold",
     name: "Gold",
     nameTh: "โกลด์",
     subtitle: "ระดับพรีเมียม",
+    price: 60000,
     icon: "i-heroicons-star",
-    bg: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/committee-assets/committee-sponsorship-modern-thai.png"),
     accent: "from-yellow-500 via-amber-400 to-orange-500",
     metallic: "from-yellow-400 via-amber-300 to-orange-500",
     featured: true,
     badge: "⭐ แนะนำ",
+    perks: [
+      "ทุกอย่างใน Silver",
+      "Booth ขนาด 2×3 ม.",
+      "ลงทะเบียนฟรี 4 ท่าน",
+      "พาดหัวข่าวบน Social Media",
+    ],
   },
   {
     id: "platinum",
     name: "Platinum",
     nameTh: "แพลทินัม",
     subtitle: "ระดับสูงสุด",
+    price: 100000,
     icon: "i-heroicons-trophy",
-    bg: "https://images.unsplash.com/photo-1466442929976-97f336a657be?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/tshe-con-low-carbon-tech-hero-20260811.png"),
     accent: "from-cyan-400 via-sky-300 to-indigo-500",
     metallic: "from-cyan-300 via-sky-200 to-indigo-400",
     featured: false,
+    perks: [
+      "ทุกอย่างใน Gold",
+      "Booth ใหญ่ 3×4 ม. (มุม)",
+      "ลงทะเบียนฟรี 8 ท่าน",
+      "กล่าวเปิด 5 นาที",
+    ],
   },
 ];
+
+const selectedTier = ref<Tier | null>(null);
+const tierModalOpen = ref(false);
+const formatPrice = (price: number) => new Intl.NumberFormat("th-TH").format(price);
+
+const openTierModal = (tier: Tier) => {
+  selectedTier.value = tier;
+  tierModalOpen.value = true;
+};
 
 interface WhySponsor {
   icon: string;
@@ -73,21 +114,21 @@ const whySponsor: WhySponsor[] = [
     icon: "i-heroicons-user-group",
     title: "เข้าถึงกลุ่มเป้าหมาย",
     desc: "นักวิจัย อาจารย์ นิสิตนักศึกษา และผู้เชี่ยวชาญด้านสิ่งแวดล้อมจากทั่วประเทศ",
-    bg: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/committee-assets/committee-hero-modern-thai.png"),
     tag: "Audience Reach",
   },
   {
     icon: "i-heroicons-globe-alt",
     title: "สร้างเครือข่าย",
     desc: "Networking กับสถาบันชั้นนำและองค์กรด้านสิ่งแวดล้อม",
-    bg: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/committee-assets/committee-sponsorship-modern-thai.png"),
     tag: "Networking",
   },
   {
     icon: "i-heroicons-sparkles",
     title: "แสดงความรับผิดชอบ",
     desc: "ตอกย้ำภาพลักษณ์องค์กรที่ใส่ใจสิ่งแวดล้อมและความยั่งยืน",
-    bg: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=1200&q=80&auto=format&fit=crop",
+    bg: imagePath("/images/tshe-con-wellbeing-family-20260811.png"),
     tag: "Sustainability",
   },
 ];
@@ -100,10 +141,10 @@ interface Stat {
 }
 
 const stats: Stat[] = [
-  { value: "500+", label: "ผู้เข้าร่วมงาน", icon: "i-heroicons-users", bg: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=1200&q=80&auto=format&fit=crop" },
-  { value: "200+", label: "บทความวิจัย", icon: "i-heroicons-document-text", bg: "https://images.unsplash.com/photo-1532153975070-2e9ab71f1b14?w=1200&q=80&auto=format&fit=crop" },
-  { value: "40+", label: "สถาบันอุดมศึกษา", icon: "i-heroicons-academic-cap", bg: "https://images.unsplash.com/photo-1562774053-701939374585?w=1200&q=80&auto=format&fit=crop" },
-  { value: "7", label: "หัวข้อวิชาการ", icon: "i-heroicons-beaker", bg: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1200&q=80&auto=format&fit=crop" },
+  { value: "500+", label: "ผู้เข้าร่วมงาน", icon: "i-heroicons-users", bg: imagePath("/images/committee-assets/committee-hero-modern-thai.png") },
+  { value: "200+", label: "บทความวิจัย", icon: "i-heroicons-document-text", bg: imagePath("/images/committee-assets/committee-academic-modern-thai.png") },
+  { value: "40+", label: "สถาบันอุดมศึกษา", icon: "i-heroicons-academic-cap", bg: imagePath("/images/technopark-building.jpg") },
+  { value: "7", label: "หัวข้อวิชาการ", icon: "i-heroicons-beaker", bg: imagePath("/images/tshe-con-low-carbon-tech-hero-20260811.png") },
 ];
 </script>
 
@@ -113,8 +154,8 @@ const stats: Stat[] = [
     <section class="relative min-h-[88vh] flex items-center justify-center overflow-hidden bg-meadow-950">
       <div class="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1559223607-a43c990c692c?w=2400&q=80&auto=format&fit=crop"
-          alt="Sponsorship & partnership"
+          :src="imagePath('/images/committee-assets/committee-sponsorship-modern-thai.png')"
+          alt="การหารือความร่วมมือและผู้สนับสนุนในบริบทไทย"
           class="w-full h-full object-cover sponsorship-hero-photo"
         />
       </div>
@@ -134,11 +175,15 @@ const stats: Stat[] = [
         <h1 class="mt-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight text-white drop-shadow-2xl">
           ร่วมสนับสนุน
           <span class="block mt-2 bg-gradient-to-r from-meadow-200 via-sky-200 to-cyan-200 bg-clip-text text-transparent">
-            ENVICON 2026
+            TSHE-CON 2026
           </span>
         </h1>
         <p class="mt-6 text-base sm:text-lg text-white/85 font-medium leading-relaxed max-w-2xl mx-auto drop-shadow-md">
-          งานประชุมวิชาการระดับชาติด้านสิ่งแวดล้อม ครั้งที่ 5
+          การประชุมวิชาการระดับชาติ
+          <br class="hidden sm:block" />
+          สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย
+          <br class="hidden sm:block" />
+          ครั้งที่ 5
           <br class="hidden sm:block" />
           12–13 พฤศจิกายน 2569 · มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
         </p>
@@ -256,10 +301,10 @@ const stats: Stat[] = [
             Packages
           </div>
           <h2 class="mt-4 text-3xl sm:text-4xl lg:text-5xl font-semibold text-stone-900 leading-tight tracking-tight">
-            แพ็กเกจสปอนเซอร์
+            สปอนเซอร์
           </h2>
           <p class="mt-3 text-base text-stone-600 max-w-2xl mx-auto">
-            4 ระดับ ตามเป้าหมายและงบประมาณของคุณ
+            4 ระดับ ตามเป้าหมายและงบประมาณ
           </p>
         </div>
 
@@ -311,37 +356,98 @@ const stats: Stat[] = [
                 <div :class="['inline-flex items-center justify-center w-12 h-12 rounded-xl shadow-md bg-gradient-to-br', tier.metallic]">
                   <UIcon :name="tier.icon" class="w-6 h-6 text-white" />
                 </div>
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-semibold">
-                  <UIcon name="i-heroicons-clock" class="w-3 h-3" />
-                  อัพเดทเร็วๆ นี้
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-meadow-50 border border-meadow-200 text-meadow-800 text-[11px] font-semibold">
+                  <UIcon name="i-heroicons-banknotes" class="w-3 h-3" />
+                  {{ formatPrice(tier.price) }} บาท
                 </span>
               </div>
 
               <p class="text-sm text-stone-600 leading-relaxed">
-                รายละเอียดและสิทธิประโยชน์ของแพ็กเกจ
+                ดูสิทธิประโยชน์และรายละเอียดของแพ็กเกจ
                 <span class="font-semibold text-stone-900">{{ tier.name }}</span>
-                จะประกาศในเร็วๆ นี้
               </p>
 
-              <a
-                href="/contact"
+              <button
+                type="button"
                 class="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-meadow-700 hover:text-meadow-800 transition-colors"
+                @click="openTierModal(tier)"
               >
-                สอบถามรายละเอียด
+                ดูรายละเอียด
                 <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </a>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
+    <UModal v-model="tierModalOpen" :ui="{ width: 'sm:max-w-2xl' }">
+      <div v-if="selectedTier" class="overflow-hidden rounded-lg bg-white">
+        <div class="relative h-48 sm:h-56 overflow-hidden">
+          <img :src="selectedTier.bg" :alt="selectedTier.name" class="absolute inset-0 w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-meadow-950/90 via-meadow-900/55 to-meadow-900/15" />
+          <div :class="['absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r', selectedTier.accent]" />
+          <button
+            type="button"
+            class="absolute top-4 right-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-md transition-colors hover:bg-black/50"
+            aria-label="ปิด"
+            @click="tierModalOpen = false"
+          >
+            <UIcon name="i-heroicons-x-mark" class="h-5 w-5" />
+          </button>
+          <div class="absolute bottom-5 left-6 right-6 text-white">
+            <div :class="['inline-block text-[10px] font-bold tracking-[0.25em] uppercase mb-2 px-2 py-0.5 rounded-full bg-gradient-to-r text-white', selectedTier.metallic]">
+              {{ selectedTier.subtitle }}
+            </div>
+            <h3 class="text-3xl font-semibold leading-tight drop-shadow-lg">
+              {{ selectedTier.name }} <span class="text-white/75">{{ selectedTier.nameTh }}</span>
+            </h3>
+          </div>
+        </div>
+
+        <div class="p-6 sm:p-7">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.2em] text-meadow-700">Sponsorship Package</p>
+              <h4 class="mt-1 text-2xl font-semibold text-stone-900">
+                {{ formatPrice(selectedTier.price) }} บาท
+              </h4>
+            </div>
+            <NuxtLink
+              to="/contact"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-meadow-800"
+              @click="tierModalOpen = false"
+            >
+              ติดต่อเจ้าหน้าที่
+              <UIcon name="i-heroicons-arrow-right" class="h-4 w-4" />
+            </NuxtLink>
+          </div>
+
+          <div class="mt-6 border-t border-stone-200 pt-5">
+            <h5 class="text-sm font-semibold text-stone-900">สิทธิประโยชน์ที่จะได้รับ</h5>
+            <ul class="mt-4 space-y-3">
+              <li
+                v-for="perk in selectedTier.perks"
+                :key="perk"
+                class="flex gap-3 text-sm leading-relaxed text-stone-700"
+              >
+                <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-meadow-100 text-meadow-700">
+                  <UIcon name="i-heroicons-check" class="h-3.5 w-3.5" />
+                </span>
+                <span>{{ perk }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </UModal>
+
     <!-- ═══════════ CTA ═══════════ -->
     <section class="relative overflow-hidden bg-meadow-950">
       <div class="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=2400&q=80&auto=format&fit=crop"
-          alt="Partnership meeting"
+          :src="imagePath('/images/committee-assets/committee-hero-modern-thai.png')"
+          alt="การประชุมเครือข่ายผู้สนับสนุนและนักวิชาการไทย"
           class="w-full h-full object-cover sponsorship-cta-photo"
         />
       </div>
@@ -359,7 +465,7 @@ const stats: Stat[] = [
           สนใจเป็นสปอนเซอร์?
         </h2>
         <p class="mt-4 text-base sm:text-lg text-white/85 font-medium leading-relaxed max-w-xl mx-auto">
-          ติดต่อคณะกรรมการจัดงานเพื่อหารือรายละเอียดและจองแพ็กเกจ
+          ติดต่อเจ้าหน้าที่จัดงานเพื่อหารือรายละเอียด
         </p>
         <div class="flex flex-col sm:flex-row gap-3 justify-center mt-8">
           <a
@@ -370,11 +476,11 @@ const stats: Stat[] = [
             fiit@technopark.kmutnb.ac.th
           </a>
           <a
-            href="tel:025552000"
+            href="tel:0647879444"
             class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-white/30 bg-white/10 backdrop-blur-md text-white font-semibold hover:bg-white/20 transition-all duration-300"
           >
             <UIcon name="i-heroicons-phone" class="w-4 h-4" />
-            02-555-2000 ต่อ 1789
+            064-787-9444 คุณรมณ
           </a>
         </div>
       </div>

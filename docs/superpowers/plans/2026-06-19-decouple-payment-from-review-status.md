@@ -178,7 +178,7 @@ Then change the `.set({ paymentSlipUrl: fileUrl, status: "payment_verifying" })`
 - [ ] **Step 3: Smoke-test both endpoints with `curl`**
 
 Start the dev server in another terminal: `cd backend && bun run dev`
-Wait for `🌿 ENVICON 2026 API running at http://localhost:3001`.
+Wait for `🌿 TSHE-CON 2026 API running at http://localhost:3001`.
 
 In the project shell, run a smoke test (replace `$TOKEN` with a real author JWT — get one by logging in via the running frontend, or seed an author via SQL and use the auth endpoint):
 

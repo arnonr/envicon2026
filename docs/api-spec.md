@@ -1,4 +1,4 @@
-# API Specification — ENVICON 2026
+# API Specification — TSHE-CON 2026
 
 **Base URL**: `/envicon2026/api`  
 **Auth**: Bearer JWT token ใน header `Authorization: Bearer <token>`  
