@@ -192,6 +192,10 @@ export const eventRegistrations = mysqlTable("event_registrations", {
   affiliation: varchar("affiliation", { length: 500 }),
   phone: varchar("phone", { length: 20 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  feeType: mysqlEnum("fee_type", ["student", "general"]).notNull().default("general"),
+  fee: int("fee").notNull().default(0),
+  paymentSlipUrl: varchar("payment_slip_url", { length: 500 }),
+  paymentStatus: mysqlEnum("payment_status", ["pending_verification", "confirmed", "rejected"]).notNull().default("pending_verification"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

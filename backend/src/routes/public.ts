@@ -3,6 +3,8 @@ import { db } from "../db";
 import { eventRegistrations } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { ok, fail } from "../utils/response";
+import { saveFile } from "../services/storage";
+import { calculateFee } from "../utils/fees";
 
 export const publicRoutes = new Elysia({ prefix: "/public" }).post(
   "/register",
@@ -24,6 +26,10 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
         affiliation: body.affiliation,
         phone: body.phone,
         email: body.email,
+        feeType: body.feeType,
+        fee: calculateFee(body.feeType),
+        paymentSlipUrl: await saveFile(body.paymentSlip, `event-slip-${crypto.randomUUID()}`),
+        paymentStatus: "pending_verification",
       });
 
       const id = (result as any)[0]?.insertId || crypto.randomUUID();
@@ -43,6 +49,8 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
       affiliation: t.Optional(t.String({ maxLength: 500 })),
       phone: t.Optional(t.String({ maxLength: 20 })),
       email: t.String({ format: "email", maxLength: 255 }),
+      feeType: t.Union([t.Literal("student"), t.Literal("general")]),
+      paymentSlip: t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: 10 * 1024 * 1024 }),
     }),
   },
 );

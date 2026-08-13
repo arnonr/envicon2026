@@ -18,6 +18,7 @@ interface Registration {
 
 const registration = ref<Registration | null>(null);
 const notRegistered = ref(false);
+const eventRegistrationOpen = ref(false);
 
 const feeTable = [
   { category: "นิสิต/นักศึกษา", type: "student" as const, earlyBird: 500, regular: 700 },
@@ -82,8 +83,37 @@ onMounted(() => {
 <template>
   <div class="max-w-4xl mx-auto px-4 py-16">
     <div class="text-center mb-12">
-      <h1 class="text-3xl font-bold text-gray-900 mb-3">ลงทะเบียนส่งผลงาน</h1>
+      <h1 class="text-3xl font-bold text-gray-900 mb-3">ลงทะเบียน</h1>
       <p class="text-gray-500 text-lg">Registration</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+      <UCard class="border-2 border-primary-100">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center shrink-0">
+            <UIcon name="i-heroicons-document-arrow-up" class="w-6 h-6" />
+          </div>
+          <div class="flex-1">
+            <h2 class="font-bold text-lg text-gray-900">ลงทะเบียนส่งผลงาน</h2>
+            <p class="mt-1 text-sm text-gray-500">สำหรับผู้ที่ต้องการส่งบทความเข้าร่วมพิจารณา</p>
+            <UButton color="primary" class="mt-4" :to="authStore.isLoggedIn ? '/submit' : '/auth/login'">
+              {{ authStore.isLoggedIn ? 'ดำเนินการส่งผลงาน' : 'เข้าสู่ระบบเพื่อส่งผลงาน' }}
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+      <UCard class="border-2 border-meadow-100">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-xl bg-meadow-50 text-meadow-600 flex items-center justify-center shrink-0">
+            <UIcon name="i-heroicons-ticket" class="w-6 h-6" />
+          </div>
+          <div class="flex-1">
+            <h2 class="font-bold text-lg text-gray-900">ลงทะเบียนเข้าร่วมงาน</h2>
+            <p class="mt-1 text-sm text-gray-500">กรอกข้อมูล ชำระเงิน และแนบหลักฐานได้ในขั้นตอนเดียว</p>
+            <UButton color="primary" class="mt-4" @click="eventRegistrationOpen = true">ลงทะเบียนเข้าร่วมงาน</UButton>
+          </div>
+        </div>
+      </UCard>
     </div>
 
     <!-- Fee Table -->
@@ -127,15 +157,17 @@ onMounted(() => {
     </div>
 
     <!-- Registration Form (not logged in) -->
-    <UCard v-else-if="!authStore.isLoggedIn" class="mb-8">
+    <UCard v-if="!authStore.isLoggedIn" class="mb-8">
       <div class="text-center py-6 text-gray-500">
         <p>กรุณาเข้าสู่ระบบเพื่อลงทะเบียนส่งผลงาน</p>
         <UButton color="primary" class="mt-4" to="/auth/login">เข้าสู่ระบบ</UButton>
       </div>
     </UCard>
 
+    <HomeRegistrationModal v-model="eventRegistrationOpen" />
+
     <!-- Registration Form (logged in, not registered) -->
-    <UCard v-else-if="notRegistered" class="mb-8">
+    <UCard v-if="authStore.isLoggedIn && notRegistered" class="mb-8">
       <template #header>
         <h2 class="font-semibold text-lg">ลงทะเบียนส่งผลงาน</h2>
       </template>

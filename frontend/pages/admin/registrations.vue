@@ -12,11 +12,16 @@ interface Registration {
   affiliation: string | null;
   phone: string | null;
   email: string;
+  feeType: "student" | "general";
+  fee: number;
+  paymentSlipUrl: string | null;
+  paymentStatus: "pending_verification" | "confirmed" | "rejected";
   createdAt: string;
 }
 
 const registrations = ref<Registration[]>([]);
 const loading = ref(true);
+const updatingId = ref<string | null>(null);
 
 async function fetchRegistrations() {
   loading.value = true;
@@ -40,6 +45,22 @@ function formatDate(iso: string) {
     month: "long",
     year: "numeric",
   });
+}
+
+async function updatePayment(reg: Registration, status: "confirmed" | "rejected") {
+  updatingId.value = reg.id;
+  const { error } = await handleApiCall(() => $fetch(`${apiBase}/admin/event-registrations/${reg.id}/payment`, {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${authStore.token}` },
+    body: { paymentStatus: status },
+  }));
+  updatingId.value = null;
+  if (error) {
+    showError(error);
+    return;
+  }
+  reg.paymentStatus = status;
+  showSuccess(status === "confirmed" ? "ยืนยันการชำระเงินแล้ว" : "ปฏิเสธหลักฐานแล้ว");
 }
 
 onMounted(fetchRegistrations);
@@ -96,6 +117,9 @@ onMounted(fetchRegistrations);
             <th class="py-3 px-3">อีเมล</th>
             <th class="py-3 px-3">สังกัด</th>
             <th class="py-3 px-3">เบอร์โทร</th>
+            <th class="py-3 px-3">ค่าลงทะเบียน</th>
+            <th class="py-3 px-3">หลักฐาน</th>
+            <th class="py-3 px-3">สถานะ</th>
             <th class="py-3 px-3 text-center">วันที่ลงทะเบียน</th>
           </tr>
         </thead>
@@ -109,6 +133,20 @@ onMounted(fetchRegistrations);
             <td class="py-3 px-3 text-gray-500">{{ reg.email }}</td>
             <td class="py-3 px-3 text-gray-500">{{ reg.affiliation || "-" }}</td>
             <td class="py-3 px-3 text-gray-500">{{ reg.phone || "-" }}</td>
+            <td class="py-3 px-3 text-gray-500">{{ reg.fee.toLocaleString() }} บาท</td>
+            <td class="py-3 px-3">
+              <a v-if="reg.paymentSlipUrl" :href="reg.paymentSlipUrl" target="_blank" class="text-primary-600 hover:underline">เปิดดู</a>
+              <span v-else class="text-gray-400">-</span>
+            </td>
+            <td class="py-3 px-3">
+              <UBadge :color="reg.paymentStatus === 'confirmed' ? 'green' : reg.paymentStatus === 'rejected' ? 'red' : 'yellow'">
+                {{ reg.paymentStatus === 'confirmed' ? 'ยืนยันแล้ว' : reg.paymentStatus === 'rejected' ? 'ไม่ผ่าน' : 'รอตรวจสอบ' }}
+              </UBadge>
+              <div v-if="reg.paymentStatus === 'pending_verification'" class="flex gap-1 mt-2">
+                <UButton size="xs" color="green" :loading="updatingId === reg.id" @click="updatePayment(reg, 'confirmed')">ยืนยัน</UButton>
+                <UButton size="xs" color="red" variant="outline" :loading="updatingId === reg.id" @click="updatePayment(reg, 'rejected')">ปฏิเสธ</UButton>
+              </div>
+            </td>
             <td class="py-3 px-3 text-center text-gray-500">{{ formatDate(reg.createdAt) }}</td>
           </tr>
         </tbody>

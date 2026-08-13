@@ -364,6 +364,10 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         affiliation: eventRegistrations.affiliation,
         phone: eventRegistrations.phone,
         email: eventRegistrations.email,
+        feeType: eventRegistrations.feeType,
+        fee: eventRegistrations.fee,
+        paymentSlipUrl: eventRegistrations.paymentSlipUrl,
+        paymentStatus: eventRegistrations.paymentStatus,
         createdAt: eventRegistrations.createdAt,
       })
       .from(eventRegistrations)
@@ -371,6 +375,30 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
 
     return ok(rows);
   })
+  .patch(
+    "/event-registrations/:id/payment",
+    async ({ params, body, set }) => {
+      const [reg] = await db
+        .select({ id: eventRegistrations.id })
+        .from(eventRegistrations)
+        .where(eq(eventRegistrations.id, params.id))
+        .limit(1);
+      if (!reg) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบข้อมูลผู้ลงทะเบียนเข้าร่วมงาน");
+      }
+      await db.update(eventRegistrations)
+        .set({ paymentStatus: body.paymentStatus })
+        .where(eq(eventRegistrations.id, params.id));
+      return ok({ id: params.id, paymentStatus: body.paymentStatus });
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        paymentStatus: t.Union([t.Literal("confirmed"), t.Literal("rejected")]),
+      }),
+    },
+  )
   .put(
     "/registrations/:id/confirm",
     async ({ headers, params, set }) => {
