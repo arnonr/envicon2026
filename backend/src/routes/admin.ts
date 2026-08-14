@@ -136,6 +136,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           submitterType: submissions.submitterType,
           educationLevel: submissions.educationLevel,
           presentationFormat: submissions.presentationFormat,
+          wantsFullPaper: submissions.wantsFullPaper,
           status: submissions.status,
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,

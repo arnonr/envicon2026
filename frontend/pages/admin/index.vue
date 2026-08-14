@@ -9,6 +9,7 @@ interface Submission {
   submitterType: string;
   educationLevel: string;
   presentationFormat: string;
+  wantsFullPaper: number;
   status: string;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   abstractFileUrl: string | null;
@@ -77,18 +78,18 @@ const TRACK_NAMES: Record<number, string> = {
 };
 
 const STATUS_OPTIONS = [
-  { value: "", label: "ทั้งหมด" },
-  { value: "draft", label: "ร่าง" },
-  { value: "submitted_round1", label: "ส่งรอบที่ 1 แล้ว" },
-  { value: "under_review_round1", label: "อยู่ระหว่างรีวิวรอบที่ 1" },
-  { value: "passed_round1", label: "ผ่านรอบที่ 1" },
-  { value: "passed_round1_with_revisions", label: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข" },
-  { value: "rejected_round1", label: "ไม่ผ่านรอบที่ 1" },
-  { value: "submitted_round2", label: "ส่งรอบที่ 2 แล้ว" },
-  { value: "under_review_round2", label: "อยู่ระหว่างรีวิวรอบที่ 2" },
-  { value: "passed_round2", label: "ผ่านรอบที่ 2" },
-  { value: "passed_round2_with_revisions", label: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข" },
-  { value: "rejected_round2", label: "ไม่ผ่านรอบที่ 2" },
+  { value: "", label: "ทั้งหมด (All)" },
+  { value: "draft", label: "ร่าง (Draft)" },
+  { value: "submitted_round1", label: "ส่งรอบที่ 1 แล้ว (Round 1 Submitted)" },
+  { value: "under_review_round1", label: "อยู่ระหว่างรีวิวรอบที่ 1 (Round 1 Under Review)" },
+  { value: "passed_round1", label: "ผ่านรอบที่ 1 (Round 1 Passed)" },
+  { value: "passed_round1_with_revisions", label: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข (Round 1 Passed with Revisions)" },
+  { value: "rejected_round1", label: "ไม่ผ่านรอบที่ 1 (Round 1 Rejected)" },
+  { value: "submitted_round2", label: "ส่งรอบที่ 2 แล้ว (Round 2 Submitted)" },
+  { value: "under_review_round2", label: "อยู่ระหว่างรีวิวรอบที่ 2 (Round 2 Under Review)" },
+  { value: "passed_round2", label: "ผ่านรอบที่ 2 (Round 2 Passed)" },
+  { value: "passed_round2_with_revisions", label: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข (Round 2 Passed with Revisions)" },
+  { value: "rejected_round2", label: "ไม่ผ่านรอบที่ 2 (Round 2 Rejected)" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -308,34 +309,34 @@ onBeforeUnmount(() => {
           :options="STATUS_OPTIONS"
           value-attribute="value"
           option-attribute="label"
-          placeholder="สถานะ"
+          placeholder="สถานะ (Status)"
           size="sm"
           class="w-48"
         />
         <USelectMenu
           v-model="paymentStatusFilter"
           :options="[
-            { value: '', label: 'ทั้งหมด (การชำระเงิน)' },
-            { value: 'unpaid', label: 'ยังไม่ชำระ' },
-            { value: 'pending_verification', label: 'รอตรวจสอบ' },
-            { value: 'verified', label: 'ชำระแล้ว' },
-            { value: 'rejected', label: 'ปฏิเสธ' },
+            { value: '', label: 'ทั้งหมด (การชำระเงิน) (All Payments)' },
+            { value: 'unpaid', label: 'ยังไม่ชำระ (Unpaid)' },
+            { value: 'pending_verification', label: 'รอตรวจสอบ (Pending Verification)' },
+            { value: 'verified', label: 'ชำระแล้ว (Verified)' },
+            { value: 'rejected', label: 'ปฏิเสธ (Rejected)' },
           ]"
           value-attribute="value"
           option-attribute="label"
-          placeholder="การชำระเงิน"
+          placeholder="การชำระเงิน (Payment Status)"
           size="sm"
           class="w-48"
         />
         <USelectMenu
           v-model="filterTrack"
           :options="[
-            { value: '', label: 'ทุกหัวข้อ' },
+            { value: '', label: 'ทุกหัวข้อ (All Tracks)' },
             ...Object.entries(TRACK_NAMES).map(([k, v]) => ({ value: k, label: v })),
           ]"
           value-attribute="value"
           option-attribute="label"
-          placeholder="หัวข้อ"
+          placeholder="หัวข้อ (Track)"
           size="sm"
           class="w-56"
         />
@@ -427,6 +428,11 @@ onBeforeUnmount(() => {
             </td>
             <td class="py-3 px-3 text-center text-gray-500">
               {{ presentationFormatLabel(sub.presentationFormat) }}
+            </td>
+            <td class="py-3 px-3 text-center">
+              <UBadge :color="sub.wantsFullPaper ? 'blue' : 'gray'" variant="soft" size="xs">
+                {{ sub.wantsFullPaper ? 'ต้องการ Full Paper' : 'เฉพาะบทคัดย่อ' }}
+              </UBadge>
             </td>
             <td class="py-3 px-3 text-center text-gray-700 font-medium">
               {{ reviewProgressLabel(sub) }}

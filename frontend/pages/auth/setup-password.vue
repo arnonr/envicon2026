@@ -7,13 +7,13 @@ const apiBase = config.public.apiBase as string;
 const { handleApiCall, showError, showSuccess } = useApiError();
 
 const TRACKS: Record<number, string> = {
-  1: "วิทยาศาสตร์สิ่งแวดล้อมฯ",
-  2: "การจัดการระบบนิเวศฯ",
-  3: "เศรษฐกิจหมุนเวียนฯ",
-  4: "การเปลี่ยนแปลงสภาพภูมิอากาศฯ",
-  5: "เทคโนโลยีดิจิทัลฯ",
-  6: "เมืองยั่งยืนฯ",
-  7: "สิ่งแวดล้อมและสุขภาพ",
+  1: "วิทยาศาสตร์สิ่งแวดล้อมฯ (Environmental Science)",
+  2: "การจัดการระบบนิเวศฯ (Ecosystem Management)",
+  3: "เศรษฐกิจหมุนเวียนฯ (Circular Economy)",
+  4: "การเปลี่ยนแปลงสภาพภูมิอากาศฯ (Climate Change)",
+  5: "เทคโนโลยีดิจิทัลฯ (Digital Technology)",
+  6: "เมืองยั่งยืนฯ (Sustainable Cities)",
+  7: "สิ่งแวดล้อมและสุขภาพ (Environment and Health)",
 };
 
 const token = computed(() => String(route.query.token || ""));
@@ -138,7 +138,7 @@ async function submit() {
           <h1 class="text-xl font-semibold">ตั้งรหัสผ่าน</h1>
           <p class="text-sm text-gray-500 mt-1">{{ account.name }} ({{ account.email }})</p>
         </div>
-        <UFormGroup label="รหัสผ่านใหม่" required :error="errors.password">
+        <UFormGroup label="รหัสผ่านใหม่ (New Password)" required :error="errors.password">
           <UInput
             v-model="password"
             type="password"
@@ -147,7 +147,7 @@ async function submit() {
             @input="errors.password = ''"
           />
         </UFormGroup>
-        <UFormGroup label="ยืนยันรหัสผ่าน" required :error="errors.confirmPassword">
+        <UFormGroup label="ยืนยันรหัสผ่าน (Confirm Password)" required :error="errors.confirmPassword">
           <UInput
             v-model="confirmPassword"
             type="password"
@@ -161,14 +161,14 @@ async function submit() {
             <p class="text-sm text-gray-600">
               กรุณากรอกข้อมูลของท่านเพื่อให้ผู้จัดงานสามารถมอบหมายผลงานที่ตรงกับความเชี่ยวชาญได้อย่างเหมาะสม
             </p>
-            <UFormGroup label="สังกัด/หน่วยงาน" required :error="errors.affiliation">
+            <UFormGroup label="สังกัด/หน่วยงาน (Affiliation/Organization)" required :error="errors.affiliation">
               <UInput
                 v-model="affiliation"
                 placeholder="เช่น มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ"
                 @input="errors.affiliation = ''"
               />
             </UFormGroup>
-            <UFormGroup label="สาขาความเชี่ยวชาญ" required :error="errors.expertiseTracks">
+            <UFormGroup label="สาขาความเชี่ยวชาญ (Areas of Expertise)" required :error="errors.expertiseTracks">
               <div class="space-y-2">
                 <label v-for="(label, track) in TRACKS" :key="track" class="flex gap-2 text-sm">
                   <input

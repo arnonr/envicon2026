@@ -38,6 +38,7 @@ interface Submission {
   fullPaperFileUrl: string | null;
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
+  wantsFullPaper: number;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
@@ -171,6 +172,10 @@ onMounted(fetchSubmission);
           <div v-if="submission.abstract" class="col-span-2">
             <dt class="text-gray-500">บทคัดย่อ</dt>
             <dd class="mt-1 text-gray-700 leading-relaxed">{{ submission.abstract }}</dd>
+          </div>
+          <div class="col-span-2">
+            <dt class="text-gray-500">ความประสงค์ส่ง Full Paper</dt>
+            <dd class="mt-0.5">{{ submission.wantsFullPaper ? 'ต้องการส่ง Full Paper' : 'ส่งเฉพาะบทคัดย่อ' }}</dd>
           </div>
         </dl>
       </UCard>

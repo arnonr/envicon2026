@@ -6,6 +6,9 @@ import { ok, fail } from "../utils/response";
 import { saveFile } from "../services/storage";
 import { calculateFee } from "../utils/fees";
 
+// Set to true when event registration payment collection is enabled again.
+const EVENT_REGISTRATION_PAYMENT_ENABLED = false;
+
 export const publicRoutes = new Elysia({ prefix: "/public" }).post(
   "/register",
   async ({ body, set }) => {
@@ -27,9 +30,11 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
         phone: body.phone,
         email: body.email,
         feeType: body.feeType,
-        fee: calculateFee(body.feeType),
-        paymentSlipUrl: await saveFile(body.paymentSlip, `event-slip-${crypto.randomUUID()}`),
-        paymentStatus: "pending_verification",
+        fee: EVENT_REGISTRATION_PAYMENT_ENABLED ? calculateFee(body.feeType) : 0,
+        paymentSlipUrl: EVENT_REGISTRATION_PAYMENT_ENABLED && body.paymentSlip
+          ? await saveFile(body.paymentSlip, `event-slip-${crypto.randomUUID()}`)
+          : null,
+        paymentStatus: EVENT_REGISTRATION_PAYMENT_ENABLED ? "pending_verification" : "confirmed",
       });
 
       const id = (result as any)[0]?.insertId || crypto.randomUUID();
@@ -50,7 +55,7 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
       phone: t.Optional(t.String({ maxLength: 20 })),
       email: t.String({ format: "email", maxLength: 255 }),
       feeType: t.Union([t.Literal("student"), t.Literal("general")]),
-      paymentSlip: t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: 10 * 1024 * 1024 }),
+      paymentSlip: t.Optional(t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: 10 * 1024 * 1024 })),
     }),
   },
 );

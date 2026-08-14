@@ -56,7 +56,7 @@ async function submit() {
         </div>
 
         <form v-else class="space-y-4" @submit.prevent="submit">
-          <UFormGroup label="อีเมล" :error="error">
+          <UFormGroup label="อีเมล (Email)" :error="error">
             <UInput
               v-model="email"
               type="email"

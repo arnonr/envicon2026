@@ -19,6 +19,7 @@ interface Submission {
   submitterType: string;
   educationLevel: string;
   presentationFormat: string;
+  wantsFullPaper: number;
   status: string;
   abstractFileUrl: string | null;
   fullPaperFileUrl: string | null;
@@ -181,6 +182,7 @@ const presentationFormatLabel = (v: string) =>
 interface Creator {
   firstName: string;
   lastName: string;
+  affiliation?: string;
 }
 
 const parsedCreators = computed<Creator[]>(() => {
@@ -201,7 +203,10 @@ const parsedKeywords = computed(() => {
 });
 
 const decisionLabel = (decision: WorkflowRound["decision"]) =>
-  ({ accept: "ผ่านการพิจารณา", reject: "ไม่ผ่าน", revise: "ขอแก้ไข" }[decision ?? ""] ?? "ยังไม่มีผลตัดสิน");
+  ({ accept: "ผ่านการพิจารณา (Accept)", reject: "ไม่ผ่าน (Reject)", revise: "ผ่านการพิจารณาแบบแก้ไข" }[decision ?? ""] ?? "ยังไม่มีผลตัดสิน");
+
+const recommendationLabel = (recommendation: string | null) =>
+  ({ accept: "ผ่านการพิจารณา (Accept)", reject: "ไม่ผ่าน (Reject)", revise: "ผ่านการพิจารณาแบบแก้ไข" }[recommendation ?? ""] ?? recommendation ?? "-");
 
 const statusLabel = (status: string) =>
   ({ draft: "ร่าง", submitted_round1: "ส่งรอบที่ 1 แล้ว", under_review_round1: "อยู่ระหว่างรีวิวรอบที่ 1", passed_round1: "ผ่านรอบที่ 1", passed_round1_with_revisions: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข", rejected_round1: "ไม่ผ่านรอบที่ 1", submitted_round2: "ส่งรอบที่ 2 แล้ว", under_review_round2: "อยู่ระหว่างรีวิวรอบที่ 2", passed_round2: "ผ่านรอบที่ 2", passed_round2_with_revisions: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข", rejected_round2: "ไม่ผ่านรอบที่ 2" }[status] ?? status);
@@ -215,7 +220,7 @@ const creatorsLabel = (raw: string | null) => {
   if (!raw) return "-";
   try {
     const values = JSON.parse(raw) as Creator[];
-    return values.map(value => `${value.firstName} ${value.lastName}`.trim()).filter(Boolean).join(", ") || "-";
+    return values.map(value => `${value.firstName} ${value.lastName}${value.affiliation ? ` · ${value.affiliation}` : ""}`.trim()).filter(Boolean).join(", ") || "-";
   } catch {
     return raw;
   }
@@ -229,7 +234,7 @@ const comparisonRows = (version: SubmissionVersion, index: number) => {
     { label: "ชื่อเรื่องภาษาอังกฤษ", before: previous.titleEn, after: version.titleEn },
     { label: "บทคัดย่อ", before: previous.abstract, after: version.abstract },
     { label: "คำสำคัญ", before: previous.keywords, after: version.keywords },
-    { label: "ผู้สร้างสรรค์", before: creatorsLabel(previous.creators), after: creatorsLabel(version.creators) },
+    { label: "ผู้แต่งร่วม", before: creatorsLabel(previous.creators), after: creatorsLabel(version.creators) },
     { label: "สาขา", before: TRACK_NAMES[previous.track] ?? String(previous.track), after: TRACK_NAMES[version.track] ?? String(version.track) },
     { label: "ประเภทผู้ส่ง", before: submitterLabel(previous.submitterType), after: submitterLabel(version.submitterType) },
     { label: "ระดับการศึกษา", before: educationLabel(previous.educationLevel), after: educationLabel(version.educationLevel) },
@@ -475,6 +480,12 @@ watch(() => props.modelValue, (open) => {
             <dd class="font-medium mt-0.5">{{ presentationFormatLabel(submission.presentationFormat) }}</dd>
           </div>
           <div>
+            <dt class="text-gray-500">ความประสงค์ส่ง Full Paper</dt>
+            <dd class="font-medium mt-0.5" :class="submission.wantsFullPaper ? 'text-blue-700' : 'text-gray-600'">
+              {{ submission.wantsFullPaper ? 'ต้องการส่ง Full Paper' : 'ส่งเฉพาะบทคัดย่อ' }}
+            </dd>
+          </div>
+          <div>
             <dt class="text-gray-500">วันที่ส่ง</dt>
             <dd class="mt-0.5">{{ formatDate(submission.submittedAt) }}</dd>
           </div>
@@ -489,10 +500,10 @@ watch(() => props.modelValue, (open) => {
 
         <!-- Creators -->
         <div v-if="parsedCreators.length">
-          <h3 class="text-xs text-gray-500 mb-1.5">ผู้สร้างสรรค์ผลงาน</h3>
+          <h3 class="text-xs text-gray-500 mb-1.5">ผู้แต่งร่วม (Co-author)</h3>
           <div class="flex flex-wrap gap-1.5">
             <UBadge v-for="(c, i) in parsedCreators" :key="i" color="primary" variant="soft" size="xs">
-              {{ c.firstName }} {{ c.lastName }}
+              {{ c.firstName }} {{ c.lastName }}<template v-if="c.affiliation"> · {{ c.affiliation }}</template>
             </UBadge>
           </div>
         </div>
@@ -624,7 +635,7 @@ watch(() => props.modelValue, (open) => {
                 <p class="font-medium">{{ assignment.reviewerName }}</p>
                 <p><span class="text-gray-500">สถานะ:</span> {{ assignmentLabel(assignment.status) }}</p>
                 <template v-if="assignment.status === 'completed'">
-                  <p><span class="text-gray-500">ข้อเสนอ:</span> {{ assignment.recommendation }}</p>
+                  <p><span class="text-gray-500">ผลประเมิน:</span> {{ recommendationLabel(assignment.recommendation) }}</p>
                   <p class="whitespace-pre-line"><span class="text-gray-500">ถึงผู้เขียน:</span> {{ assignment.commentsToAuthor }}</p>
                   <p v-if="assignment.commentsToEditor" class="whitespace-pre-line"><span class="text-gray-500">ถึงเจ้าหน้าที่:</span> {{ assignment.commentsToEditor }}</p>
                 </template>
@@ -742,7 +753,7 @@ watch(() => props.modelValue, (open) => {
               </div>
               <p v-else-if="assignment.dueAt" class="text-xs text-gray-500">กำหนดส่ง {{ formatDate(assignment.dueAt) }}</p>
               <div v-if="assignment.status === 'completed'" class="bg-gray-50 rounded p-3 text-sm space-y-1">
-                <p><span class="text-gray-500">ข้อเสนอ:</span> {{ assignment.recommendation }}</p>
+                <p><span class="text-gray-500">ผลประเมิน:</span> {{ recommendationLabel(assignment.recommendation) }}</p>
                 <p><span class="text-gray-500">ถึงผู้เขียน:</span> {{ assignment.commentsToAuthor }}</p>
                 <p v-if="assignment.commentsToEditor"><span class="text-gray-500">ถึงเจ้าหน้าที่:</span> {{ assignment.commentsToEditor }}</p>
               </div>
@@ -755,9 +766,9 @@ watch(() => props.modelValue, (open) => {
               <USelectMenu
                 v-model="decision"
                 :options="[
-                  { value: 'accept', label: 'ผ่านการพิจารณา' },
-                  { value: 'reject', label: 'ไม่ผ่าน' },
-                  { value: 'revise', label: 'ขอแก้ไข' },
+                  { value: 'accept', label: 'ผ่านการพิจารณา (Accept)' },
+                  { value: 'reject', label: 'ไม่ผ่าน (Reject)' },
+                  { value: 'revise', label: 'ผ่านการพิจารณาแบบแก้ไข' },
                 ]"
                 value-attribute="value"
                 option-attribute="label"

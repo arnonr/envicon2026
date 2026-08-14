@@ -10,6 +10,8 @@ const isOpen = computed({
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
 const { handleApiCall, showError, showSuccess } = useApiError();
+// Set to true when event registration payment collection is enabled again.
+const EVENT_REGISTRATION_PAYMENT_ENABLED = false;
 
 const form = ref({
   fullName: "",
@@ -20,8 +22,8 @@ const form = ref({
 });
 
 const feeTable = [
-  { type: "student" as const, label: "นิสิต/นักศึกษา", earlyBird: 500, regular: 700 },
-  { type: "general" as const, label: "อาจารย์/นักวิจัย/บุคคลทั่วไป", earlyBird: 2000, regular: 2500 },
+  { type: "student" as const, label: "นิสิต/นักศึกษา (Student)", earlyBird: 500, regular: 700 },
+  { type: "general" as const, label: "อาจารย์/นักวิจัย/บุคคลทั่วไป (Faculty/Researcher/General)", earlyBird: 2000, regular: 2500 },
 ];
 const payment = {
   bank: "ธนาคารกรุงไทย",
@@ -50,7 +52,7 @@ async function handleSubmit() {
   }
 
   submitting.value = true;
-  if (!paymentSlip.value) {
+  if (EVENT_REGISTRATION_PAYMENT_ENABLED && !paymentSlip.value) {
     submitting.value = false;
     showError({ status: 400, error: "กรุณาแนบหลักฐานการชำระเงิน" });
     return;
@@ -62,7 +64,9 @@ async function handleSubmit() {
   body.append("phone", form.value.phone);
   body.append("email", form.value.email);
   body.append("feeType", form.value.feeType);
-  body.append("paymentSlip", paymentSlip.value);
+  if (EVENT_REGISTRATION_PAYMENT_ENABLED && paymentSlip.value) {
+    body.append("paymentSlip", paymentSlip.value);
+  }
 
   const { error } = await handleApiCall(() =>
     $fetch(`${apiBase}/public/register`, {
@@ -117,7 +121,7 @@ function close() {
       </div>
 
       <form v-else class="space-y-4" @submit.prevent="handleSubmit">
-        <UFormGroup label="ชื่อ-นามสกุล" required>
+        <UFormGroup label="ชื่อ-นามสกุล (Full Name)" required>
           <UInput
             v-model="form.fullName"
             placeholder="กรอกชื่อ-นามสกุล"
@@ -125,14 +129,14 @@ function close() {
           />
         </UFormGroup>
 
-        <UFormGroup label="สังกัด">
+        <UFormGroup label="สังกัด (Affiliation)">
           <UInput
             v-model="form.affiliation"
             placeholder="มหาวิทยาลัย / องค์กร"
           />
         </UFormGroup>
 
-        <UFormGroup label="เบอร์โทรศัพท์">
+        <UFormGroup label="เบอร์โทรศัพท์ (Phone Number)">
           <UInput
             v-model="form.phone"
             placeholder="0XX-XXX-XXXX"
@@ -140,7 +144,7 @@ function close() {
           />
         </UFormGroup>
 
-        <UFormGroup label="อีเมล" required>
+        <UFormGroup label="อีเมล (Email)" required>
           <UInput
             v-model="form.email"
             placeholder="email@example.com"
@@ -149,7 +153,7 @@ function close() {
           />
         </UFormGroup>
 
-        <UFormGroup label="ประเภทผู้เข้าร่วม" required>
+        <UFormGroup label="ประเภทผู้เข้าร่วม (Participant Type)" required>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label
               v-for="fee in feeTable"
@@ -158,12 +162,12 @@ function close() {
               :class="form.feeType === fee.type ? 'border-meadow-500 bg-meadow-50' : 'border-gray-200'"
             >
               <input v-model="form.feeType" type="radio" name="event-fee-type" :value="fee.type" />
-              <span class="text-sm">{{ fee.label }}<br /><strong>{{ currentFee.toLocaleString() }} บาท</strong></span>
+              <span class="text-sm">{{ fee.label }}<br /><strong v-if="EVENT_REGISTRATION_PAYMENT_ENABLED">{{ currentFee.toLocaleString() }} บาท</strong><strong v-else>ไม่เสียค่าใช้จ่าย</strong></span>
             </label>
           </div>
         </UFormGroup>
 
-        <div class="rounded-xl border border-meadow-100 bg-meadow-50 p-4">
+        <div v-if="EVENT_REGISTRATION_PAYMENT_ENABLED" class="rounded-xl border border-meadow-100 bg-meadow-50 p-4">
           <div class="flex flex-col sm:flex-row gap-4 items-center">
             <img :src="payment.qrImage" alt="QR สำหรับชำระค่าลงทะเบียน" class="w-32 h-32 rounded-lg bg-white p-2" />
             <div class="text-sm text-gray-700 space-y-1">
@@ -175,7 +179,7 @@ function close() {
           </div>
         </div>
 
-        <UFormGroup label="แนบหลักฐานการชำระเงิน" required>
+        <UFormGroup v-if="EVENT_REGISTRATION_PAYMENT_ENABLED" label="แนบหลักฐานการชำระเงิน (Payment Proof)" required>
           <input
             type="file"
             accept="image/png,image/jpeg,application/pdf"
@@ -184,6 +188,7 @@ function close() {
             @change="onFileChange"
           />
           <p class="text-xs text-gray-500 mt-1">รองรับ JPG, PNG หรือ PDF ขนาดไม่เกิน 10 MB</p>
+          <p class="text-xs text-gray-500 mt-1">ใบเสร็จรับได้ที่วันประชุม</p>
         </UFormGroup>
 
         <UButton

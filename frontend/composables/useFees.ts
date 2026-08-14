@@ -9,10 +9,10 @@ export function useFees() {
   }));
 
   const studentLabel = computed(() =>
-    `นิสิต/นักศึกษา (${fees.value.student.toLocaleString()} บาท)`,
+    `นิสิต/นักศึกษา (Student) (${fees.value.student.toLocaleString()} บาท)`,
   );
   const generalLabel = computed(() =>
-    `อาจารย์/นักวิจัย/บุคคลทั่วไป (${fees.value.general.toLocaleString()} บาท)`,
+    `อาจารย์/นักวิจัย/บุคคลทั่วไป (Faculty/Researcher/General) (${fees.value.general.toLocaleString()} บาท)`,
   );
 
   return { isEarlyBird, fees, studentLabel, generalLabel };

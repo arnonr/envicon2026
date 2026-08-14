@@ -6,7 +6,6 @@ interface ReviewDetail {
   status: "sent" | "in_progress" | "completed";
   recommendation: "accept" | "reject" | "revise" | null;
   commentsToAuthor: string | null;
-  commentsToEditor: string | null;
   dueAt: string | null;
   roundNumber: number;
   title: string;
@@ -14,13 +13,7 @@ interface ReviewDetail {
   abstract: string | null;
   keywords: string | null;
   track: number;
-  abstractFileUrl: string | null;
-  fullPaperFileUrl: string | null;
-  round1FileUrl: string | null;
-  round1FileType: "abstract" | "full_paper" | null;
-  authorName?: string | null;
-  authorEmail?: string | null;
-  authorAffiliation?: string | null;
+  presentationFormat: "oral" | "poster";
 }
 
 const route = useRoute();
@@ -35,13 +28,25 @@ const saving = ref(false);
 const form = reactive({
   recommendation: "" as "" | "accept" | "reject" | "revise",
   commentsToAuthor: "",
-  commentsToEditor: "",
 });
 const recommendationOptions = [
-  { value: "accept", label: "ผ่านการพิจารณา" },
-  { value: "reject", label: "ไม่ผ่าน" },
-  { value: "revise", label: "ขอแก้ไข" },
+  { value: "accept", label: "ผ่านการพิจารณา (Accept)" },
+  { value: "reject", label: "ไม่ผ่าน (Reject)" },
+  { value: "revise", label: "ผ่านการพิจารณาแบบแก้ไข" },
 ];
+const TRACK_NAMES: Record<number, string> = {
+  1: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
+  2: "การจัดการระบบนิเวศและความหลากหลายทางชีวภาพ",
+  3: "เศรษฐกิจหมุนเวียนและการใช้ทรัพยากรอย่างยั่งยืน",
+  4: "การเปลี่ยนแปลงสภาพภูมิอากาศและการลดก๊าซเรือนกระจก",
+  5: "เทคโนโลยีดิจิทัลและระบบอัจฉริยะเพื่อการติดตามสิ่งแวดล้อม",
+  6: "เมืองยั่งยืน อุตสาหกรรมสีเขียว และการจัดการสิ่งแวดล้อม",
+  7: "สิ่งแวดล้อมและสุขภาพ",
+};
+
+function presentationFormatLabel(value: ReviewDetail["presentationFormat"]) {
+  return value === "oral" ? "Oral Presentation" : "Poster Presentation";
+}
 
 async function fetchReview() {
   if (!authStore.initialized) {
@@ -61,7 +66,6 @@ async function fetchReview() {
   review.value = data!.data;
   form.recommendation = review.value.recommendation ?? "";
   form.commentsToAuthor = review.value.commentsToAuthor ?? "";
-  form.commentsToEditor = review.value.commentsToEditor ?? "";
 }
 
 async function saveDraft() {
@@ -73,7 +77,6 @@ async function saveDraft() {
       body: {
         recommendation: form.recommendation || undefined,
         commentsToAuthor: form.commentsToAuthor || undefined,
-        commentsToEditor: form.commentsToEditor || undefined,
       },
     }),
   );
@@ -104,7 +107,6 @@ async function submitReview() {
       body: {
         recommendation: form.recommendation,
         commentsToAuthor: form.commentsToAuthor,
-        commentsToEditor: form.commentsToEditor || undefined,
       },
     }),
   );
@@ -112,11 +114,6 @@ async function submitReview() {
   if (error) return showError(error);
   showSuccess("ส่งผลประเมินเรียบร้อย");
   await navigateTo("/reviewer");
-}
-
-function fileLink(url: string | null) {
-  if (!url) return "";
-  return url.startsWith("http") ? url : new URL(apiBase).origin + url;
 }
 
 onMounted(fetchReview);
@@ -142,40 +139,19 @@ onMounted(fetchReview);
       </div>
       <UCard class="mb-6">
         <dl class="grid sm:grid-cols-2 gap-3 text-sm">
-          <div v-if="review.authorName">
-            <dt class="text-gray-500">ผู้ส่ง</dt>
-            <dd>{{ review.authorName }} ({{ review.authorEmail }})</dd>
-          </div>
-          <div v-else>
-            <dt class="text-gray-500">ผู้ส่ง</dt>
-            <dd>ซ่อนชื่อผู้ส่งเพื่อความยุติธรรม (อีเมล: {{ review.authorEmail }})</dd>
-          </div>
-          <div v-if="review.authorAffiliation">
-            <dt class="text-gray-500">สังกัด</dt>
-            <dd>{{ review.authorAffiliation }}</dd>
-          </div>
-          <div v-if="review.keywords" class="sm:col-span-2"><dt class="text-gray-500">คำสำคัญ</dt><dd>{{ review.keywords }}</dd></div>
+          <div><dt class="text-gray-500">สาขาที่ส่งผลงาน</dt><dd class="mt-1 font-medium">{{ TRACK_NAMES[review.track] ?? review.track }}</dd></div>
+          <div><dt class="text-gray-500">รูปแบบการนำเสนอ</dt><dd class="mt-1 font-medium">{{ presentationFormatLabel(review.presentationFormat) }}</dd></div>
           <div v-if="review.abstract" class="sm:col-span-2"><dt class="text-gray-500">บทคัดย่อ</dt><dd class="mt-1 whitespace-pre-line">{{ review.abstract }}</dd></div>
         </dl>
-        <div class="flex gap-2 mt-4">
-          <UButton v-if="review.round1FileUrl" :to="fileLink(review.round1FileUrl)" target="_blank" size="xs" color="gray" variant="soft">
-            {{ review.round1FileType === 'full_paper' ? 'ไฟล์บทความ (รอบที่ 1)' : 'ไฟล์บทคัดย่อ (รอบที่ 1)' }}
-          </UButton>
-          <UButton v-else-if="review.abstractFileUrl" :to="fileLink(review.abstractFileUrl)" target="_blank" size="xs" color="gray" variant="soft">ไฟล์บทคัดย่อ</UButton>
-          <UButton v-if="review.fullPaperFileUrl" :to="fileLink(review.fullPaperFileUrl)" target="_blank" size="xs" color="gray" variant="soft">ไฟล์ฉบับแก้ไข/ฉบับเต็ม</UButton>
-        </div>
       </UCard>
       <UCard>
         <template #header><h2 class="font-semibold">แบบประเมิน รอบที่ {{ review.roundNumber }}</h2></template>
         <div class="space-y-4">
-          <UFormGroup label="ข้อเสนอแนะผลพิจารณา" required>
+          <UFormGroup label="ข้อเสนอแนะผลพิจารณา (Recommendation)" required>
             <USelectMenu v-model="form.recommendation" :options="recommendationOptions" value-attribute="value" option-attribute="label" :disabled="review.status === 'completed'" />
           </UFormGroup>
-          <UFormGroup label="ความคิดเห็นถึงผู้เขียน" required>
+          <UFormGroup label="ความคิดเห็นถึงผู้เขียน (Comments to Author)" required>
             <UTextarea v-model="form.commentsToAuthor" :rows="5" :disabled="review.status === 'completed'" />
-          </UFormGroup>
-          <UFormGroup label="ความคิดเห็นถึงเจ้าหน้าที่ (ไม่แสดงแก่ผู้เขียน)">
-            <UTextarea v-model="form.commentsToEditor" :rows="4" :disabled="review.status === 'completed'" />
           </UFormGroup>
           <div v-if="review.status !== 'completed'" class="flex gap-2">
             <UButton color="gray" variant="soft" :loading="saving" @click="saveDraft">บันทึกร่าง</UButton>

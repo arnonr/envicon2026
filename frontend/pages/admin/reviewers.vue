@@ -16,13 +16,13 @@ interface Reviewer {
 }
 
 const TRACKS: Record<number, string> = {
-  1: "วิทยาศาสตร์สิ่งแวดล้อมฯ",
-  2: "การจัดการระบบนิเวศฯ",
-  3: "เศรษฐกิจหมุนเวียนฯ",
-  4: "การเปลี่ยนแปลงสภาพภูมิอากาศฯ",
-  5: "เทคโนโลยีดิจิทัลฯ",
-  6: "เมืองยั่งยืนฯ",
-  7: "สิ่งแวดล้อมและสุขภาพ",
+  1: "วิทยาศาสตร์สิ่งแวดล้อมฯ (Environmental Science)",
+  2: "การจัดการระบบนิเวศฯ (Ecosystem Management)",
+  3: "เศรษฐกิจหมุนเวียนฯ (Circular Economy)",
+  4: "การเปลี่ยนแปลงสภาพภูมิอากาศฯ (Climate Change)",
+  5: "เทคโนโลยีดิจิทัลฯ (Digital Technology)",
+  6: "เมืองยั่งยืนฯ (Sustainable Cities)",
+  7: "สิ่งแวดล้อมและสุขภาพ (Environment and Health)",
 };
 
 const config = useRuntimeConfig();
@@ -141,20 +141,20 @@ onMounted(fetchReviewers);
           <h2 class="font-semibold">{{ editingId ? "แก้ไขผู้รีวิว" : "เพิ่มผู้รีวิว" }}</h2>
         </template>
         <form class="space-y-4" @submit.prevent="saveReviewer">
-          <UFormGroup label="ชื่อ-นามสกุล" required>
+          <UFormGroup label="ชื่อ-นามสกุล (Full Name)" required>
             <UInput v-model="form.name" />
           </UFormGroup>
-          <UFormGroup label="อีเมล" required>
+          <UFormGroup label="อีเมล (Email)" required>
             <UInput v-model="form.email" type="email" :disabled="Boolean(editingId)" />
           </UFormGroup>
-          <UFormGroup label="จำนวนงานแนะนำสูงสุด">
+          <UFormGroup label="จำนวนงานแนะนำสูงสุด (Maximum Concurrent Reviews)">
             <UInput v-model.number="form.maxConcurrentReviews" type="number" min="1" />
           </UFormGroup>
           <template v-if="editingId">
-            <UFormGroup label="สังกัด">
+            <UFormGroup label="สังกัด (Affiliation)">
               <UInput v-model="form.affiliation" placeholder="ปล่อยว่างได้หากผู้รีวิวยังไม่ได้ระบุ" />
             </UFormGroup>
-            <UFormGroup label="สาขาความเชี่ยวชาญ">
+            <UFormGroup label="สาขาความเชี่ยวชาญ (Areas of Expertise)">
               <label v-for="(label, track) in TRACKS" :key="track" class="flex gap-2 text-sm mb-2">
                 <input type="checkbox" :checked="form.expertiseTracks.includes(Number(track))" @change="toggleTrack(Number(track))" />
                 <span>{{ label }}</span>

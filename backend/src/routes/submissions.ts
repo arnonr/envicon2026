@@ -17,8 +17,8 @@ function parseCreators(raw: string | undefined): string | null {
   if (parsed.length === 0) return null;
   if (parsed.length > MAX_CREATORS) throw new Error(`creators must have at most ${MAX_CREATORS} entries`);
   for (const c of parsed) {
-    if (typeof c.firstName !== "string" || typeof c.lastName !== "string")
-      throw new Error("each creator must have firstName and lastName");
+    if (typeof c.firstName !== "string" || typeof c.lastName !== "string" || typeof c.affiliation !== "string")
+      throw new Error("each creator must have firstName, lastName, and affiliation");
   }
   return JSON.stringify(parsed);
 }
@@ -185,6 +185,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         submitterType: body.submitterType,
         educationLevel: body.educationLevel,
         presentationFormat: body.presentationFormat,
+        wantsFullPaper: body.wantsFullPaper ? 1 : 0,
       });
 
       const [sub] = await db
@@ -207,6 +208,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         submitterType: t.Union([t.Literal("student"), t.Literal("general")]),
         educationLevel: t.Union([t.Literal("bachelor"), t.Literal("master"), t.Literal("doctorate")]),
         presentationFormat: t.Union([t.Literal("oral"), t.Literal("poster")]),
+        wantsFullPaper: t.Optional(t.Boolean()),
       }),
     }
   )
@@ -310,6 +312,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.submitterType && { submitterType: body.submitterType }),
           ...(body.educationLevel && { educationLevel: body.educationLevel }),
           ...(body.presentationFormat && { presentationFormat: body.presentationFormat }),
+          ...(body.wantsFullPaper !== undefined && { wantsFullPaper: body.wantsFullPaper ? 1 : 0 }),
           ...(body.round1FileType && { round1FileType: body.round1FileType }),
         })
         .where(eq(submissions.id, params.id));
@@ -333,6 +336,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         submitterType: t.Optional(t.Union([t.Literal("student"), t.Literal("general")])),
         educationLevel: t.Optional(t.Union([t.Literal("bachelor"), t.Literal("master"), t.Literal("doctorate")])),
         presentationFormat: t.Optional(t.Union([t.Literal("oral"), t.Literal("poster")])),
+        wantsFullPaper: t.Optional(t.Boolean()),
         round1FileType: t.Optional(t.Union([t.Literal("abstract"), t.Literal("full_paper")])),
       }),
     }

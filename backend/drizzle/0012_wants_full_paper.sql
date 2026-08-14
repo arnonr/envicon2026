@@ -1,0 +1,1 @@
+ALTER TABLE `submissions` ADD `wants_full_paper` int DEFAULT 0 NOT NULL;

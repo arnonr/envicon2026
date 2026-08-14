@@ -147,7 +147,7 @@ async function handleSubmit() {
         <form @submit.prevent="handleSubmit" class="space-y-4">
           <UAlert v-if="serverError" icon="i-heroicons-exclamation-triangle" color="red" variant="soft" :title="serverError" :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'gray', variant: 'link' }" @close="serverError = ''" />
           <template v-if="isRegisterMode">
-            <UFormGroup label="ชื่อ-นามสกุล" :error="touched.name ? errors.name : ''">
+            <UFormGroup label="ชื่อ-นามสกุล (Full Name)" :error="touched.name ? errors.name : ''">
               <UInput
                 v-model="form.name"
                 placeholder="ดร.สมชาย สิ่งแวดล้อม"
@@ -155,15 +155,15 @@ async function handleSubmit() {
                 @blur="onBlur('name')"
               />
             </UFormGroup>
-            <UFormGroup label="สังกัด">
+            <UFormGroup label="สังกัด (Affiliation)">
               <UInput v-model="form.affiliation" placeholder="มหาวิทยาลัย..." icon="i-heroicons-building-office" />
             </UFormGroup>
-            <UFormGroup label="เบอร์โทรศัพท์">
+            <UFormGroup label="เบอร์โทรศัพท์ (Phone Number)">
               <UInput v-model="form.phone" placeholder="08X-XXX-XXXX" icon="i-heroicons-phone" />
             </UFormGroup>
           </template>
 
-          <UFormGroup label="อีเมล" :error="touched.email ? errors.email : ''">
+          <UFormGroup label="อีเมล (Email)" :error="touched.email ? errors.email : ''">
             <UInput
               v-model="form.email"
               type="email"
@@ -173,7 +173,7 @@ async function handleSubmit() {
             />
           </UFormGroup>
 
-          <UFormGroup label="รหัสผ่าน" :error="touched.password ? errors.password : ''">
+          <UFormGroup label="รหัสผ่าน (Password)" :error="touched.password ? errors.password : ''">
             <UInput
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"

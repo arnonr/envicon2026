@@ -139,9 +139,6 @@ onMounted(async () => {
             <UButton v-if="submissions.length === 0" color="primary" size="xs" to="/submit" icon="i-heroicons-plus">
               ส่งผลงานใหม่
             </UButton>
-            <span v-else class="text-xs text-gray-400">
-              ส่งผลงานได้ 1 ผลงานเท่านั้น
-            </span>
           </div>
         </template>
 
@@ -171,7 +168,7 @@ onMounted(async () => {
                 </p>
                 <p class="text-xs text-gray-400 mt-0.5">
                   ประเภท {{ TRACK_NAMES[sub.track] || sub.track }}
-                  <template v-if="getCreatorCount(sub.creators)"> · ผู้สร้างสรรค์ {{ getCreatorCount(sub.creators) }}
+                  <template v-if="getCreatorCount(sub.creators)"> · ผู้แต่งร่วม {{ getCreatorCount(sub.creators) }}
                     คน</template>
                   · {{ sub.submitterType === 'student' ? `นิสิต/นักศึกษา (${fees.student.toLocaleString()} บาท)` : `อาจารย์/นักวิจัย/บุคคลทั่วไป (${fees.general.toLocaleString()} บาท)` }}
                   · {{ educationLabel(sub.educationLevel) }}
@@ -202,31 +199,6 @@ onMounted(async () => {
     <!-- Submission Detail Modal -->
     <SubmissionDetailModal v-model="modalOpen" :submission-id="selectedSubmissionId" />
 
-    <!-- Quick links -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/guidelines')">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-accent-100 flex items-center justify-center">
-            <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-accent-600" />
-          </div>
-          <div>
-            <p class="font-medium text-sm">คู่มือการส่งผลงาน</p>
-            <p class="text-xs text-gray-400">Template และข้อกำหนด</p>
-          </div>
-        </div>
-      </UCard>
-      <UCard class="cursor-pointer hover:shadow-md transition-shadow" @click="navigateTo('/important-dates')">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
-            <UIcon name="i-heroicons-calendar-days" class="w-5 h-5 text-primary-600" />
-          </div>
-          <div>
-            <p class="font-medium text-sm">กำหนดการสำคัญ</p>
-            <p class="text-xs text-gray-400">ตรวจสอบวันที่ Deadline</p>
-          </div>
-        </div>
-      </UCard>
-    </div>
   </div>
   </ClientOnly>
 </template>

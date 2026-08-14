@@ -236,10 +236,10 @@ watch(() => props.modelValue, (open) => {
 
         <!-- Creators -->
         <div v-if="parsedCreators.length">
-          <h3 class="text-xs text-gray-500 mb-1.5">ผู้สร้างสรรค์ผลงาน</h3>
+        <h3 class="text-xs text-gray-500 mb-1.5">ผู้แต่งร่วม (Co-author)</h3>
           <div class="flex flex-wrap gap-1.5">
             <UBadge v-for="(c, i) in parsedCreators" :key="i" color="primary" variant="soft" size="xs">
-              {{ c.firstName }} {{ c.lastName }}
+              {{ c.firstName }} {{ c.lastName }}<template v-if="c.affiliation"> · {{ c.affiliation }}</template>
             </UBadge>
           </div>
         </div>
@@ -328,6 +328,7 @@ watch(() => props.modelValue, (open) => {
             </div>
             <div>
               <p class="text-xs text-gray-500 mb-2">อัปโหลดหลักฐานการชำระเงิน (สลิปโอนเงิน)</p>
+              <p class="text-xs text-gray-500 mb-2">ใบเสร็จรับได้ที่วันประชุม</p>
               <CommonFileUpload :loading="uploadingSlip" :max-size-mb="10" accept=".pdf,.png,.jpg,.jpeg" @change="onSlipSelected" />
               <div class="flex justify-end mt-3">
                 <UButton v-if="selectedSlipFile" color="primary" :loading="uploadingSlip" @click="uploadSlip">

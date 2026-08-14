@@ -85,7 +85,7 @@ async function submit() {
           <h1 class="text-xl font-semibold">ตั้งรหัสผ่านใหม่</h1>
           <p class="text-sm text-gray-500 mt-1">{{ account.name }} ({{ account.email }})</p>
         </div>
-        <UFormGroup label="รหัสผ่านใหม่" required :error="errors.password">
+        <UFormGroup label="รหัสผ่านใหม่ (New Password)" required :error="errors.password">
           <UInput
             v-model="password"
             type="password"
@@ -94,7 +94,7 @@ async function submit() {
             @input="errors.password = ''"
           />
         </UFormGroup>
-        <UFormGroup label="ยืนยันรหัสผ่าน" required :error="errors.confirmPassword">
+        <UFormGroup label="ยืนยันรหัสผ่าน (Confirm Password)" required :error="errors.confirmPassword">
           <UInput
             v-model="confirmPassword"
             type="password"

@@ -15,6 +15,7 @@ interface DraftSubmission {
   submitterType: string;
   educationLevel: string;
   presentationFormat: string;
+  wantsFullPaper: boolean;
   round1FileType: 'abstract' | 'full_paper' | null;
 }
 
@@ -44,13 +45,14 @@ const form = ref<SubmissionFormData>({
   submitterType: 'student',
   educationLevel: '',
   presentationFormat: '',
+  wantsFullPaper: false,
 });
 
 const isStep1Valid = computed(() => {
   const f = form.value;
   if (!f.title.trim() || !f.title_en.trim() || !f.abstract.trim() || !f.track || !f.submitterType || !f.educationLevel || !f.presentationFormat) return false;
   const creators = submissionFormRef.value?.creators ?? initialCreators.value;
-  return creators.some(c => c.firstName.trim() && c.lastName.trim());
+  return creators.some(c => c.firstName.trim() && c.lastName.trim() && c.affiliation.trim());
 });
 
 const parseCreators = (raw: string | null): Creator[] => {
@@ -109,6 +111,7 @@ const loadDraft = async (id: string) => {
     submitterType: (draft.submitterType as 'student' | 'general') ?? 'student',
     educationLevel: draft.educationLevel ?? '',
     presentationFormat: draft.presentationFormat ?? '',
+    wantsFullPaper: Boolean(draft.wantsFullPaper),
   };
   initialCreators.value = parseCreators(draft.creators);
   if (draft.round1FileType) {
@@ -132,7 +135,7 @@ const createSubmission = async () => {
 
   const creators = submissionFormRef.value?.creators ?? [];
   const creatorsJson = JSON.stringify(
-    creators.filter(c => c.firstName.trim() && c.lastName.trim())
+    creators.filter(c => c.firstName.trim() && c.lastName.trim() && c.affiliation.trim())
   );
 
   const { data, error } = await handleApiCall(() =>
@@ -149,6 +152,7 @@ const createSubmission = async () => {
         submitterType: form.value.submitterType,
         educationLevel: form.value.educationLevel,
         presentationFormat: form.value.presentationFormat,
+        wantsFullPaper: form.value.wantsFullPaper,
       },
     })
   );
@@ -169,7 +173,7 @@ const saveDraft = async () => {
 
   const creators = submissionFormRef.value?.creators ?? [];
   const creatorsJson = JSON.stringify(
-    creators.filter(c => c.firstName.trim() && c.lastName.trim())
+    creators.filter(c => c.firstName.trim() && c.lastName.trim() && c.affiliation.trim())
   );
   const baseBody = {
     title: form.value.title.trim(),
@@ -181,6 +185,7 @@ const saveDraft = async () => {
     submitterType: form.value.submitterType,
     educationLevel: form.value.educationLevel,
     presentationFormat: form.value.presentationFormat,
+    wantsFullPaper: form.value.wantsFullPaper,
   };
 
   try {
@@ -321,7 +326,7 @@ const uploadAbstract = async () => {
 
       <div class="space-y-5">
         <div>
-          <p class="text-sm font-medium text-gray-700 mb-2">ประเภทไฟล์ที่ส่ง <span class="text-red-500">*</span></p>
+          <p class="text-sm font-medium text-gray-700 mb-2">ประเภทไฟล์ที่ส่ง (Submission File Type) <span class="text-red-500">*</span></p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label
               class="cursor-pointer border-2 rounded-lg p-4 transition-colors"
@@ -335,7 +340,7 @@ const uploadAbstract = async () => {
                   :class="round1FileType === 'abstract' ? 'text-primary-600' : 'text-gray-400'"
                 />
                 <div>
-                  <p class="font-medium text-sm text-gray-900">เฉพาะบทคัดย่อ (Abstract)</p>
+                  <p class="font-medium text-sm text-gray-900">เฉพาะบทคัดย่อ (Abstract Only)</p>
                   <p class="text-xs text-gray-500 mt-1">ส่งเอกสารบทคัดย่อเพื่อให้คณะกรรมการพิจารณาเบื้องต้น</p>
                 </div>
               </div>

@@ -64,7 +64,7 @@ const isFormValid = computed(() => {
     return false;
   }
   return (submissionFormRef.value?.creators ?? initialCreators.value)
-    .some(creator => creator.firstName.trim() && creator.lastName.trim());
+    .some(creator => creator.firstName.trim() && creator.lastName.trim() && creator.affiliation.trim());
 });
 
 onMounted(async () => {
@@ -107,7 +107,7 @@ const submitRevision = async () => {
   saving.value = true;
 
   const creators = (submissionFormRef.value?.creators ?? [])
-    .filter(creator => creator.firstName.trim() && creator.lastName.trim());
+    .filter(creator => creator.firstName.trim() && creator.lastName.trim() && creator.affiliation.trim());
   const { error: updateError } = await handleApiCall(() =>
     $fetch(`${apiBase}/submissions/${route.params.id}`, {
       method: 'PUT',
@@ -217,7 +217,7 @@ const submitRevision = async () => {
           />
         </div>
 
-        <UFormGroup label="บันทึกการแก้ไข (Changelog)" hint="อธิบายสิ่งที่แก้ไขตามข้อเสนอแนะ">
+        <UFormGroup label="บันทึกการแก้ไข (Changelog)" hint="อธิบายสิ่งที่แก้ไขตามข้อเสนอแนะ (Describe changes made in response to feedback)">
           <UTextarea
             v-model="changelog"
             placeholder="เช่น แก้ไขตามข้อเสนอแนะของคณะกรรมการ ข้อ 1-3, เพิ่มเติมข้อมูลในส่วนวิธีการวิจัย..."

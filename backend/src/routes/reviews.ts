@@ -72,6 +72,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           creators: submissions.creators,
           track: submissions.track,
           submitterType: submissions.submitterType,
+          presentationFormat: submissions.presentationFormat,
           abstractFileUrl: submissions.abstractFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
           round1FileUrl: submissions.round1FileUrl,
@@ -87,6 +88,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           versionCreators: submissionVersions.creators,
           versionTrack: submissionVersions.track,
           versionSubmitterType: submissionVersions.submitterType,
+          versionPresentationFormat: submissionVersions.presentationFormat,
           versionFileUrl: submissionVersions.fileUrl,
           versionSubmittedAt: submissionVersions.submittedAt,
           paymentStatus: submissions.paymentStatus,
@@ -120,6 +122,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         keywords: hasSnapshot ? assignment.versionKeywords : assignment.keywords,
         track: hasSnapshot ? assignment.versionTrack : assignment.track,
         submitterType: hasSnapshot ? assignment.versionSubmitterType : assignment.submitterType,
+        presentationFormat: hasSnapshot ? assignment.versionPresentationFormat : assignment.presentationFormat,
         fullPaperFileUrl: assignment.versionFileUrl ?? assignment.fullPaperFileUrl,
         submittedAt: hasSnapshot ? assignment.versionSubmittedAt : assignment.submittedAt,
         revisions: revisionList,
@@ -128,11 +131,18 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         response.creators = resolvedCreators;
       } else {
         delete response.authorName;
+        delete response.authorEmail;
         delete response.authorAffiliation;
         delete response.creators;
         delete response.paymentStatus;
+        delete response.abstractFileUrl;
+        delete response.fullPaperFileUrl;
+        delete response.round1FileUrl;
+        delete response.round1FileType;
+        delete response.versionFileUrl;
       }
       delete response.versionCreators;
+      delete response.versionPresentationFormat;
       return ok(response);
     },
     { params: t.Object({ id: t.String() }) },

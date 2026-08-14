@@ -34,6 +34,7 @@ export const submissions = mysqlTable("submissions", {
   submitterType: mysqlEnum("submitter_type", ["student", "general"]).notNull().default("student"),
   educationLevel: mysqlEnum("education_level", ["bachelor", "master", "doctorate"]).notNull(),
   presentationFormat: mysqlEnum("presentation_format", ["oral", "poster"]).notNull(),
+  wantsFullPaper: int("wants_full_paper").notNull().default(0),
   status: mysqlEnum("status", [
     "draft",
     "submitted_round1",
