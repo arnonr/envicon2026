@@ -1,20 +1,24 @@
 <script setup lang="ts">
+const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+
 const documents = [
   {
     number: "01",
-    title: "Template บทความ",
-    titleEn: "Article Template",
+    title: "แบบฟอร์มบทคัดย่อ",
+    titleEn: "Abstract Template",
     type: "Microsoft Word · .DOCX",
     icon: "i-heroicons-document-text",
     accent: "from-emerald-400 to-lime-300",
+    downloadUrl: `${appBaseUrl}/downloads/abstract-template.docx`,
   },
   {
     number: "02",
-    title: "Full Paper",
-    titleEn: "Complete Paper",
+    title: "แบบฟอร์มบทคัดย่อ",
+    titleEn: "Abstract Template",
     type: "Adobe PDF · .PDF",
     icon: "i-heroicons-document-duplicate",
     accent: "from-sky-400 to-cyan-300",
+    downloadUrl: `${appBaseUrl}/downloads/abstract-template.pdf`,
   },
 ];
 </script>
@@ -88,17 +92,18 @@ const documents = [
 
             <div class="relative mt-8 flex items-center justify-between border-t border-stone-100 pt-5">
               <span class="inline-flex items-center gap-2 text-xs font-medium text-stone-400">
-                <span class="h-2 w-2 rounded-full bg-amber-400" />
-                กำลังเตรียมไฟล์
+                <span class="h-2 w-2 rounded-full bg-emerald-400" />
+                พร้อมดาวน์โหลด
               </span>
-              <button
-                disabled
-                :aria-label="`ดาวน์โหลด ${document.title} เร็ว ๆ นี้`"
-                class="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-stone-100 px-4 py-2.5 text-sm font-semibold text-stone-400"
+              <a
+                :href="document.downloadUrl"
+                :download="document.downloadUrl.split('/').pop()"
+                :aria-label="`ดาวน์โหลด ${document.title} รูปแบบ ${document.type}`"
+                class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-meadow-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-meadow-500 focus-visible:ring-offset-2"
               >
                 ดาวน์โหลด
                 <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4" />
-              </button>
+              </a>
             </div>
           </div>
         </article>

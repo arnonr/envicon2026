@@ -34,6 +34,7 @@ const dates = [
     icon: "i-heroicons-star",
     color: "primary",
     active: false,
+    link: "/program",
   },
 ];
 
@@ -86,6 +87,17 @@ const hotels = [
               <div>
                 <h3 class="font-semibold text-gray-900 text-lg">{{ item.title }}</h3>
                 <p class="text-primary-600 font-medium mt-1">{{ item.date }}</p>
+                <UButton
+                  v-if="item.link"
+                  :to="item.link"
+                  color="primary"
+                  variant="soft"
+                  size="md"
+                  class="mt-4"
+                >
+                  ดูกำหนดการประชุม
+                  <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
+                </UButton>
               </div>
             </UCard>
           </div>
