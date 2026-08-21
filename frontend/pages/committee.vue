@@ -22,7 +22,7 @@ const committees: CommitteeGroup[] = [
     title: "คณะกรรมการอำนวยการ",
     titleEn: "คณะที่ปรึกษา",
     icon: "i-heroicons-user-group",
-    bg: "/images/committee-assets/committee-advisory-modern-thai.png",
+    bg: "/envicon2026/images/committee-assets/committee-advisory-modern-thai.png",
     accent: "from-meadow-400 via-emerald-400 to-teal-400",
     members: [
       { prefix: "รองศาสตราจารย์ ดร.", firstName: "รัฐชา", lastName: "ชัยชนะ", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
@@ -35,7 +35,7 @@ const committees: CommitteeGroup[] = [
     title: "คณะกรรมการฝ่ายวิชาการ",
     titleEn: "ฝ่ายวิชาการ",
     icon: "i-heroicons-academic-cap",
-    bg: "/images/committee-assets/committee-academic-modern-thai.png",
+    bg: "/envicon2026/images/committee-assets/committee-academic-modern-thai.png",
     accent: "from-sky-400 via-cyan-400 to-blue-400",
     members: [
       { prefix: "รองศาสตราจารย์ ดร.", firstName: "อุมา", lastName: "ลางคุลเสน", affiliation: "มหาวิทยาลัยธรรมศาสตร์" },
@@ -62,7 +62,7 @@ const committees: CommitteeGroup[] = [
     title: "ฝ่ายลงทะเบียน",
     titleEn: "ฝ่ายลงทะเบียน",
     icon: "i-heroicons-clipboard-document-list",
-    bg: "/images/committee-assets/committee-registration-modern-thai.png",
+    bg: "/envicon2026/images/committee-assets/committee-registration-modern-thai.png",
     accent: "from-amber-400 via-orange-400 to-rose-400",
     members: [
       { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
@@ -77,7 +77,7 @@ const committees: CommitteeGroup[] = [
     title: "ฝ่ายสถานที่ พิธีการ และการศึกษาดูงาน",
     titleEn: "ฝ่ายสถานที่",
     icon: "i-heroicons-map-pin",
-    bg: "/images/committee-assets/committee-venue-modern-thai.png",
+    bg: "/envicon2026/images/committee-assets/committee-venue-modern-thai.png",
     accent: "from-violet-400 via-purple-400 to-fuchsia-400",
     members: [
       { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
@@ -92,7 +92,7 @@ const committees: CommitteeGroup[] = [
     title: "ฝ่ายระดมทุนและสปอนเซอร์",
     titleEn: "ฝ่ายสปอนเซอร์",
     icon: "i-heroicons-currency-dollar",
-    bg: "/images/committee-assets/committee-sponsorship-modern-thai.png",
+    bg: "/envicon2026/images/committee-assets/committee-sponsorship-modern-thai.png",
     accent: "from-pink-400 via-rose-400 to-red-400",
     members: [
       { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
@@ -115,7 +115,7 @@ function pad(n: number, width = 2): string {
     <section class="relative overflow-hidden bg-meadow-950">
       <div class="absolute inset-0">
         <img
-          src="/images/committee-assets/committee-hero-modern-thai.png"
+          :src="'/envicon2026/images/committee-assets/committee-hero-modern-thai.png'"
           alt="คณะกรรมการจัดงานประชุมวิชาการ"
           class="w-full h-full object-cover committee-hero-photo"
         />
