@@ -20,6 +20,15 @@ const documents = [
     accent: "from-sky-400 to-cyan-300",
     downloadUrl: `${appBaseUrl}/downloads/abstract-template.pdf`,
   },
+  {
+    number: "03",
+    title: "แบบฟอร์มบทความฉบับสมบูรณ์",
+    titleEn: "Full Paper Template",
+    type: "Microsoft Word · .DOCX",
+    icon: "i-heroicons-document-text",
+    accent: "from-orange-400 to-amber-300",
+    downloadUrl: `${appBaseUrl}/downloads/Full%20paper_Template.docx`,
+  },
 ];
 </script>
 
