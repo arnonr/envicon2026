@@ -133,28 +133,37 @@ const createSubmission = async () => {
   if (!isStep1Valid.value) return;
   submitting.value = true;
 
-  const creators = submissionFormRef.value?.creators ?? [];
+  const creators = submissionFormRef.value?.creators ?? initialCreators.value;
   const creatorsJson = JSON.stringify(
     creators.filter(c => c.firstName.trim() && c.lastName.trim() && c.affiliation.trim())
   );
 
+  const body = {
+    title: form.value.title.trim(),
+    titleEn: form.value.title_en.trim(),
+    abstract: form.value.abstract.trim(),
+    keywords: form.value.keywords.trim() || undefined,
+    creators: creatorsJson,
+    track: parseInt(form.value.track),
+    submitterType: form.value.submitterType,
+    educationLevel: form.value.educationLevel,
+    presentationFormat: form.value.presentationFormat,
+    wantsFullPaper: form.value.wantsFullPaper,
+    ...(submissionId.value && { round1FileType: round1FileType.value }),
+  };
+
   const { data, error } = await handleApiCall(() =>
-    $fetch<{ success: true; data: { id: string } }>(`${apiBase}/submissions`, {
-      method: 'POST',
-      headers: headers.value,
-      body: {
-        title: form.value.title.trim(),
-        titleEn: form.value.title_en.trim(),
-        abstract: form.value.abstract.trim(),
-        keywords: form.value.keywords.trim() || undefined,
-        creators: creatorsJson,
-        track: parseInt(form.value.track),
-        submitterType: form.value.submitterType,
-        educationLevel: form.value.educationLevel,
-        presentationFormat: form.value.presentationFormat,
-        wantsFullPaper: form.value.wantsFullPaper,
-      },
-    })
+    submissionId.value
+      ? $fetch<{ success: true; data: { id: string } }>(`${apiBase}/submissions/${submissionId.value}`, {
+        method: 'PUT',
+        headers: headers.value,
+        body,
+      })
+      : $fetch<{ success: true; data: { id: string } }>(`${apiBase}/submissions`, {
+        method: 'POST',
+        headers: headers.value,
+        body,
+      })
   );
 
   submitting.value = false;

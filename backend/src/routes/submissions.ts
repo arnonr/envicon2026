@@ -17,7 +17,12 @@ function parseCreators(raw: string | undefined): string | null {
   if (parsed.length === 0) return null;
   if (parsed.length > MAX_CREATORS) throw new Error(`creators must have at most ${MAX_CREATORS} entries`);
   for (const c of parsed) {
-    if (typeof c.firstName !== "string" || typeof c.lastName !== "string" || typeof c.affiliation !== "string")
+    if (
+      typeof c !== "object" || c === null ||
+      typeof (c as Record<string, unknown>).firstName !== "string" ||
+      typeof (c as Record<string, unknown>).lastName !== "string" ||
+      typeof (c as Record<string, unknown>).affiliation !== "string"
+    )
       throw new Error("each creator must have firstName, lastName, and affiliation");
   }
   return JSON.stringify(parsed);
