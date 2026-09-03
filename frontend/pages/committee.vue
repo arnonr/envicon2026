@@ -20,14 +20,14 @@ const committees: CommitteeGroup[] = [
   {
     id: "advisory",
     title: "คณะกรรมการอำนวยการ",
-    titleEn: "คณะที่ปรึกษา",
+    titleEn: "คณะกรรมการอำนวยการ",
     icon: "i-heroicons-user-group",
     bg: "/envicon2026/images/committee-assets/committee-advisory-modern-thai.png",
     accent: "from-meadow-400 via-emerald-400 to-teal-400",
     members: [
-      { prefix: "รองศาสตราจารย์ ดร.", firstName: "รัฐชา", lastName: "ชัยชนะ", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
-      { prefix: "ศาสตราจารย์ ดร.", firstName: "วรณพ", lastName: "วิยกาญจน์", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "รัฐชา", lastName: "ชัยชนะ", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ศาสตราจารย์ ดร.", firstName: "วรณพ", lastName: "วิยกาญจน์", affiliation: "สถาบันวิจัยทรัพยากรทางน้ำ จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
     ],
   },
   {
@@ -38,23 +38,30 @@ const committees: CommitteeGroup[] = [
     bg: "/envicon2026/images/committee-assets/committee-academic-modern-thai.png",
     accent: "from-sky-400 via-cyan-400 to-blue-400",
     members: [
-      { prefix: "รองศาสตราจารย์ ดร.", firstName: "อุมา", lastName: "ลางคุลเสน", affiliation: "มหาวิทยาลัยธรรมศาสตร์" },
-      { prefix: "รองศาสตราจารย์ ดร.", firstName: "สุเมธ", lastName: "วงศ์เขียว", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
-      { prefix: "รองศาสตราจารย์ ดร.", firstName: "ชุลีมาศ", lastName: "บุญไทย อิวาย", affiliation: "มหาวิทยาลัยขอนแก่น" },
-      { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรรณวดี", lastName: "สุวัฒิกะ", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อรประภา", lastName: "ภุมมะกาญจนะ โรแบร์", affiliation: "มหาวิทยาลัยศิลปากร" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "รัชวุฒิ", lastName: "โคตรลาคำ", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "มนพร", lastName: "วงศ์สุนทรชัย", affiliation: "มหาวิทยาลัยธรรมศาสตร์" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปฏิพัทธ์", lastName: "วงค์เรือง", affiliation: "มหาวิทยาลัยพะเยา" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปิยะวดี", lastName: "ศรีวิชัย", affiliation: "มหาวิทยาลัยพะเยา" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "บงกช", lastName: "วิชาชูเชิด", affiliation: "มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน" },
-      { prefix: "ดร.", firstName: "นฤพร", lastName: "เพ็ชร์กลาง", affiliation: "มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน" },
-      { prefix: "ดร.", firstName: "พรเทพ", lastName: "พรรณรักษ์", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
-      { prefix: "ดร.", firstName: "ยศวดี", lastName: "ฮะวังจู", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
-      { prefix: "ดร.", firstName: "ชิษณุพงษ์", lastName: "ชาติอาษา", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "อุมา", lastName: "ลางคุลเสน", affiliation: "คณะสาธารณสุขศาสตร์ มหาวิทยาลัยธรรมศาสตร์" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "สุเมธ", lastName: "วงศ์เขียว", affiliation: "ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม คณะวิทยาศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "ชุลีมาศ", lastName: "บุญไทย อิวาย", affiliation: "ภาควิชาปฐพีศาสตร์และสิ่งแวดล้อม คณะเกษตรศาสตร์ มหาวิทยาลัยขอนแก่น" },
+      { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "กองวิทยาศาสตร์สิ่งแวดล้อม โรงเรียนนายร้อยพระจุลจอมเกล้า" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรรณวดี", lastName: "สุวัฒิกะ", affiliation: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อรประภา", lastName: "ภุมมะกาญจนะ โรแบร์", affiliation: "ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม คณะวิทยาศาสตร์ มหาวิทยาลัยศิลปากร" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "คณะวิทยาศาสตร์ มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "รัชวุฒิ", lastName: "โคตรลาคำ", affiliation: "คณะวิทยาศาสตร์ มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "มนพร", lastName: "วงศ์สุนทรชัย", affiliation: "คณะสาธารณสุขศาสตร์ มหาวิทยาลัยธรรมศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปฏิพัทธ์", lastName: "วงค์เรือง", affiliation: "คณะสาธารณสุขศาสตร์ มหาวิทยาลัยพะเยา" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปิยะวดี", lastName: "ศรีวิชัย", affiliation: "คณะสาธารณสุขศาสตร์ มหาวิทยาลัยพะเยา" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "บงกช", lastName: "วิชาชูเชิด", affiliation: "ภาควิชาวิทยาศาสตร์และนวัตกรรมชีวภาพ คณะศิลปศาสตร์และวิทยาศาสตร์ มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน" },
+      { prefix: "ดร.", firstName: "นฤพร", lastName: "เพ็ชร์กลาง", affiliation: "ภาควิชาวิทยาศาสตร์และนวัตกรรมชีวภาพ คณะศิลปศาสตร์และวิทยาศาสตร์ มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน" },
+      { prefix: "ดร.", firstName: "พรเทพ", lastName: "พรรณรักษ์", affiliation: "สถาบันวิจัยทรัพยากรทางน้ำ จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ดร.", firstName: "ยศวดี", lastName: "ฮะวังจู", affiliation: "สถาบันวิจัยทรัพยากรทางน้ำ จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ดร.", firstName: "ชิษณุพงษ์", lastName: "ชาติอาษา", affiliation: "ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม คณะวิทยาศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรสวัสดิ์", lastName: "ศรีสวัสดิ์", affiliation: "สาขาวิชาวิทยาศาสตร์สุขภาพ มหาวิทยาลัยสุโขทัยธรรมาธิราช" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปธานิน", lastName: "แสงอรุณ", affiliation: "สาขาวิชาวิทยาศาสตร์สุขภาพ มหาวิทยาลัยสุโขทัยธรรมาธิราช" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปานใจ", lastName: "สื่อประเสริฐสิทธิ์", affiliation: "คณะสิ่งแวดล้อมและทรัพยากรศาสตร์ มหาวิทยาลัยมหาสารคาม" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "วินัย", lastName: "มีแสง", affiliation: "สาขาอนามัยสิ่งแวดล้อม คณะวิทยาศาสตร์ มหาวิทยาลัยราชภัฏอุดรธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรนาฏ", lastName: "คิดดี", affiliation: "คณะวิทยาศาสตร์และนวัตกรรมดิจิทัล มหาวิทยาลัยทักษิณ" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อุมารัจน์", lastName: "สันติสุขเกษม", affiliation: "ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม คณะวิทยาศาสตร์ มหาวิทยาลัยศิลปากร" },
+      { prefix: "ดร.", firstName: "ปรัชญากรณ์", lastName: "ไชยคช", affiliation: "คณะการจัดการสิ่งแวดล้อม มหาวิทยาลัยสงขลานครินทร์" },
     ],
   },
   {
@@ -65,11 +72,11 @@ const committees: CommitteeGroup[] = [
     bg: "/envicon2026/images/committee-assets/committee-registration-modern-thai.png",
     accent: "from-amber-400 via-orange-400 to-rose-400",
     members: [
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
-      { prefix: "นางสาว", firstName: "ปุณยานุช", lastName: "แดงจะนะ", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
-      { prefix: "นางสาว", firstName: "ณัฐนริน", lastName: "ทองดี", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
-      { prefix: "นางสาว", firstName: "อมรรัตน์", lastName: "รักงาม", affiliation: "มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "คณะวิทยาศาสตร์ มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "นางสาว", firstName: "ปุณยานุช", lastName: "แดงจะนะ", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "นางสาว", firstName: "ณัฐนริน", lastName: "ทองดี", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "นางสาว", firstName: "อมรรัตน์", lastName: "รักงาม", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
     ],
   },
   {
@@ -80,11 +87,11 @@ const committees: CommitteeGroup[] = [
     bg: "/envicon2026/images/committee-assets/committee-venue-modern-thai.png",
     accent: "from-violet-400 via-purple-400 to-fuchsia-400",
     members: [
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรรณวดี", lastName: "สุวัฒิกะ", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
-      { prefix: "รองศาสตราจารย์ ดร.", firstName: "สุเมธ", lastName: "วงศ์เขียว", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "มหาวิทยาลัยอุบลราชธานี" },
-      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อรประภา", lastName: "ภุมมะกาญจนะ โรแบร์", affiliation: "มหาวิทยาลัยศิลปากร" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พีรพงษ์", lastName: "พรวงศ์ทอง", affiliation: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "พรรณวดี", lastName: "สุวัฒิกะ", affiliation: "คณะวิทยาศาสตร์ประยุกต์ มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
+      { prefix: "รองศาสตราจารย์ ดร.", firstName: "สุเมธ", lastName: "วงศ์เขียว", affiliation: "ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม คณะวิทยาศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "คณะวิทยาศาสตร์ มหาวิทยาลัยอุบลราชธานี" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "อรประภา", lastName: "ภุมมะกาญจนะ โรแบร์", affiliation: "ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม คณะวิทยาศาสตร์ มหาวิทยาลัยศิลปากร" },
     ],
   },
   {
@@ -95,7 +102,8 @@ const committees: CommitteeGroup[] = [
     bg: "/envicon2026/images/committee-assets/committee-sponsorship-modern-thai.png",
     accent: "from-pink-400 via-rose-400 to-red-400",
     members: [
-      { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
+      { prefix: "รองศาสตราจารย์ พ.อ.ดร.", firstName: "กิตติภพ", lastName: "พรหมดี", affiliation: "กองวิทยาศาสตร์สิ่งแวดล้อม โรงเรียนนายร้อยพระจุลจอมเกล้า" },
+      { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ปานใจ", lastName: "สื่อประเสริฐสิทธิ์", affiliation: "คณะสิ่งแวดล้อมและทรัพยากรศาสตร์ มหาวิทยาลัยมหาสารคาม" },
     ],
   },
 ];
@@ -310,7 +318,7 @@ function pad(n: number, width = 2): string {
                         {{ m.firstName }} {{ m.lastName }}
                       </span>
                     </h3>
-                    <p class="mt-1 text-xs font-medium text-stone-500 truncate">
+                    <p class="mt-1 text-xs font-medium text-stone-500 leading-relaxed">
                       {{ m.affiliation }}
                     </p>
                   </div>
