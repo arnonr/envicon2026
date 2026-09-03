@@ -30,9 +30,16 @@ const payment = {
   accountName: "สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย (สอสท.)",
   accountNumber: "412-206-6685",
 };
+
+const isEarlyBird = computed(() => new Date() <= new Date("2026-10-14T23:59:59+07:00"));
+
+function getFeeAmount(item: (typeof feeTable)[number]) {
+  return isEarlyBird.value ? item.earlyBird : item.regular;
+}
+
 const currentFee = computed(() => {
   const row = feeTable.find((item) => item.type === form.value.feeType)!;
-  return new Date() <= new Date("2026-10-14T23:59:59+07:00") ? row.earlyBird : row.regular;
+  return getFeeAmount(row);
 });
 const paymentSlip = ref<File | null>(null);
 const submitting = ref(false);
@@ -161,7 +168,7 @@ function close() {
               :class="form.feeType === fee.type ? 'border-meadow-500 bg-meadow-50' : 'border-gray-200'"
             >
               <input v-model="form.feeType" type="radio" name="event-fee-type" :value="fee.type" />
-              <span class="text-sm">{{ fee.label }}<br /><strong v-if="EVENT_REGISTRATION_PAYMENT_ENABLED">{{ currentFee.toLocaleString() }} บาท</strong><strong v-else>ไม่เสียค่าใช้จ่าย</strong></span>
+              <span class="text-sm">{{ fee.label }}<br /><strong v-if="EVENT_REGISTRATION_PAYMENT_ENABLED">{{ getFeeAmount(fee).toLocaleString() }} บาท</strong><strong v-else>ไม่เสียค่าใช้จ่าย</strong></span>
             </label>
           </div>
         </UFormGroup>
