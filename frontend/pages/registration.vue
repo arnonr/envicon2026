@@ -119,7 +119,7 @@ onMounted(() => {
     <!-- Fee Table -->
     <UCard class="mb-8">
       <template #header>
-        <h2 class="font-semibold text-lg">อัตราค่าลงทะเบียนส่งผลงาน</h2>
+        <h2 class="font-semibold text-lg">อัตราค่าลงทะเบียน (ส่งผลงาน / เข้าร่วมงาน)</h2>
       </template>
       <div class="overflow-x-auto">
         <table class="w-full text-sm">

@@ -298,26 +298,21 @@ watch(() => props.modelValue, (open) => {
             <SubmissionPaymentStatusBadge :status="submission.paymentStatus" class="ml-auto" />
           </div>
 
-          <!-- unpaid: QR + bank + upload -->
+          <!-- unpaid: bank info + upload -->
           <template v-if="submission.paymentStatus === 'unpaid'">
-            <div class="flex justify-center">
-              <div class="w-48 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                <span class="text-xs text-gray-400">QR Code</span>
-              </div>
-            </div>
             <div class="bg-white rounded-lg p-3 text-sm space-y-1.5">
               <p class="font-semibold text-gray-700">รายละเอียดการโอน</p>
               <div class="flex justify-between">
                 <span class="text-gray-500">ธนาคาร</span>
-                <span>กสิกรไทย (KBANK)</span>
+                <span>ธนาคารไทยพาณิชย์ (SCB) สาขาจัตุรัสจามจุรี</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-500">เลขบัญชี</span>
-                <span class="font-mono">XXX-X-XXXXX-X</span>
+                <span class="font-mono font-semibold">412-206-6685</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-500">ชื่อบัญชี</span>
-                <span>สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย</span>
+                <span>สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย (สอสท.)</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-500">จำนวนเงิน</span>

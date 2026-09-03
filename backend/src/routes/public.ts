@@ -7,7 +7,7 @@ import { saveFile } from "../services/storage";
 import { calculateFee } from "../utils/fees";
 
 // Set to true when event registration payment collection is enabled again.
-const EVENT_REGISTRATION_PAYMENT_ENABLED = false;
+const EVENT_REGISTRATION_PAYMENT_ENABLED = true;
 
 export const publicRoutes = new Elysia({ prefix: "/public" }).post(
   "/register",

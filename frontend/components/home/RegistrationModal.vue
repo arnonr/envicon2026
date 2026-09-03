@@ -11,7 +11,7 @@ const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
 const { handleApiCall, showError, showSuccess } = useApiError();
 // Set to true when event registration payment collection is enabled again.
-const EVENT_REGISTRATION_PAYMENT_ENABLED = false;
+const EVENT_REGISTRATION_PAYMENT_ENABLED = true;
 
 const form = ref({
   fullName: "",
@@ -26,10 +26,9 @@ const feeTable = [
   { type: "general" as const, label: "อาจารย์/นักวิจัย/บุคคลทั่วไป (Faculty/Researcher/General)", earlyBird: 2000, regular: 2500 },
 ];
 const payment = {
-  bank: "ธนาคารกรุงไทย",
-  accountName: "กรุณาระบุชื่อบัญชี",
-  accountNumber: "กรุณาระบุเลขบัญชี",
-  qrImage: "/images/payment-qr-placeholder.svg",
+  bank: "ธนาคารไทยพาณิชย์ (SCB) สาขาจัตุรัสจามจุรี",
+  accountName: "สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย (สอสท.)",
+  accountNumber: "412-206-6685",
 };
 const currentFee = computed(() => {
   const row = feeTable.find((item) => item.type === form.value.feeType)!;
@@ -168,13 +167,19 @@ function close() {
         </UFormGroup>
 
         <div v-if="EVENT_REGISTRATION_PAYMENT_ENABLED" class="rounded-xl border border-meadow-100 bg-meadow-50 p-4">
-          <div class="flex flex-col sm:flex-row gap-4 items-center">
-            <img :src="payment.qrImage" alt="QR สำหรับชำระค่าลงทะเบียน" class="w-32 h-32 rounded-lg bg-white p-2" />
-            <div class="text-sm text-gray-700 space-y-1">
-              <p class="font-semibold text-meadow-800">ชำระค่าลงทะเบียน {{ currentFee.toLocaleString() }} บาท</p>
-              <p>{{ payment.bank }}</p>
-              <p>ชื่อบัญชี: {{ payment.accountName }}</p>
-              <p>เลขบัญชี: {{ payment.accountNumber }}</p>
+          <div class="text-sm text-gray-700 space-y-1.5">
+            <p class="font-semibold text-meadow-800 text-base mb-2">รายละเอียดการโอนชำระเงิน ({{ currentFee.toLocaleString() }} บาท)</p>
+            <div class="flex justify-between">
+              <span class="text-gray-500">ธนาคาร</span>
+              <span class="font-medium text-gray-900">{{ payment.bank }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">เลขบัญชี</span>
+              <span class="font-mono font-semibold text-gray-900">{{ payment.accountNumber }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">ชื่อบัญชี</span>
+              <span class="font-medium text-gray-900">{{ payment.accountName }}</span>
             </div>
           </div>
         </div>
