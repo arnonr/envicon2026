@@ -101,6 +101,53 @@ const openTierModal = (tier: Tier) => {
   tierModalOpen.value = true;
 };
 
+interface FloorPlan {
+  id: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  image: string;
+  aspect: string;
+  highlights: string[];
+}
+
+const floorPlans: FloorPlan[] = [
+  {
+    id: "layout-2d",
+    title: "แผนผังพื้นที่รวมและผังห้องประชุม (2D Floor Plan)",
+    subtitle: "แสดงตำแหน่งประตูทางเข้าอาคาร 99, จุดลงทะเบียน, ที่นั่งในห้องประชุม และตำแหน่งโต๊ะสปอนเซอร์",
+    type: "แปลนพื้นที่รวม (Top View)",
+    image: imagePath("/images/sponsorship/sponsor-booth-layout-plan.jpg"),
+    aspect: "aspect-[4/3]",
+    highlights: [
+      "จุดลงทะเบียน (Registration) ตั้งอยู่บริเวณกึ่งกลางด้านหน้าห้องประชุม",
+      "โต๊ะสปอนเซอร์จัดวางเรียงตามแนวโถงทางเดินหลัก ผู้เข้าร่วมงานเดินผ่านทุกคน",
+      "มีโต๊ะจัดแสดงทั้งบริเวณโถงทางเข้าด้านหน้าและแนวทางเดินด้านข้าง",
+    ],
+  },
+  {
+    id: "layout-3d",
+    title: "ภาพจำลองมุมมองโต๊ะบูธนิทรรศการ (3D Perspective)",
+    subtitle: "แสดงรูปแบบโต๊ะบูธพร้อมฉากกั้น Backdrop สำหรับติดตั้งป้ายประชาสัมพันธ์ขององค์กร",
+    type: "ทัศนียภาพจำลอง 3 มิติ",
+    image: imagePath("/images/sponsorship/sponsor-booth-layout-perspective.jpg"),
+    aspect: "aspect-[16/9]",
+    highlights: [
+      "โต๊ะจัดแสดงขนาดมาตรฐานพร้อมเก้าอี้และจุดเชื่อมต่อระบบไฟฟ้า",
+      "ฉากหลัง (Backdrop Board) กว้างขวาง รองรับป้าย Roll-up และแบนเนอร์ประชาสัมพันธ์",
+      "การจัดวางโปร่งสบายตา เข้าถึงง่ายจากแนวทางเดินหลัก",
+    ],
+  },
+];
+
+const activeFloorPlanModal = ref<FloorPlan | null>(null);
+const floorPlanModalOpen = ref(false);
+
+const openFloorPlanModal = (plan: FloorPlan) => {
+  activeFloorPlanModal.value = plan;
+  floorPlanModalOpen.value = true;
+};
+
 interface WhySponsor {
   icon: string;
   title: string;
@@ -187,13 +234,20 @@ const stats: Stat[] = [
           <br class="hidden sm:block" />
           12–13 พฤศจิกายน 2569 · มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ
         </p>
-        <div class="flex flex-col sm:flex-row gap-3 justify-center mt-10">
+        <div class="flex flex-col sm:flex-row flex-wrap gap-3 justify-center mt-10">
           <a
             href="#packages"
             class="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white text-meadow-700 font-semibold shadow-xl shadow-meadow-900/40 hover:shadow-2xl hover:bg-meadow-50 transition-all duration-300"
           >
             ดูแพ็กเกจ
             <UIcon name="i-heroicons-arrow-down" class="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+          </a>
+          <a
+            href="#floor-plan"
+            class="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-white/40 bg-white/15 backdrop-blur-md text-white font-semibold hover:bg-white/25 transition-all duration-300"
+          >
+            <UIcon name="i-heroicons-map" class="w-4 h-4 text-meadow-300" />
+            แผนผังโต๊ะสปอนเซอร์
           </a>
           <NuxtLink
             to="/contact"
@@ -437,6 +491,250 @@ const stats: Stat[] = [
                 <span>{{ perk }}</span>
               </li>
             </ul>
+
+            <div v-if="selectedTier.id === 'gold' || selectedTier.id === 'platinum'" class="mt-5 p-3.5 rounded-xl bg-meadow-50 border border-meadow-200/80 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-2 text-xs text-meadow-900 font-medium">
+                <UIcon name="i-heroicons-map" class="w-4 h-4 text-meadow-700 shrink-0" />
+                <span>แพ็กเกจนี้ได้รับสิทธิ์พื้นที่บูธจัดแสดง</span>
+              </div>
+              <a
+                href="#floor-plan"
+                class="text-xs font-semibold text-meadow-700 hover:text-meadow-800 underline underline-offset-2 shrink-0"
+                @click="tierModalOpen = false"
+              >
+                ดูแผนผังโต๊ะบูธ &rarr;
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </UModal>
+
+    <!-- ═══════════ BOOTH FLOOR PLAN ═══════════ -->
+    <section id="floor-plan" class="relative bg-white py-16 lg:py-24 border-t border-stone-200/70">
+      <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <!-- Section Header -->
+        <div class="text-center mb-12 lg:mb-16">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-meadow-100 text-meadow-800 text-xs font-semibold uppercase tracking-[0.25em]">
+            <span class="w-1.5 h-1.5 rounded-full bg-meadow-600"></span>
+            Floor Plan & Booth Layout
+          </div>
+          <h2 class="mt-4 text-3xl sm:text-4xl lg:text-5xl font-semibold text-stone-900 leading-tight tracking-tight">
+            แผนผังพื้นที่และโต๊ะบูธสปอนเซอร์
+          </h2>
+          <p class="mt-3 text-base text-stone-600 max-w-2xl mx-auto">
+            ผังแสดงตำแหน่งโต๊ะประชาสัมพันธ์ บูธนิทรรศการ และจุดต้อนรับผู้สนับสนุน บริเวณโถงหน้าห้องประชุมและภายในอาคาร 99
+          </p>
+        </div>
+
+        <!-- Highlights Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          <div class="flex items-start gap-3.5 p-4 rounded-xl bg-stone-50 border border-stone-200/80">
+            <div class="p-2.5 rounded-lg bg-meadow-100 text-meadow-700 shrink-0">
+              <UIcon name="i-heroicons-map-pin" class="w-5 h-5" />
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-stone-900">ทำเลทางเดินหลัก</h4>
+              <p class="text-xs text-stone-500 mt-1 leading-relaxed">
+                ติดแนวทางเดินระหว่างทางเข้าอาคาร 99 และจุดลงทะเบียน ผู้ร่วมงานทุกคนต้องผ่าน
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 p-4 rounded-xl bg-stone-50 border border-stone-200/80">
+            <div class="p-2.5 rounded-lg bg-sky-100 text-sky-700 shrink-0">
+              <UIcon name="i-heroicons-eye" class="w-5 h-5" />
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-stone-900">ทัศนวิสัยเด่นชัด</h4>
+              <p class="text-xs text-stone-500 mt-1 leading-relaxed">
+                จัดวางแบบเปิดโล่ง มองเห็นป้ายชื่อแบรนด์และ Backdrop ขององค์กรได้ทันที
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 p-4 rounded-xl bg-stone-50 border border-stone-200/80">
+            <div class="p-2.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+              <UIcon name="i-heroicons-wrench-screwdriver" class="w-5 h-5" />
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-stone-900">สิ่งอำนวยความสะดวก</h4>
+              <p class="text-xs text-stone-500 mt-1 leading-relaxed">
+                โต๊ะจัดแสดง เก้าอี้ จุดเชื่อมต่อระบบไฟฟ้า และฉากกั้นสำหรับติดป้ายประชาสัมพันธ์
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 p-4 rounded-xl bg-stone-50 border border-stone-200/80">
+            <div class="p-2.5 rounded-lg bg-purple-100 text-purple-700 shrink-0">
+              <UIcon name="i-heroicons-sparkles" class="w-5 h-5" />
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-stone-900">สิทธิ์ Gold & Platinum</h4>
+              <p class="text-xs text-stone-500 mt-1 leading-relaxed">
+                บูธขนาด 2×3 ม. (Gold) และบูธใหญ่ขนาด 3×4 ม. ตำแหน่งมุม (Platinum)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floor Plan Images Display -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div
+            v-for="plan in floorPlans"
+            :key="plan.id"
+            class="group bg-stone-50 rounded-2xl border border-stone-200/80 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
+          >
+            <!-- Image Container with Zoom Trigger -->
+            <div
+              class="relative overflow-hidden cursor-pointer bg-stone-900 flex items-center justify-center min-h-[280px]"
+              :class="plan.aspect"
+              @click="openFloorPlanModal(plan)"
+            >
+              <img
+                :src="plan.image"
+                :alt="plan.title"
+                class="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+
+              <!-- Overlay Gradient -->
+              <div class="absolute inset-0 bg-stone-950/20 group-hover:bg-stone-950/45 transition-colors flex items-center justify-center">
+                <div class="opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 backdrop-blur-md text-stone-900 text-xs font-semibold shadow-lg">
+                  <UIcon name="i-heroicons-magnifying-glass-plus" class="w-4 h-4 text-meadow-700" />
+                  คลิกเพื่อดูภาพขยาย
+                </div>
+              </div>
+
+              <!-- Badge Tag -->
+              <div class="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium border border-white/20">
+                <span class="w-1.5 h-1.5 rounded-full bg-meadow-400"></span>
+                {{ plan.type }}
+              </div>
+            </div>
+
+            <!-- Card Content -->
+            <div class="p-6 flex-1 flex flex-col justify-between bg-white">
+              <div>
+                <h3 class="text-lg font-semibold text-stone-900">
+                  {{ plan.title }}
+                </h3>
+                <p class="mt-2 text-sm text-stone-600 leading-relaxed">
+                  {{ plan.subtitle }}
+                </p>
+
+                <!-- Feature bullet list -->
+                <ul class="mt-4 space-y-2">
+                  <li
+                    v-for="(item, idx) in plan.highlights"
+                    :key="idx"
+                    class="flex items-start gap-2.5 text-xs text-stone-600 leading-relaxed"
+                  >
+                    <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-meadow-100 text-meadow-700">
+                      <UIcon name="i-heroicons-check" class="h-2.5 w-2.5" />
+                    </span>
+                    <span>{{ item }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1.5 text-xs font-semibold text-meadow-700 hover:text-meadow-800 transition-colors"
+                  @click="openFloorPlanModal(plan)"
+                >
+                  <UIcon name="i-heroicons-arrows-pointing-out" class="w-3.5 h-3.5" />
+                  ขยายภาพเต็มจอ
+                </button>
+                <a
+                  :href="plan.image"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-700 transition-colors"
+                >
+                  <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
+                  เปิดในแท็บใหม่
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note below Floor Plan -->
+        <div class="mt-10 rounded-2xl bg-meadow-50/60 border border-meadow-200/70 p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="p-2 rounded-xl bg-meadow-100 text-meadow-700 shrink-0 mt-0.5">
+              <UIcon name="i-heroicons-information-circle" class="w-5 h-5" />
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-stone-900">
+                การเลือกตำแหน่งบูธสำหรับผู้สนับสนุน
+              </h4>
+              <p class="text-xs sm:text-sm text-stone-600 mt-0.5 leading-relaxed">
+                สิทธิ์ในการเลือกทำเลบูธจะเรียงตามระดับแพ็กเกจ (Platinum &gt; Gold) และลำดับการยืนยันการเป็นผู้สนับสนุน
+              </p>
+            </div>
+          </div>
+          <NuxtLink
+            to="/contact"
+            class="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl bg-meadow-700 text-white text-xs sm:text-sm font-semibold hover:bg-meadow-800 shadow-sm transition-colors shrink-0"
+          >
+            จองสิทธิ์บูธสปอนเซอร์
+            <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal for Floor Plan Zoom -->
+    <UModal v-model="floorPlanModalOpen" :ui="{ width: 'sm:max-w-5xl' }">
+      <div v-if="activeFloorPlanModal" class="overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-stone-50/90">
+          <div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-meadow-100 text-meadow-800 text-xs font-semibold">
+              {{ activeFloorPlanModal.type }}
+            </span>
+            <h3 class="mt-1 text-lg sm:text-xl font-semibold text-stone-900">
+              {{ activeFloorPlanModal.title }}
+            </h3>
+          </div>
+          <button
+            type="button"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-stone-200 text-stone-700 hover:bg-stone-300 transition-colors"
+            aria-label="ปิด"
+            @click="floorPlanModalOpen = false"
+          >
+            <UIcon name="i-heroicons-x-mark" class="h-5 w-5" />
+          </button>
+        </div>
+
+        <div class="p-4 sm:p-6 bg-stone-950 flex items-center justify-center min-h-[350px] max-h-[75vh] overflow-auto">
+          <img
+            :src="activeFloorPlanModal.image"
+            :alt="activeFloorPlanModal.title"
+            class="max-h-[70vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
+          />
+        </div>
+
+        <div class="p-6 bg-white border-t border-stone-200">
+          <p class="text-sm text-stone-600 leading-relaxed mb-4">
+            {{ activeFloorPlanModal.subtitle }}
+          </p>
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs text-stone-500">
+              <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-meadow-600" />
+              <span>ตำแหน่งบูธขึ้นอยู่กับระดับการสนับสนุน (Gold &amp; Platinum) และลำดับการยืนยันสิทธิ์</span>
+            </div>
+            <a
+              :href="activeFloorPlanModal.image"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center gap-1.5 text-xs font-semibold text-meadow-700 hover:text-meadow-800 underline underline-offset-4"
+            >
+              <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-4 h-4" />
+              เปิดดูภาพต้นฉบับขนาดเต็ม
+            </a>
           </div>
         </div>
       </div>
