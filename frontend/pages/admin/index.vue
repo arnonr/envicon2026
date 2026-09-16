@@ -17,6 +17,9 @@ interface Submission {
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
   paymentSlipUrl: string | null;
+  receiptName: string | null;
+  receiptTaxId: string | null;
+  receiptAddress: string | null;
   submittedAt: string | null;
   updatedAt: string;
   authorName: string | null;

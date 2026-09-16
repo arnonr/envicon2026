@@ -191,6 +191,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         educationLevel: body.educationLevel,
         presentationFormat: body.presentationFormat,
         wantsFullPaper: body.wantsFullPaper ? 1 : 0,
+        receiptName: body.receiptName ?? null,
+        receiptTaxId: body.receiptTaxId ?? null,
+        receiptAddress: body.receiptAddress ?? null,
       });
 
       const [sub] = await db
@@ -214,6 +217,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         educationLevel: t.Union([t.Literal("bachelor"), t.Literal("master"), t.Literal("doctorate")]),
         presentationFormat: t.Union([t.Literal("oral"), t.Literal("poster")]),
         wantsFullPaper: t.Optional(t.Boolean()),
+        receiptName: t.Optional(t.String()),
+        receiptTaxId: t.Optional(t.String()),
+        receiptAddress: t.Optional(t.String()),
       }),
     }
   )
@@ -319,6 +325,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.presentationFormat && { presentationFormat: body.presentationFormat }),
           ...(body.wantsFullPaper !== undefined && { wantsFullPaper: body.wantsFullPaper ? 1 : 0 }),
           ...(body.round1FileType && { round1FileType: body.round1FileType }),
+          ...(body.receiptName !== undefined && { receiptName: body.receiptName }),
+          ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId }),
+          ...(body.receiptAddress !== undefined && { receiptAddress: body.receiptAddress }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -343,6 +352,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         presentationFormat: t.Optional(t.Union([t.Literal("oral"), t.Literal("poster")])),
         wantsFullPaper: t.Optional(t.Boolean()),
         round1FileType: t.Optional(t.Union([t.Literal("abstract"), t.Literal("full_paper")])),
+        receiptName: t.Optional(t.String()),
+        receiptTaxId: t.Optional(t.String()),
+        receiptAddress: t.Optional(t.String()),
       }),
     }
   )
@@ -514,7 +526,13 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       await db
         .update(submissions)
-        .set({ paymentSlipUrl: fileUrl, paymentStatus: "pending_verification" })
+        .set({
+          paymentSlipUrl: fileUrl,
+          paymentStatus: "pending_verification",
+          ...(body.receiptName !== undefined && { receiptName: body.receiptName }),
+          ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId }),
+          ...(body.receiptAddress !== undefined && { receiptAddress: body.receiptAddress }),
+        })
         .where(eq(submissions.id, params.id));
 
       const [updated] = await db
@@ -528,6 +546,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     {
       body: t.Object({
         file: t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: 10 * 1024 * 1024 }),
+        receiptName: t.Optional(t.String()),
+        receiptTaxId: t.Optional(t.String()),
+        receiptAddress: t.Optional(t.String()),
       }),
     }
   )

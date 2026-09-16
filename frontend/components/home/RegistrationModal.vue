@@ -19,7 +19,16 @@ const form = ref({
   phone: "",
   email: "",
   feeType: "general" as "student" | "general",
+  receiptName: "",
+  receiptTaxId: "",
+  receiptAddress: "",
 });
+
+function copyRegistrationToReceipt() {
+  if (form.value.fullName) {
+    form.value.receiptName = form.value.fullName;
+  }
+}
 
 const feeTable = [
   { type: "student" as const, label: "นิสิต/นักศึกษา (Student)", earlyBird: 500, regular: 700 },
@@ -57,6 +66,21 @@ async function handleSubmit() {
     return;
   }
 
+  if (!form.value.receiptName.trim()) {
+    showError({ status: 400, error: "กรุณากรอกชื่อสำหรับออกใบเสร็จรับเงิน" });
+    return;
+  }
+
+  if (!form.value.receiptTaxId.trim()) {
+    showError({ status: 400, error: "กรุณากรอกเลขประจำตัวผู้เสียภาษี" });
+    return;
+  }
+
+  if (!form.value.receiptAddress.trim()) {
+    showError({ status: 400, error: "กรุณากรอกที่อยู่สำหรับออกใบเสร็จรับเงิน" });
+    return;
+  }
+
   submitting.value = true;
   if (EVENT_REGISTRATION_PAYMENT_ENABLED && !paymentSlip.value) {
     submitting.value = false;
@@ -70,6 +94,9 @@ async function handleSubmit() {
   body.append("phone", form.value.phone);
   body.append("email", form.value.email);
   body.append("feeType", form.value.feeType);
+  body.append("receiptName", form.value.receiptName.trim());
+  body.append("receiptTaxId", form.value.receiptTaxId.trim());
+  body.append("receiptAddress", form.value.receiptAddress.trim());
   if (EVENT_REGISTRATION_PAYMENT_ENABLED && paymentSlip.value) {
     body.append("paymentSlip", paymentSlip.value);
   }
@@ -95,7 +122,16 @@ function close() {
   isOpen.value = false;
   setTimeout(() => {
     success.value = false;
-    form.value = { fullName: "", affiliation: "", phone: "", email: "", feeType: "general" };
+    form.value = {
+      fullName: "",
+      affiliation: "",
+      phone: "",
+      email: "",
+      feeType: "general",
+      receiptName: "",
+      receiptTaxId: "",
+      receiptAddress: "",
+    };
     paymentSlip.value = null;
   }, 300);
 }
@@ -173,6 +209,51 @@ function close() {
           </div>
         </UFormGroup>
 
+        <div class="border-t border-gray-200 pt-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h4 class="font-semibold text-gray-900 text-sm flex items-center gap-1.5">
+              <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-meadow-600" />
+              ข้อมูลสำหรับออกใบเสร็จรับเงิน (Receipt Information)
+            </h4>
+            <UButton
+              v-if="form.fullName.trim()"
+              type="button"
+              size="2xs"
+              color="gray"
+              variant="soft"
+              @click="copyRegistrationToReceipt"
+            >
+              ใช้ชื่อเดียวกับผู้ลงทะเบียน
+            </UButton>
+          </div>
+
+          <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
+            <UInput
+              v-model="form.receiptName"
+              placeholder="ระบุชื่อสำหรับออกใบเสร็จ"
+              required
+            />
+          </UFormGroup>
+
+          <UFormGroup label="เลขประจำตัวผู้เสียภาษี (Tax ID / เลขบัตรประชาชน)" required help="เลขประจำตัวผู้เสียภาษี 13 หลัก หรือเลขบัตรประชาชน">
+            <UInput
+              v-model="form.receiptTaxId"
+              placeholder="XXXXXXXXXXXXX"
+              maxlength="20"
+              required
+            />
+          </UFormGroup>
+
+          <UFormGroup label="ที่อยู่สำหรับออกใบเสร็จ (Receipt Address)" required help="ที่อยู่สำหรับระบุในใบเสร็จรับเงิน">
+            <UTextarea
+              v-model="form.receiptAddress"
+              placeholder="ระบุที่อยู่สำหรับออกใบเสร็จ"
+              :rows="3"
+              required
+            />
+          </UFormGroup>
+        </div>
+
         <div v-if="EVENT_REGISTRATION_PAYMENT_ENABLED" class="rounded-xl border border-meadow-100 bg-meadow-50 p-4">
           <div class="text-sm text-gray-700 space-y-1.5">
             <p class="font-semibold text-meadow-800 text-base mb-2">รายละเอียดการโอนชำระเงิน ({{ currentFee.toLocaleString() }} บาท)</p>
@@ -200,7 +281,7 @@ function close() {
             @change="onFileChange"
           />
           <p class="text-xs text-gray-500 mt-1">รองรับ JPG, PNG หรือ PDF ขนาดไม่เกิน 10 MB</p>
-          <p class="text-xs text-gray-500 mt-1">ใบเสร็จรับได้ที่วันประชุม</p>
+          <p class="text-xs text-gray-500 mt-1">ใบเสร็จจะออกตามข้อมูลที่ท่านระบุไว้ด้านบน และรับได้ที่วันประชุม</p>
         </UFormGroup>
 
         <UButton

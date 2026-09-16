@@ -35,6 +35,9 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
           ? await saveFile(body.paymentSlip, `event-slip-${crypto.randomUUID()}`)
           : null,
         paymentStatus: EVENT_REGISTRATION_PAYMENT_ENABLED ? "pending_verification" : "confirmed",
+        receiptName: body.receiptName,
+        receiptTaxId: body.receiptTaxId,
+        receiptAddress: body.receiptAddress,
       });
 
       const id = (result as any)[0]?.insertId || crypto.randomUUID();
@@ -56,6 +59,9 @@ export const publicRoutes = new Elysia({ prefix: "/public" }).post(
       email: t.String({ format: "email", maxLength: 255 }),
       feeType: t.Union([t.Literal("student"), t.Literal("general")]),
       paymentSlip: t.Optional(t.File({ type: ["application/pdf", "image/png", "image/jpeg"], maxSize: 10 * 1024 * 1024 })),
+      receiptName: t.String({ minLength: 1, maxLength: 255 }),
+      receiptTaxId: t.String({ minLength: 1, maxLength: 20 }),
+      receiptAddress: t.String({ minLength: 1 }),
     }),
   },
 );

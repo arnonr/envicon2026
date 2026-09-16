@@ -33,6 +33,9 @@ interface Submission {
   paymentSlipUrl: string | null;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   paymentNote: string | null;
+  receiptName: string | null;
+  receiptTaxId: string | null;
+  receiptAddress: string | null;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
@@ -66,6 +69,12 @@ const uploadingPaper = ref(false);
 const uploadingSlip = ref(false);
 const slipPreviewOpen = ref(false);
 
+const receiptForm = ref({
+  name: '',
+  taxId: '',
+  address: '',
+});
+
 const TRACK_NAMES: Record<number, string> = {
   1: 'วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ',
   2: 'การจัดการระบบนิเวศและทรัพยากรธรรมชาติ',
@@ -96,6 +105,11 @@ const fetchSubmission = async () => {
   loading.value = false;
   if (error) { showError(error); return; }
   submission.value = data!.data;
+  receiptForm.value = {
+    name: submission.value.receiptName || '',
+    taxId: submission.value.receiptTaxId || '',
+    address: submission.value.receiptAddress || '',
+  };
 };
 
 const uploadFullPaper = async (file: File) => {
@@ -124,9 +138,27 @@ const onSlipSelected = (file: File) => {
 
 const uploadSlip = async () => {
   if (!props.submissionId || !selectedSlipFile.value) return;
+
+  if (!receiptForm.value.name.trim()) {
+    showError({ status: 400, error: 'กรุณาระบุชื่อสำหรับออกใบเสร็จรับเงิน' });
+    return;
+  }
+  if (!receiptForm.value.taxId.trim()) {
+    showError({ status: 400, error: 'กรุณาระบุเลขประจำตัวผู้เสียภาษี' });
+    return;
+  }
+  if (!receiptForm.value.address.trim()) {
+    showError({ status: 400, error: 'กรุณาระบุที่อยู่สำหรับออกใบเสร็จรับเงิน' });
+    return;
+  }
+
   uploadingSlip.value = true;
   const formData = new FormData();
   formData.append('file', selectedSlipFile.value);
+  formData.append('receiptName', receiptForm.value.name.trim());
+  formData.append('receiptTaxId', receiptForm.value.taxId.trim());
+  formData.append('receiptAddress', receiptForm.value.address.trim());
+
   const { error } = await handleApiCall(() =>
     $fetch(`${apiBase}/submissions/${props.submissionId}/upload-slip`, {
       method: 'POST',
@@ -321,9 +353,22 @@ watch(() => props.modelValue, (open) => {
                 </span>
               </div>
             </div>
+            <div class="bg-white rounded-lg p-3 text-sm space-y-3">
+              <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+              <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
+                <UInput v-model="receiptForm.name" placeholder="ระบุชื่อสำหรับออกใบเสร็จ" />
+              </UFormGroup>
+              <UFormGroup label="เลขประจำตัวผู้เสียภาษี (Tax ID / เลขบัตรประชาชน)" required help="เลขประจำตัวผู้เสียภาษี 13 หลัก">
+                <UInput v-model="receiptForm.taxId" placeholder="XXXXXXXXXXXXX" maxlength="20" />
+              </UFormGroup>
+              <UFormGroup label="ที่อยู่สำหรับออกใบเสร็จ (Receipt Address)" required help="ที่อยู่สำหรับระบุในใบเสร็จรับเงิน">
+                <UTextarea v-model="receiptForm.address" placeholder="ระบุที่อยู่สำหรับออกใบเสร็จ" :rows="2" />
+              </UFormGroup>
+            </div>
+
             <div>
               <p class="text-xs text-gray-500 mb-2">อัปโหลดหลักฐานการชำระเงิน (สลิปโอนเงิน)</p>
-              <p class="text-xs text-gray-500 mb-2">ใบเสร็จรับได้ที่วันประชุม</p>
+              <p class="text-xs text-gray-500 mb-2">ใบเสร็จจะออกตามข้อมูลที่ระบุด้านบน และรับได้ที่วันประชุม</p>
               <CommonFileUpload :loading="uploadingSlip" :max-size-mb="10" accept=".pdf,.png,.jpg,.jpeg" @change="onSlipSelected" />
               <div class="flex justify-end mt-3">
                 <UButton v-if="selectedSlipFile" color="primary" :loading="uploadingSlip" @click="uploadSlip">
@@ -338,6 +383,21 @@ watch(() => props.modelValue, (open) => {
           <!-- pending_verification: slip preview only -->
           <template v-else-if="submission.paymentStatus === 'pending_verification'">
             <p class="text-sm text-gray-600">ได้รับหลักฐานการชำระเงินเรียบร้อย กำลังรอเจ้าหน้าที่ตรวจสอบ</p>
+            <div class="bg-white rounded-lg p-3 text-sm space-y-1.5 border border-blue-100">
+              <p class="font-semibold text-gray-700">ข้อมูลใบเสร็จรับเงิน</p>
+              <div class="flex justify-between">
+                <span class="text-gray-500">ชื่อ</span>
+                <span class="font-medium text-gray-900">{{ submission.receiptName || '-' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี</span>
+                <span class="font-mono text-gray-900">{{ submission.receiptTaxId || '-' }}</span>
+              </div>
+              <div>
+                <span class="text-gray-500">ที่อยู่</span>
+                <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
+              </div>
+            </div>
             <div v-if="submission.paymentSlipUrl">
               <p class="text-xs text-gray-500 mb-1.5">หลักฐานการชำระเงิน</p>
               <img
@@ -354,6 +414,18 @@ watch(() => props.modelValue, (open) => {
               <p class="font-semibold text-red-700 mb-1">เหตุผลที่ปฏิเสธ</p>
               <p class="text-red-600 whitespace-pre-line">{{ submission.paymentNote || '-' }}</p>
             </div>
+            <div class="bg-white rounded-lg p-3 text-sm space-y-3">
+              <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+              <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
+                <UInput v-model="receiptForm.name" placeholder="ระบุชื่อสำหรับออกใบเสร็จ" />
+              </UFormGroup>
+              <UFormGroup label="เลขประจำตัวผู้เสียภาษี (Tax ID / เลขบัตรประชาชน)" required help="เลขประจำตัวผู้เสียภาษี 13 หลัก">
+                <UInput v-model="receiptForm.taxId" placeholder="XXXXXXXXXXXXX" maxlength="20" />
+              </UFormGroup>
+              <UFormGroup label="ที่อยู่สำหรับออกใบเสร็จ (Receipt Address)" required help="ที่อยู่สำหรับระบุในใบเสร็จรับเงิน">
+                <UTextarea v-model="receiptForm.address" placeholder="ระบุที่อยู่สำหรับออกใบเสร็จ" :rows="2" />
+              </UFormGroup>
+            </div>
             <p class="text-xs text-gray-500">กรุณาอัปโหลดหลักฐานการชำระเงินใหม่</p>
             <CommonFileUpload :loading="uploadingSlip" :max-size-mb="10" accept=".pdf,.png,.jpg,.jpeg" @change="onSlipSelected" />
             <div class="flex justify-end mt-3">
@@ -366,9 +438,27 @@ watch(() => props.modelValue, (open) => {
         </div>
 
         <!-- Verified: replace section with a small success line -->
-        <div v-else class="flex items-center gap-1.5 text-sm text-green-700 px-1">
-          <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-          <span>ชำระเงินเรียบร้อย</span>
+        <div v-else class="border border-green-200 rounded-lg p-4 bg-green-50/50 space-y-3">
+          <div class="flex items-center gap-1.5 text-sm text-green-700">
+            <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
+            <span class="font-semibold">ชำระเงินเรียบร้อยแล้ว</span>
+            <SubmissionPaymentStatusBadge :status="submission.paymentStatus" class="ml-auto" />
+          </div>
+          <div v-if="submission.receiptName || submission.receiptTaxId || submission.receiptAddress" class="bg-white rounded-lg p-3 text-sm space-y-1.5 border border-green-100">
+            <p class="font-semibold text-gray-700">ข้อมูลใบเสร็จรับเงิน</p>
+            <div class="flex justify-between">
+              <span class="text-gray-500">ชื่อ</span>
+              <span class="font-medium text-gray-900">{{ submission.receiptName || '-' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี</span>
+              <span class="font-mono text-gray-900">{{ submission.receiptTaxId || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500">ที่อยู่</span>
+              <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- Slip preview modal -->

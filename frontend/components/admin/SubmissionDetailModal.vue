@@ -29,6 +29,9 @@ interface Submission {
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   paymentNote: string | null;
   paymentVerifiedAt: string | null;
+  receiptName: string | null;
+  receiptTaxId: string | null;
+  receiptAddress: string | null;
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
@@ -448,6 +451,22 @@ watch(() => props.modelValue, (open) => {
           <div v-if="submission.paymentSlipUrl" class="text-sm">
             <span class="text-gray-500">หลักฐาน: </span>
             <a :href="submission.paymentSlipUrl" target="_blank" class="text-primary-600 hover:underline">เปิดดูสลิป</a>
+          </div>
+
+          <div v-if="submission.receiptName || submission.receiptTaxId || submission.receiptAddress" class="bg-gray-50 rounded-lg p-3 text-sm space-y-1.5 border border-gray-100">
+            <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+            <div class="flex justify-between">
+              <span class="text-gray-500">ชื่อ:</span>
+              <span class="font-medium text-gray-900">{{ submission.receiptName || '-' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี:</span>
+              <span class="font-mono text-gray-900">{{ submission.receiptTaxId || '-' }}</span>
+            </div>
+            <div>
+              <span class="text-gray-500">ที่อยู่:</span>
+              <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
+            </div>
           </div>
 
           <div v-if="submission.paymentStatus === 'rejected' && submission.paymentNote" class="bg-red-50 border border-red-200 rounded p-3 text-sm">
