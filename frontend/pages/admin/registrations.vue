@@ -16,6 +16,9 @@ interface Registration {
   fee: number;
   paymentSlipUrl: string | null;
   paymentStatus: "pending_verification" | "confirmed" | "rejected";
+  receiptName: string | null;
+  receiptTaxId: string | null;
+  receiptAddress: string | null;
   createdAt: string;
 }
 
@@ -63,14 +66,56 @@ async function updatePayment(reg: Registration, status: "confirmed" | "rejected"
   showSuccess(status === "confirmed" ? "ยืนยันการชำระเงินแล้ว" : "ปฏิเสธหลักฐานแล้ว");
 }
 
+const exporting = ref(false);
+
+async function exportRegistrations() {
+  exporting.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<Blob>(`${apiBase}/admin/registrations/export`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      responseType: "blob",
+    }),
+  );
+  exporting.value = false;
+  if (error) {
+    showError(error);
+    return;
+  }
+  if (!data) return;
+
+  const objectUrl = URL.createObjectURL(data);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = `envicon-event-registrations-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+  showSuccess("ดาวน์โหลดไฟล์ Excel สำเร็จ");
+}
+
 onMounted(fetchRegistrations);
 </script>
 
 <template>
   <div class="max-w-6xl mx-auto px-4 py-12">
     <div class="flex items-center justify-between mb-8">
-      <h1 class="text-2xl font-bold text-gray-900">ข้อมูลผู้ลงทะเบียนเข้าร่วมงาน</h1>
-      <UButton color="gray" variant="ghost" to="/">กลับหน้าแรก</UButton>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">ข้อมูลผู้ลงทะเบียนเข้าร่วมงาน</h1>
+        <p class="text-sm text-gray-500 mt-1">รายชื่อผู้เข้าร่วมงาน สถานะการชำระเงิน และข้อมูลใบเสร็จรับเงิน</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <UButton
+          color="emerald"
+          icon="i-heroicons-arrow-down-tray"
+          :loading="exporting"
+          :disabled="loading || exporting || registrations.length === 0"
+          @click="exportRegistrations"
+        >
+          Export Excel
+        </UButton>
+        <UButton color="gray" variant="ghost" to="/">กลับหน้าแรก</UButton>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
@@ -117,6 +162,7 @@ onMounted(fetchRegistrations);
             <th class="py-3 px-3">อีเมล</th>
             <th class="py-3 px-3">สังกัด</th>
             <th class="py-3 px-3">เบอร์โทร</th>
+            <th class="py-3 px-3">ข้อมูลใบเสร็จ</th>
             <th class="py-3 px-3">ค่าลงทะเบียน</th>
             <th class="py-3 px-3">หลักฐาน</th>
             <th class="py-3 px-3">สถานะ</th>
@@ -133,6 +179,16 @@ onMounted(fetchRegistrations);
             <td class="py-3 px-3 text-gray-500">{{ reg.email }}</td>
             <td class="py-3 px-3 text-gray-500">{{ reg.affiliation || "-" }}</td>
             <td class="py-3 px-3 text-gray-500">{{ reg.phone || "-" }}</td>
+            <td class="py-3 px-3 text-xs">
+              <div v-if="reg.receiptName || reg.receiptTaxId" class="space-y-0.5 max-w-xs">
+                <p class="font-medium text-gray-900">{{ reg.receiptName || '-' }}</p>
+                <p class="font-mono text-gray-500">{{ reg.receiptTaxId || '-' }}</p>
+                <p class="text-gray-400 line-clamp-1 hover:line-clamp-none cursor-pointer" :title="reg.receiptAddress || ''">
+                  {{ reg.receiptAddress || '-' }}
+                </p>
+              </div>
+              <span v-else class="text-gray-400">-</span>
+            </td>
             <td class="py-3 px-3 text-gray-500">{{ reg.fee.toLocaleString() }} บาท</td>
             <td class="py-3 px-3">
               <a v-if="reg.paymentSlipUrl" :href="reg.paymentSlipUrl" target="_blank" class="text-primary-600 hover:underline">เปิดดู</a>
