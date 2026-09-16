@@ -1,6 +1,6 @@
 # Receipt Information Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** เพิ่มการจัดเก็บและแสดงผลข้อมูลสำหรับออกใบเสร็จรับเงิน (`receiptName`, `receiptTaxId`, `receiptAddress`) ให้กับผู้ส่งผลงาน (ตอนอัปโหลดสลิป) และผู้ลงทะเบียนเข้าร่วมงาน (ตอนลงทะเบียน) พร้อมปุ่ม Export Excel ในหน้า Admin
 
@@ -29,7 +29,7 @@
 - Consumes: Existing form model in `SubmissionForm.vue`
 - Produces: `SubmissionFormData` without receipt fields, restoring Step 1 to only paper submission content
 
-- [ ] **Step 1: Clean `frontend/components/submission/SubmissionForm.vue`**
+- [x] **Step 1: Clean `frontend/components/submission/SubmissionForm.vue`**
 
 Remove `receiptName`, `receiptTaxId`, `receiptAddress` from interface `SubmissionFormData`:
 ```ts
@@ -52,7 +52,7 @@ Remove the receipt information input block from the template:
     <!-- <div class="border-t border-gray-200 pt-5 space-y-4"> ... ข้อมูลสำหรับออกใบเสร็จรับเงิน ... </div> -->
 ```
 
-- [ ] **Step 2: Clean `frontend/pages/submit/index.vue`**
+- [x] **Step 2: Clean `frontend/pages/submit/index.vue`**
 
 Remove receipt properties from `DraftSubmission`, `form`, `isStep1Valid`, `createSubmission`, `saveDraft`, and `loadDraft`:
 ```ts
@@ -78,11 +78,11 @@ const isStep1Valid = computed(() => {
 });
 ```
 
-- [ ] **Step 3: Verify frontend compiles Step 1 without errors**
+- [x] **Step 3: Verify frontend compiles Step 1 without errors**
 
 Run: `cd frontend && npx vue-tsc --noEmit`
 
-- [ ] **Step 4: Commit Task 1**
+- [x] **Step 4: Commit Task 1**
 
 ```bash
 git add frontend/components/submission/SubmissionForm.vue frontend/pages/submit/index.vue
@@ -100,7 +100,7 @@ git commit -m "refactor(frontend): remove receipt fields from paper submission s
 - Consumes: `eventRegistrations` table from `../db/schema.ts`, `ExcelJS`, `absoluteFileUrl()`, `formatExportDate()`
 - Produces: Endpoint `GET /admin/registrations/export` returning Excel spreadsheet (`.xlsx`) stream
 
-- [ ] **Step 1: Add label mappings for event registrations in `backend/src/routes/admin.ts`**
+- [x] **Step 1: Add label mappings for event registrations in `backend/src/routes/admin.ts`**
 
 ```ts
 const EVENT_PAYMENT_STATUS_NAMES: Record<string, string> = {
@@ -115,7 +115,7 @@ const EVENT_FEE_TYPE_NAMES: Record<string, string> = {
 };
 ```
 
-- [ ] **Step 2: Add `GET /registrations/export` endpoint in `adminRoutes`**
+- [x] **Step 2: Add `GET /registrations/export` endpoint in `adminRoutes`**
 
 Insert the endpoint into `adminRoutes`:
 ```ts
@@ -217,11 +217,11 @@ Insert the endpoint into `adminRoutes`:
   })
 ```
 
-- [ ] **Step 3: Run backend typecheck or check with Bun**
+- [x] **Step 3: Run backend typecheck or check with Bun**
 
 Run: `cd backend && bun run --dry-run src/index.ts`
 
-- [ ] **Step 4: Commit Task 2**
+- [x] **Step 4: Commit Task 2**
 
 ```bash
 git add backend/src/routes/admin.ts
@@ -239,7 +239,7 @@ git commit -m "feat(backend): add excel export endpoint for event registrations"
 - Consumes: `$fetch<Blob>(\`${apiBase}/admin/registrations/export\`)`
 - Produces: Export Excel button in registrations header, downloading `.xlsx` file
 
-- [ ] **Step 1: Add export state and function in `frontend/pages/admin/registrations.vue`**
+- [x] **Step 1: Add export state and function in `frontend/pages/admin/registrations.vue`**
 
 ```ts
 const exporting = ref(false);
@@ -271,7 +271,7 @@ async function exportRegistrations() {
 }
 ```
 
-- [ ] **Step 2: Add Export button to header template in `frontend/pages/admin/registrations.vue`**
+- [x] **Step 2: Add Export button to header template in `frontend/pages/admin/registrations.vue`**
 
 ```vue
     <div class="flex items-center justify-between mb-8">
@@ -294,9 +294,9 @@ async function exportRegistrations() {
     </div>
 ```
 
-- [ ] **Step 3: Test export button click in UI / check no syntax errors**
+- [x] **Step 3: Test export button click in UI / check no syntax errors**
 
-- [ ] **Step 4: Commit Task 3**
+- [x] **Step 4: Commit Task 3**
 
 ```bash
 git add frontend/pages/admin/registrations.vue
@@ -318,11 +318,11 @@ git commit -m "feat(frontend): add export excel button on event registrations ad
 - Consumes: `receiptName`, `receiptTaxId`, `receiptAddress` in API payloads and responses
 - Produces: Consistent UI & validation across public registrations and author slip uploads
 
-- [ ] **Step 1: Check `backend/src/routes/submissions.ts`**
+- [x] **Step 1: Check `backend/src/routes/submissions.ts`**
 
 Verify `POST /submissions/:id/upload-slip` properly updates `receiptName`, `receiptTaxId`, `receiptAddress`.
 
-- [ ] **Step 2: Check `frontend/components/home/RegistrationModal.vue`**
+- [x] **Step 2: Check `frontend/components/home/RegistrationModal.vue`**
 
 Ensure fields:
 - Receipt Name (with "ใช้ชื่อเดียวกับผู้ลงทะเบียน" button)
@@ -330,18 +330,18 @@ Ensure fields:
 - Receipt Address (Textarea)
 - Note: "ใบเสร็จจะออกตามข้อมูลที่ท่านระบุไว้ด้านบน และรับได้ที่วันประชุม"
 
-- [ ] **Step 3: Check `frontend/components/submission/SubmissionDetailModal.vue`**
+- [x] **Step 3: Check `frontend/components/submission/SubmissionDetailModal.vue`**
 
 Ensure:
 - When status is `unpaid` or `rejected`: Form fields for receipt name, tax ID, and address are shown and sent with FormData on slip upload.
 - When status is `pending_verification` or `verified`: Display receipt summary card.
 
-- [ ] **Step 4: Check `frontend/components/admin/SubmissionDetailModal.vue`**
+- [x] **Step 4: Check `frontend/components/admin/SubmissionDetailModal.vue`**
 
 Ensure:
 - Admin sees the Receipt Information card under payment section with name, tax ID, and address.
 
-- [ ] **Step 5: Commit Task 4**
+- [x] **Step 5: Commit Task 4**
 
 ```bash
 git add backend/src/routes/submissions.ts backend/src/routes/public.ts frontend/components/home/RegistrationModal.vue frontend/components/submission/SubmissionDetailModal.vue frontend/components/admin/SubmissionDetailModal.vue
@@ -357,20 +357,20 @@ git commit -m "feat: complete receipt information workflow across modals"
 - Check: `backend/drizzle/0013_stiff_brother_voodoo.sql`
 - Verify: Whole project build
 
-- [ ] **Step 1: Verify database schema state**
+- [x] **Step 1: Verify database schema state**
 
 Ensure `bun run db:push` or migration files are in sync with MySQL.
 
-- [ ] **Step 2: Run frontend build**
+- [x] **Step 2: Run frontend build**
 
 Run: `cd frontend && npm run build`
 Expected: Build passes with 0 errors.
 
-- [ ] **Step 3: Run backend check**
+- [x] **Step 3: Run backend check**
 
 Run: `cd backend && bun run --dry-run src/index.ts` (or check import/type validity).
 
-- [ ] **Step 4: Commit database migration artifacts**
+- [x] **Step 4: Commit database migration artifacts**
 
 ```bash
 git add backend/drizzle/ backend/src/db/schema.ts
