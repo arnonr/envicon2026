@@ -29,6 +29,17 @@ const PAYMENT_STATUS_NAMES: Record<string, string> = {
   rejected: "ปฏิเสธ",
 };
 
+const EVENT_PAYMENT_STATUS_NAMES: Record<string, string> = {
+  pending_verification: "รอตรวจสอบ",
+  confirmed: "ยืนยันแล้ว",
+  rejected: "ไม่ผ่าน",
+};
+
+const EVENT_FEE_TYPE_NAMES: Record<string, string> = {
+  student: "นิสิต/นักศึกษา",
+  general: "บุคคลทั่วไป",
+};
+
 const EDUCATION_LEVEL_NAMES: Record<string, string> = {
   bachelor: "ปริญญาตรี",
   master: "ปริญญาโท",
@@ -246,6 +257,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         round1FileType: submissions.round1FileType,
         paymentSlipUrl: submissions.paymentSlipUrl,
         paymentStatus: submissions.paymentStatus,
+        receiptName: submissions.receiptName,
+        receiptTaxId: submissions.receiptTaxId,
+        receiptAddress: submissions.receiptAddress,
         submittedAt: submissions.submittedAt,
         updatedAt: submissions.updatedAt,
         authorName: users.name,
@@ -285,6 +299,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       { header: "ลิงก์ไฟล์ฉบับเต็ม", key: "fullPaperFileUrl", width: 55 },
       { header: "ลิงก์หลักฐานชำระเงิน", key: "paymentSlipUrl", width: 55 },
       { header: "สถานะการชำระเงิน", key: "paymentStatus", width: 20 },
+      { header: "ชื่อสำหรับออกใบเสร็จ", key: "receiptName", width: 30 },
+      { header: "เลขประจำตัวผู้เสียภาษี", key: "receiptTaxId", width: 22 },
+      { header: "ที่อยู่สำหรับออกใบเสร็จ", key: "receiptAddress", width: 45 },
     ];
 
     const origin = new URL(request.url).origin;
@@ -314,6 +331,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         fullPaperFileUrl,
         paymentSlipUrl,
         paymentStatus: PAYMENT_STATUS_NAMES[submission.paymentStatus] ?? submission.paymentStatus,
+        receiptName: submission.receiptName ?? "",
+        receiptTaxId: submission.receiptTaxId ?? "",
+        receiptAddress: submission.receiptAddress ?? "",
       });
 
       for (const [key, url] of [
@@ -328,14 +348,14 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:U1";
+    worksheet.autoFilter = "A1:X1";
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF047857" } };
       cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     });
-    for (const key of ["title", "titleEn", "creators", "keywords", "abstract"] as const) {
+    for (const key of ["title", "titleEn", "creators", "keywords", "abstract", "receiptAddress"] as const) {
       worksheet.getColumn(key).alignment = { vertical: "top", wrapText: true };
     }
     worksheet.eachRow((row, rowNumber) => {
@@ -369,12 +389,111 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         fee: eventRegistrations.fee,
         paymentSlipUrl: eventRegistrations.paymentSlipUrl,
         paymentStatus: eventRegistrations.paymentStatus,
+        receiptName: eventRegistrations.receiptName,
+        receiptTaxId: eventRegistrations.receiptTaxId,
+        receiptAddress: eventRegistrations.receiptAddress,
         createdAt: eventRegistrations.createdAt,
       })
       .from(eventRegistrations)
       .orderBy(desc(eventRegistrations.createdAt));
 
     return ok(rows);
+  })
+  .get("/registrations/export", async ({ request }) => {
+    const rows = await db
+      .select({
+        id: eventRegistrations.id,
+        fullName: eventRegistrations.fullName,
+        affiliation: eventRegistrations.affiliation,
+        phone: eventRegistrations.phone,
+        email: eventRegistrations.email,
+        feeType: eventRegistrations.feeType,
+        fee: eventRegistrations.fee,
+        paymentSlipUrl: eventRegistrations.paymentSlipUrl,
+        paymentStatus: eventRegistrations.paymentStatus,
+        receiptName: eventRegistrations.receiptName,
+        receiptTaxId: eventRegistrations.receiptTaxId,
+        receiptAddress: eventRegistrations.receiptAddress,
+        createdAt: eventRegistrations.createdAt,
+      })
+      .from(eventRegistrations)
+      .orderBy(desc(eventRegistrations.createdAt));
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "TSHE-CON 2026";
+    workbook.created = new Date();
+    const worksheet = workbook.addWorksheet("ผู้ลงทะเบียน", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+
+    worksheet.columns = [
+      { header: "ลำดับ", key: "sequence", width: 9 },
+      { header: "รหัสลงทะเบียน", key: "id", width: 38 },
+      { header: "ชื่อ-นามสกุล", key: "fullName", width: 28 },
+      { header: "สังกัด/หน่วยงาน", key: "affiliation", width: 32 },
+      { header: "เบอร์โทรศัพท์", key: "phone", width: 18 },
+      { header: "อีเมล", key: "email", width: 30 },
+      { header: "ประเภทผู้เข้าร่วม", key: "feeType", width: 20 },
+      { header: "ค่าลงทะเบียน (บาท)", key: "fee", width: 18 },
+      { header: "สถานะการชำระเงิน", key: "paymentStatus", width: 20 },
+      { header: "ลิงก์หลักฐานชำระเงิน", key: "paymentSlipUrl", width: 55 },
+      { header: "ชื่อสำหรับออกใบเสร็จ", key: "receiptName", width: 30 },
+      { header: "เลขประจำตัวผู้เสียภาษี", key: "receiptTaxId", width: 22 },
+      { header: "ที่อยู่สำหรับออกใบเสร็จ", key: "receiptAddress", width: 45 },
+      { header: "วันที่ลงทะเบียน", key: "createdAt", width: 22 },
+    ];
+
+    const origin = new URL(request.url).origin;
+    rows.forEach((reg, index) => {
+      const paymentSlipUrl = absoluteFileUrl(reg.paymentSlipUrl, origin);
+      const row = worksheet.addRow({
+        sequence: index + 1,
+        id: reg.id,
+        fullName: reg.fullName,
+        affiliation: reg.affiliation ?? "",
+        phone: reg.phone ?? "",
+        email: reg.email,
+        feeType: EVENT_FEE_TYPE_NAMES[reg.feeType] ?? reg.feeType,
+        fee: reg.fee,
+        paymentStatus: EVENT_PAYMENT_STATUS_NAMES[reg.paymentStatus] ?? reg.paymentStatus,
+        paymentSlipUrl,
+        receiptName: reg.receiptName ?? "",
+        receiptTaxId: reg.receiptTaxId ?? "",
+        receiptAddress: reg.receiptAddress ?? "",
+        createdAt: formatExportDate(reg.createdAt),
+      });
+
+      if (paymentSlipUrl) {
+        const cell = row.getCell("paymentSlipUrl");
+        cell.value = { text: paymentSlipUrl, hyperlink: paymentSlipUrl };
+        cell.font = { color: { argb: "FF0563C1" }, underline: true };
+      }
+    });
+
+    worksheet.autoFilter = "A1:N1";
+    worksheet.getRow(1).height = 28;
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF047857" } };
+      cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    });
+
+    for (const key of ["fullName", "affiliation", "receiptAddress"] as const) {
+      worksheet.getColumn(key).alignment = { vertical: "top", wrapText: true };
+    }
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      row.alignment = { vertical: "top" };
+    });
+
+    const file = await workbook.xlsx.writeBuffer();
+    const filename = `envicon-event-registrations-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    return new Response(new Uint8Array(file), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
   })
   .patch(
     "/event-registrations/:id/payment",
