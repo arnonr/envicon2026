@@ -62,6 +62,9 @@ export const submissions = mysqlTable("submissions", {
   paymentVerifiedBy: varchar("payment_verified_by", { length: 36 }).references(() => users.id),
   paymentVerifiedAt: timestamp("payment_verified_at"),
   paymentNote: text("payment_note"),
+  receiptName: varchar("receipt_name", { length: 255 }),
+  receiptTaxId: varchar("receipt_tax_id", { length: 20 }),
+  receiptAddress: text("receipt_address"),
   submittedAt: timestamp("submitted_at"),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
@@ -197,6 +200,9 @@ export const eventRegistrations = mysqlTable("event_registrations", {
   fee: int("fee").notNull().default(0),
   paymentSlipUrl: varchar("payment_slip_url", { length: 500 }),
   paymentStatus: mysqlEnum("payment_status", ["pending_verification", "confirmed", "rejected"]).notNull().default("pending_verification"),
+  receiptName: varchar("receipt_name", { length: 255 }),
+  receiptTaxId: varchar("receipt_tax_id", { length: 20 }),
+  receiptAddress: text("receipt_address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
