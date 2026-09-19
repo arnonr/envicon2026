@@ -13,7 +13,7 @@ export function buildReviewerInvitationEmail(data: ReviewerInvitationData): { su
       เรียน <strong>${escapeHtml(reviewerName)}</strong>
     </p>
     <p style="font-size:15px;color:#374151;line-height:1.7;margin:0 0 16px">
-      คณะกรรมการจัดงานประชุมวิชาการนานาชาติด้านวิทยาศาสตร์และเทคโนโลยีสิ่งแวดล้อม
+      คณะกรรมการจัดงานประชุมวิชาการระดับชาติด้านวิทยาศาสตร์และเทคโนโลยีสิ่งแวดล้อม
       <strong>TSHE-CON 2026</strong>
       มีความยินดีที่ได้เชิญท่านให้เกียรติเป็น <strong>ผู้ประเมินผลงานวิจัย</strong>
     </p>
@@ -152,7 +152,7 @@ function emailLayout(body: string): string {
   <tr>
     <td style="background-color:#059669;padding:28px 32px;text-align:center">
       <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:1px">TSHE-CON 2026</div>
-      <div style="font-size:13px;color:#d1fae5;margin-top:4px">International Conference on Environmental Science and Technology</div>
+      <div style="font-size:13px;color:#d1fae5;margin-top:4px">National Conference on Environmental Science and Technology</div>
     </td>
   </tr>
 
