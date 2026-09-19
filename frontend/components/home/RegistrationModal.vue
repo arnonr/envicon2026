@@ -88,11 +88,17 @@ async function handleSubmit() {
     return;
   }
 
+  const cleanEmail = form.value.email.trim().toLowerCase();
+  if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    showError({ status: 400, error: "กรุณากรอกอีเมลที่ถูกต้อง" });
+    return;
+  }
+
   const body = new FormData();
-  body.append("fullName", form.value.fullName);
-  body.append("affiliation", form.value.affiliation);
-  body.append("phone", form.value.phone);
-  body.append("email", form.value.email);
+  body.append("fullName", form.value.fullName.trim());
+  body.append("affiliation", form.value.affiliation.trim());
+  body.append("phone", form.value.phone.trim());
+  body.append("email", cleanEmail);
   body.append("feeType", form.value.feeType);
   body.append("receiptName", form.value.receiptName.trim());
   body.append("receiptTaxId", form.value.receiptTaxId.trim());
@@ -162,7 +168,7 @@ function close() {
         <UButton color="primary" @click="close">ปิด</UButton>
       </div>
 
-      <form v-else class="space-y-4" @submit.prevent="handleSubmit">
+      <form v-else class="space-y-4" novalidate @submit.prevent="handleSubmit">
         <UFormGroup label="ชื่อ-นามสกุล (Full Name)" required>
           <UInput
             v-model="form.fullName"
@@ -188,9 +194,10 @@ function close() {
 
         <UFormGroup label="อีเมล (Email)" required>
           <UInput
-            v-model="form.email"
+            v-model.trim="form.email"
             placeholder="email@example.com"
             type="email"
+            autocomplete="email"
             required
           />
         </UFormGroup>

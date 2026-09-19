@@ -41,8 +41,11 @@ function validateField(field: "name" | "email" | "password") {
   if (field === "name" && isRegisterMode.value && !form.name.trim()) {
     errors.name = "กรุณากรอกชื่อ-นามสกุล";
   }
-  if (field === "email" && (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))) {
-    errors.email = "กรุณากรอกอีเมลที่ถูกต้อง";
+  if (field === "email") {
+    const email = form.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "กรุณากรอกอีเมลที่ถูกต้อง";
+    }
   }
   if (field === "password" && form.password.length > 0 && form.password.length < 8) {
     errors.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
@@ -51,6 +54,12 @@ function validateField(field: "name" | "email" | "password") {
 
 function onBlur(field: "name" | "email" | "password") {
   touched[field] = true;
+  if (field === "email") {
+    form.email = form.email.trim();
+  }
+  if (field === "name") {
+    form.name = form.name.trim();
+  }
   validateField(field);
 }
 
@@ -75,7 +84,8 @@ function validate(): boolean {
     errors.name = "กรุณากรอกชื่อ-นามสกุล";
     valid = false;
   }
-  if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+  const email = form.email.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errors.email = "กรุณากรอกอีเมลที่ถูกต้อง";
     valid = false;
   }
@@ -96,17 +106,19 @@ function getErrorMessage(error: any): string {
 }
 
 async function handleSubmit() {
+  form.email = form.email.trim();
+  if (form.name) form.name = form.name.trim();
   if (!validate()) return;
   loading.value = true;
 
   if (isRegisterMode.value) {
     const { error } = await handleApiCall(() =>
       register({
-        email: form.email,
+        email: form.email.trim().toLowerCase(),
         password: form.password,
-        name: form.name,
-        affiliation: form.affiliation || undefined,
-        phone: form.phone || undefined,
+        name: form.name.trim(),
+        affiliation: form.affiliation?.trim() || undefined,
+        phone: form.phone?.trim() || undefined,
       }),
     );
     if (error) {
@@ -117,7 +129,7 @@ async function handleSubmit() {
     showSuccess("ลงทะเบียนสำเร็จ");
   } else {
     const { error } = await handleApiCall(() =>
-      login(form.email, form.password),
+      login(form.email.trim().toLowerCase(), form.password),
     );
     if (error) {
       serverError.value = getErrorMessage(error);
@@ -144,7 +156,7 @@ async function handleSubmit() {
       </div>
 
       <UCard>
-        <form @submit.prevent="handleSubmit" class="space-y-4">
+        <form novalidate @submit.prevent="handleSubmit" class="space-y-4">
           <UAlert v-if="serverError" icon="i-heroicons-exclamation-triangle" color="red" variant="soft" :title="serverError" :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'gray', variant: 'link' }" @close="serverError = ''" />
           <template v-if="isRegisterMode">
             <UFormGroup label="ชื่อ-นามสกุล (Full Name)" :error="touched.name ? errors.name : ''">
@@ -165,10 +177,11 @@ async function handleSubmit() {
 
           <UFormGroup label="อีเมล (Email)" :error="touched.email ? errors.email : ''">
             <UInput
-              v-model="form.email"
+              v-model.trim="form.email"
               type="email"
               placeholder="email@example.com"
               icon="i-heroicons-envelope"
+              autocomplete="email"
               @blur="onBlur('email')"
             />
           </UFormGroup>

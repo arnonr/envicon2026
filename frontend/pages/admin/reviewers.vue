@@ -96,7 +96,7 @@ async function saveReviewer() {
   const { error } = await handleApiCall(() =>
     editingId.value
       ? $fetch(`${apiBase}/admin/reviewers/${editingId.value}`, { method: "PATCH", headers: headers.value, body: payload })
-      : $fetch(`${apiBase}/admin/reviewers`, { method: "POST", headers: headers.value, body: { ...payload, email: form.email.trim() } }),
+      : $fetch(`${apiBase}/admin/reviewers`, { method: "POST", headers: headers.value, body: { ...payload, email: form.email.trim().toLowerCase() } }),
   );
   saving.value = false;
   if (error) return showError(error);
@@ -140,12 +140,12 @@ onMounted(fetchReviewers);
         <template #header>
           <h2 class="font-semibold">{{ editingId ? "แก้ไขผู้รีวิว" : "เพิ่มผู้รีวิว" }}</h2>
         </template>
-        <form class="space-y-4" @submit.prevent="saveReviewer">
+        <form novalidate class="space-y-4" @submit.prevent="saveReviewer">
           <UFormGroup label="ชื่อ-นามสกุล (Full Name)" required>
             <UInput v-model="form.name" />
           </UFormGroup>
           <UFormGroup label="อีเมล (Email)" required>
-            <UInput v-model="form.email" type="email" :disabled="Boolean(editingId)" />
+            <UInput v-model.trim="form.email" type="email" :disabled="Boolean(editingId)" />
           </UFormGroup>
           <UFormGroup label="จำนวนงานแนะนำสูงสุด (Maximum Concurrent Reviews)">
             <UInput v-model.number="form.maxConcurrentReviews" type="number" min="1" />

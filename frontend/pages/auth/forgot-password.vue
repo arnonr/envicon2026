@@ -13,7 +13,8 @@ const successMessage = ref("หากอีเมลนี้อยู่ใน�
 
 function validate() {
   error.value = "";
-  if (!email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+  const cleanEmail = email.value.trim();
+  if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
     error.value = "กรุณากรอกอีเมลที่ถูกต้อง";
     return false;
   }
@@ -21,12 +22,13 @@ function validate() {
 }
 
 async function submit() {
+  email.value = email.value.trim();
   if (!validate()) return;
   loading.value = true;
   const { data, error: apiError } = await handleApiCall(() =>
     $fetch<{ success: true; data: { sent: boolean }; message?: string }>(`${apiBase}/auth/forgot-password`, {
       method: "POST",
-      body: { email: email.value },
+      body: { email: email.value.trim().toLowerCase() },
     }),
   );
   loading.value = false;
@@ -55,10 +57,10 @@ async function submit() {
           <UButton to="/auth/login" color="primary">กลับไปเข้าสู่ระบบ</UButton>
         </div>
 
-        <form v-else class="space-y-4" @submit.prevent="submit">
+        <form v-else class="space-y-4" novalidate @submit.prevent="submit">
           <UFormGroup label="อีเมล (Email)" :error="error">
             <UInput
-              v-model="email"
+              v-model.trim="email"
               type="email"
               placeholder="email@example.com"
               icon="i-heroicons-envelope"

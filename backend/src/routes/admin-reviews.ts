@@ -120,7 +120,10 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
   .post(
     "/reviewers",
     async ({ body, set }) => {
-      const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, body.email)).limit(1);
+      const email = body.email.trim().toLowerCase();
+      const name = body.name.trim();
+
+      const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
       if (existing) {
         set.status = 409;
         return fail("CONFLICT", "อีเมลนี้มีบัญชีในระบบแล้ว");
@@ -129,8 +132,8 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       const id = crypto.randomUUID();
       await db.insert(users).values({
         id,
-        name: body.name,
-        email: body.email,
+        name,
+        email,
         role: "reviewer",
       });
       await db.insert(reviewerProfiles).values({
@@ -138,9 +141,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         maxConcurrentReviews: body.maxConcurrentReviews,
       });
 
-      const email = await sendInvitation({ id, name: body.name, email: body.email });
+      const invitation = await sendInvitation({ id, name, email });
       set.status = 201;
-      return ok({ id, invitationStatus: email.status });
+      return ok({ id, invitationStatus: invitation.status });
     },
     {
       body: t.Object({

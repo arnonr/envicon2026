@@ -15,7 +15,13 @@ export const useAuth = () => {
       data: { token: string; user: any };
     }>(`${apiBase}/auth/register`, {
       method: "POST",
-      body: data,
+      body: {
+        ...data,
+        email: data.email.trim().toLowerCase(),
+        name: data.name.trim(),
+        affiliation: data.affiliation?.trim() || undefined,
+        phone: data.phone?.trim() || undefined,
+      },
     });
     authStore.setAuth(res.data.token, res.data.user);
     return res.data;
@@ -27,7 +33,7 @@ export const useAuth = () => {
       data: { token: string; user: any };
     }>(`${apiBase}/auth/login`, {
       method: "POST",
-      body: { email, password },
+      body: { email: email.trim().toLowerCase(), password },
     });
     authStore.setAuth(res.data.token, res.data.user);
     return res.data;
