@@ -87,7 +87,7 @@ defineExpose({ creators });
         @update:model-value="update('title_en', $event as string)" />
     </UFormGroup>
 
-    <UFormGroup label="บทคัดย่อ (Abstract)" required hint="ไม่เกิน 250 คำ (Maximum 250 words)">
+    <UFormGroup label="บทคัดย่อ (Abstract)" required hint="ไม่เกิน 300 คำ (Maximum 300 words)">
       <UTextarea :model-value="modelValue.abstract" placeholder="สรุปผลงานวิจัย วัตถุประสงค์ วิธีการ และผลการศึกษา"
         :rows="6" @update:model-value="update('abstract', $event as string)" />
     </UFormGroup>
