@@ -1,8 +1,9 @@
 import { Elysia, t } from "elysia";
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db } from "../db";
 import {
   emailNotifications,
+  passwordSetupTokens,
   reviewRounds,
   reviewerExpertiseTracks,
   reviewerProfiles,
@@ -19,6 +20,30 @@ import { buildAuthorResultEmail, buildReviewerInvitationEmail, buildReviewAssign
 import { issuePasswordSetupToken } from "../services/password-setup";
 import { fail, ok } from "../utils/response";
 import { storedFileExists } from "../services/storage";
+
+function generateSecurePassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const special = "!@#$%&*";
+  const all = upper + lower + digits + special;
+
+  const bytes = crypto.getRandomValues(new Uint8Array(10));
+  const chars = [
+    upper[bytes[0] % upper.length],
+    lower[bytes[1] % lower.length],
+    digits[bytes[2] % digits.length],
+    special[bytes[3] % special.length],
+  ];
+  for (let i = 4; i < 10; i++) {
+    chars.push(all[bytes[i] % all.length]);
+  }
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = bytes[i] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
+}
 
 async function sendInvitation(user: { id: string; email: string; name: string }) {
   const token = await issuePasswordSetupToken(user.id);
@@ -204,6 +229,60 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       return ok(await sendInvitation(reviewer));
     },
     { params: t.Object({ id: t.String() }) },
+  )
+  .post(
+    "/reviewers/:id/reset-password",
+    async ({ params, body, set }) => {
+      const [reviewer] = await db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .where(and(eq(users.id, params.id), eq(users.role, "reviewer")))
+        .limit(1);
+      if (!reviewer) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบผู้รีวิว");
+      }
+
+      let plainPassword = body?.password?.trim();
+      if (plainPassword) {
+        if (plainPassword.length < 8) {
+          set.status = 400;
+          return fail("VALIDATION_ERROR", "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร");
+        }
+      } else {
+        plainPassword = generateSecurePassword();
+      }
+
+      const passwordHash = await Bun.password.hash(plainPassword, {
+        algorithm: "bcrypt",
+        cost: 10,
+      });
+
+      await db.update(users).set({ passwordHash }).where(eq(users.id, params.id));
+
+      await db
+        .update(passwordSetupTokens)
+        .set({ usedAt: new Date() })
+        .where(and(eq(passwordSetupTokens.userId, params.id), isNull(passwordSetupTokens.usedAt)));
+
+      return ok(
+        {
+          id: reviewer.id,
+          name: reviewer.name,
+          email: reviewer.email,
+          password: plainPassword,
+        },
+        "รีเซ็ตรหัสผ่านสำเร็จ",
+      );
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Optional(
+        t.Object({
+          password: t.Optional(t.String()),
+        }),
+      ),
+    },
   )
   .get(
     "/submissions/:id/review-workflow",

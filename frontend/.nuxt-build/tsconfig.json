@@ -131,7 +131,7 @@
         "./tailwind/expose"
       ],
       "#app-manifest": [
-        "./manifest/meta/dffe3296-de61-4867-8af7-c2984228ddb2.json"
+        "./manifest/meta/f612e452-8cfa-412d-a722-246e1911a045.json"
       ],
       "#components": [
         "./components"

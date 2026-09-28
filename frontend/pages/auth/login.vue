@@ -20,7 +20,7 @@ const form = reactive({
   name: "",
   affiliation: "",
   phone: "",
-  email: "",
+  email: typeof route.query.email === "string" ? route.query.email : "",
   password: "",
 });
 

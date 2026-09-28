@@ -122,6 +122,112 @@ async function resendInvitation(id: string) {
   }
 }
 
+const resetModalOpen = ref(false);
+const resetStep = ref<"form" | "result">("form");
+const targetReviewer = ref<Reviewer | null>(null);
+const newPasswordInput = ref("");
+const resetting = ref(false);
+const displayedPassword = ref("");
+const copied = ref(false);
+
+function openResetPasswordModal(reviewer: Reviewer) {
+  targetReviewer.value = reviewer;
+  newPasswordInput.value = "";
+  displayedPassword.value = "";
+  resetStep.value = "form";
+  copied.value = false;
+  resetModalOpen.value = true;
+}
+
+function generateRandomPassword() {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const special = "!@#$%&*";
+  const all = upper + lower + digits + special;
+
+  const array = new Uint8Array(10);
+  crypto.getRandomValues(array);
+  const chars = [
+    upper[array[0] % upper.length],
+    lower[array[1] % lower.length],
+    digits[array[2] % digits.length],
+    special[array[3] % special.length],
+  ];
+  for (let i = 4; i < 10; i++) {
+    chars.push(all[array[i] % all.length]);
+  }
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = array[i] % (i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  newPasswordInput.value = chars.join("");
+}
+
+async function copyToClipboard(text: string) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 3000);
+  } catch {
+    showError({ status: 500, error: "ไม่สามารถคัดลอกได้ กรุณาคัดลอกด้วยตนเอง" });
+  }
+}
+
+async function copyPassword() {
+  if (!displayedPassword.value) return;
+  await copyToClipboard(displayedPassword.value);
+  showSuccess("คัดลอกรหัสผ่านเรียบร้อย");
+}
+
+async function copyAllLoginInfo() {
+  if (!targetReviewer.value) return;
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const loginUrl = `${origin}/envicon2026/auth/login`;
+  const text = `ข้อมูลเข้าสู่ระบบกรรมการ ENVICON 2026\nผู้ใช้งาน: ${targetReviewer.value.name}\nอีเมล: ${targetReviewer.value.email}\nรหัสผ่าน: ${displayedPassword.value}\nเข้าสู่ระบบได้ที่: ${loginUrl}`;
+  await copyToClipboard(text);
+  showSuccess("คัดลอกข้อมูลเข้าสู่ระบบเรียบร้อย");
+}
+
+async function confirmResetPassword() {
+  if (!targetReviewer.value) return;
+  if (newPasswordInput.value.trim() && newPasswordInput.value.trim().length < 8) {
+    showError({ status: 400, error: "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร" });
+    return;
+  }
+
+  resetting.value = true;
+  const payload = newPasswordInput.value.trim() ? { password: newPasswordInput.value.trim() } : {};
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: { id: string; name: string; email: string; password: string } }>(
+      `${apiBase}/admin/reviewers/${targetReviewer.value!.id}/reset-password`,
+      {
+        method: "POST",
+        headers: headers.value,
+        body: payload,
+      },
+    ),
+  );
+  resetting.value = false;
+  if (error) return showError(error);
+
+  displayedPassword.value = data!.data.password;
+  resetStep.value = "result";
+  showSuccess("รีเซ็ตรหัสผ่านเรียบร้อยแล้ว");
+  await fetchReviewers();
+}
+
 onMounted(fetchReviewers);
 </script>
 
@@ -202,13 +308,132 @@ onMounted(fetchReviewers);
               </div>
               <p class="text-xs text-gray-500 mt-2">งานค้าง {{ reviewer.activeReviewCount }}/{{ reviewer.maxConcurrentReviews }} | เสร็จแล้ว {{ reviewer.completedReviewCount }}</p>
             </div>
-            <div class="flex gap-2 items-start">
+            <div class="flex flex-wrap gap-2 items-start">
               <UButton size="xs" color="gray" variant="soft" @click="editReviewer(reviewer)">แก้ไข</UButton>
+              <UButton size="xs" color="amber" variant="soft" icon="i-heroicons-key" @click="openResetPasswordModal(reviewer)">รีเซ็ตรหัสผ่าน</UButton>
               <UButton size="xs" color="primary" variant="soft" :loading="invitationSending === reviewer.id" @click="resendInvitation(reviewer.id)">ส่งคำเชิญซ้ำ</UButton>
             </div>
           </div>
         </div>
       </UCard>
     </div>
+
+    <!-- Modal รีเซ็ตรหัสผ่านกรรมการ -->
+    <UModal v-model="resetModalOpen" :ui="{ width: 'sm:max-w-md' }">
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-key" class="w-5 h-5 text-amber-500" />
+            <h3 class="font-semibold text-gray-900">รีเซ็ตรหัสผ่านกรรมการ</h3>
+          </div>
+        </template>
+
+        <!-- ขั้นตอนที่ 1: กำหนดรหัสผ่าน หรือสุ่มรหัสผ่าน -->
+        <div v-if="resetStep === 'form'" class="space-y-4">
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+            <p class="font-medium text-gray-900">{{ targetReviewer?.name }}</p>
+            <p class="text-gray-500 text-xs mt-0.5">{{ targetReviewer?.email }}</p>
+            <p v-if="targetReviewer?.affiliation" class="text-gray-500 text-xs">{{ targetReviewer?.affiliation }}</p>
+          </div>
+
+          <UFormGroup
+            label="รหัสผ่านใหม่ (New Password)"
+            help="สามารถคลิก 'สุ่มรหัส' เพื่อให้ระบบสุ่มรหัสผ่านให้ หรือพิมพ์เองอย่างน้อย 8 ตัวอักษร (หากเว้นว่างไว้ ระบบจะสุ่มให้อัตโนมัติ)"
+          >
+            <div class="flex gap-2">
+              <UInput
+                v-model="newPasswordInput"
+                type="text"
+                placeholder="เว้นว่างไว้เพื่อสุ่มอัตโนมัติ"
+                class="flex-1 font-mono"
+              />
+              <UButton
+                color="gray"
+                variant="soft"
+                size="sm"
+                icon="i-heroicons-arrow-path"
+                @click="generateRandomPassword"
+              >
+                สุ่มรหัส
+              </UButton>
+            </div>
+          </UFormGroup>
+
+          <div class="rounded-md bg-amber-50 p-3 text-xs text-amber-800 border border-amber-200 flex gap-2">
+            <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600" />
+            <div>
+              <p class="font-medium">ข้อควรระวัง:</p>
+              <p class="mt-0.5">เมื่อรีเซ็ตแล้ว รหัสผ่านเดิมจะถูกเปลี่ยนทันที และระบบจะแสดงรหัสผ่านใหม่เพื่อให้ Admin นำไปแจ้งกรรมการ</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-2 pt-2">
+            <UButton color="gray" variant="ghost" @click="resetModalOpen = false">ยกเลิก</UButton>
+            <UButton
+              color="amber"
+              :loading="resetting"
+              @click="confirmResetPassword"
+            >
+              ยืนยันรีเซ็ตรหัสผ่าน
+            </UButton>
+          </div>
+        </div>
+
+        <!-- ขั้นตอนที่ 2: แสดงรหัสผ่านใหม่ให้ Admin ทราบ -->
+        <div v-else class="space-y-4">
+          <div class="text-center py-1">
+            <div class="w-12 h-12 rounded-full bg-green-100 text-green-600 mx-auto flex items-center justify-center mb-2">
+              <UIcon name="i-heroicons-check" class="w-6 h-6" />
+            </div>
+            <h4 class="font-semibold text-gray-900 text-base">รีเซ็ตรหัสผ่านสำเร็จ</h4>
+            <p class="text-xs text-gray-500 mt-1">
+              กรรมการ: <span class="font-medium text-gray-800">{{ targetReviewer?.name }}</span> ({{ targetReviewer?.email }})
+            </p>
+          </div>
+
+          <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 text-center">
+            <p class="text-xs font-medium text-amber-900 mb-1">รหัสผ่านใหม่สำหรับเข้าสู่ระบบ</p>
+            <div class="flex items-center justify-center gap-2 mt-2">
+              <code class="font-mono text-xl font-bold tracking-wider text-gray-900 bg-white px-3 py-1.5 rounded border border-amber-200 select-all">
+                {{ displayedPassword }}
+              </code>
+              <UButton
+                :color="copied ? 'green' : 'amber'"
+                :icon="copied ? 'i-heroicons-check' : 'i-heroicons-clipboard-document'"
+                size="sm"
+                @click="copyPassword"
+              >
+                {{ copied ? "คัดลอกแล้ว" : "คัดลอกรหัสผ่าน" }}
+              </UButton>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <UButton
+              block
+              color="gray"
+              variant="outline"
+              size="sm"
+              icon="i-heroicons-document-duplicate"
+              @click="copyAllLoginInfo"
+            >
+              คัดลอกข้อความแจ้งกรรมการ (อีเมล + รหัสผ่าน + ลิงก์)
+            </UButton>
+          </div>
+
+          <div class="rounded-md bg-blue-50 p-3 text-xs text-blue-800 border border-blue-200 flex gap-2">
+            <UIcon name="i-heroicons-information-circle" class="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
+            <div>
+              <p class="font-medium">คำแนะนำสำหรับ Admin:</p>
+              <p class="mt-0.5">โปรดคัดลอกรหัสผ่านนี้ส่งให้กรรมการทางช่องทางติดต่อส่วนตัว เนื่องจากระบบจะไม่แสดงรหัสผ่านนี้อีกครั้งเพื่อความปลอดภัย</p>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-2">
+            <UButton color="primary" @click="resetModalOpen = false">ปิดหน้าต่าง</UButton>
+          </div>
+        </div>
+      </UCard>
+    </UModal>
   </div>
 </template>

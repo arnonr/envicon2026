@@ -106,11 +106,14 @@ async function submit() {
     body.affiliation = affiliation.value.trim();
     body.expertiseTracks = expertiseTracks.value;
   }
-  const { error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/auth/setup-password`, {
-      method: "POST",
-      body,
-    }),
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: { ready: boolean; token?: string; user?: any } }>(
+      `${apiBase}/auth/setup-password`,
+      {
+        method: "POST",
+        body,
+      },
+    ),
   );
   saving.value = false;
   if (error) {
@@ -119,6 +122,20 @@ async function submit() {
   }
   completed.value = true;
   showSuccess("ตั้งรหัสผ่านสำเร็จ");
+
+  if (data?.data?.token && data?.data?.user) {
+    const authStore = useAuthStore();
+    authStore.setAuth(data.data.token, data.data.user);
+    const targetPath =
+      data.data.user.role === "reviewer"
+        ? "/reviewer"
+        : data.data.user.role === "admin"
+        ? "/admin"
+        : "/dashboard";
+    setTimeout(() => {
+      navigateTo(targetPath);
+    }, 2000);
+  }
 }
 </script>
 
@@ -129,9 +146,29 @@ async function submit() {
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 animate-spin text-gray-400" />
       </div>
       <div v-else-if="completed" class="text-center space-y-4 py-5">
-        <UIcon name="i-heroicons-check-circle" class="w-12 h-12 text-green-500 mx-auto" />
-        <h1 class="text-xl font-semibold">ตั้งรหัสผ่านเรียบร้อยแล้ว</h1>
-        <UButton to="/auth/login" color="primary">เข้าสู่ระบบ</UButton>
+        <UIcon name="i-heroicons-check-circle" class="w-14 h-14 text-green-500 mx-auto" />
+        <h1 class="text-xl font-bold text-gray-900">ตั้งรหัสผ่านเรียบร้อยแล้ว</h1>
+        
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center space-y-1">
+          <p class="text-xs text-gray-500 font-medium">อีเมลสำหรับเข้าสู่ระบบของคุณ (Username):</p>
+          <p class="font-mono text-base font-bold text-primary-700 select-all">{{ account?.email }}</p>
+        </div>
+
+        <p class="text-xs text-gray-500 flex items-center justify-center gap-1">
+          <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin text-primary-500" />
+          ระบบกำลังนำท่านเข้าสู่ระบบอัตโนมัติ...
+        </p>
+
+        <div class="pt-2">
+          <UButton
+            :to="account?.role === 'reviewer' ? '/reviewer' : account?.role === 'admin' ? '/admin' : '/dashboard'"
+            color="primary"
+            block
+            size="lg"
+          >
+            เข้าสู่ระบบทันที
+          </UButton>
+        </div>
       </div>
       <form v-else-if="account" class="space-y-4" @submit.prevent="submit">
         <div>

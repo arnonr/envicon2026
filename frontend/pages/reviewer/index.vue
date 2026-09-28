@@ -16,9 +16,77 @@ const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
 const authStore = useAuthStore();
 const { user } = useAuth();
-const { handleApiCall, showError } = useApiError();
+const { handleApiCall, showError, showSuccess } = useApiError();
 const loading = ref(true);
 const assignments = ref<ReviewAssignment[]>([]);
+
+const changePasswordModalOpen = ref(false);
+const changingPassword = ref(false);
+const passwordForm = reactive({
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+});
+const passwordErrors = reactive({
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+});
+
+function openChangePasswordModal() {
+  passwordForm.currentPassword = "";
+  passwordForm.newPassword = "";
+  passwordForm.confirmPassword = "";
+  passwordErrors.currentPassword = "";
+  passwordErrors.newPassword = "";
+  passwordErrors.confirmPassword = "";
+  changePasswordModalOpen.value = true;
+}
+
+function validateChangePassword() {
+  passwordErrors.currentPassword = "";
+  passwordErrors.newPassword = "";
+  passwordErrors.confirmPassword = "";
+  let valid = true;
+
+  if (!passwordForm.currentPassword) {
+    passwordErrors.currentPassword = "กรุณากรอกรหัสผ่านปัจจุบัน";
+    valid = false;
+  }
+  if (!passwordForm.newPassword || passwordForm.newPassword.length < 8) {
+    passwordErrors.newPassword = "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร";
+    valid = false;
+  }
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    passwordErrors.confirmPassword = "รหัสผ่านใหม่ไม่ตรงกัน";
+    valid = false;
+  }
+  return valid;
+}
+
+async function handleChangePassword() {
+  if (!validateChangePassword()) return;
+  changingPassword.value = true;
+
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/auth/change-password`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authStore.token}` },
+      body: {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      },
+    }),
+  );
+  changingPassword.value = false;
+  if (error) {
+    showError(error);
+    return;
+  }
+
+  showSuccess("เปลี่ยนรหัสผ่านสำเร็จแล้ว");
+  changePasswordModalOpen.value = false;
+}
 
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมฯ",
@@ -62,10 +130,24 @@ onMounted(async () => {
 
 <template>
   <div class="max-w-5xl mx-auto px-4 py-12">
-    <div class="flex items-center justify-between mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">งานประเมินผลงาน</h1>
-        <p class="text-gray-500">สวัสดี, {{ user?.name }}</p>
+        <p class="text-gray-500 text-sm mt-0.5">
+          สวัสดี, {{ user?.name }}
+          <span v-if="user?.email" class="text-gray-400 font-mono text-xs">({{ user.email }})</span>
+        </p>
+      </div>
+      <div>
+        <UButton
+          color="gray"
+          variant="soft"
+          icon="i-heroicons-key"
+          size="sm"
+          @click="openChangePasswordModal"
+        >
+          เปลี่ยนรหัสผ่าน
+        </UButton>
       </div>
     </div>
     <div v-if="loading" class="flex justify-center py-16">
@@ -101,5 +183,60 @@ onMounted(async () => {
         </NuxtLink>
       </UCard>
     </template>
+
+    <!-- Modal เปลี่ยนรหัสผ่าน -->
+    <UModal v-model="changePasswordModalOpen" :ui="{ width: 'sm:max-w-md' }">
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-key" class="w-5 h-5 text-primary-600" />
+            <h3 class="font-semibold text-gray-900">เปลี่ยนรหัสผ่าน (Change Password)</h3>
+          </div>
+        </template>
+
+        <form class="space-y-4" novalidate @submit.prevent="handleChangePassword">
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs text-gray-600 space-y-1">
+            <p>ผู้ใช้งาน: <span class="font-medium text-gray-900">{{ user?.name }}</span></p>
+            <p>อีเมล (Username): <span class="font-mono text-gray-900 font-semibold">{{ user?.email }}</span></p>
+          </div>
+
+          <UFormGroup label="รหัสผ่านปัจจุบัน" required :error="passwordErrors.currentPassword">
+            <UInput
+              v-model="passwordForm.currentPassword"
+              type="password"
+              placeholder="กรอกรหัสผ่านเดิม"
+              autocomplete="current-password"
+            />
+          </UFormGroup>
+
+          <UFormGroup label="รหัสผ่านใหม่" required :error="passwordErrors.newPassword" help="อย่างน้อย 8 ตัวอักษร">
+            <UInput
+              v-model="passwordForm.newPassword"
+              type="password"
+              placeholder="อย่างน้อย 8 ตัวอักษร"
+              autocomplete="new-password"
+            />
+          </UFormGroup>
+
+          <UFormGroup label="ยืนยันรหัสผ่านใหม่" required :error="passwordErrors.confirmPassword">
+            <UInput
+              v-model="passwordForm.confirmPassword"
+              type="password"
+              placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
+              autocomplete="new-password"
+            />
+          </UFormGroup>
+
+          <div class="flex justify-end gap-2 pt-2">
+            <UButton color="gray" variant="ghost" @click="changePasswordModalOpen = false">
+              ยกเลิก
+            </UButton>
+            <UButton type="submit" color="primary" :loading="changingPassword">
+              บันทึกรหัสผ่านใหม่
+            </UButton>
+          </div>
+        </form>
+      </UCard>
+    </UModal>
   </div>
 </template>

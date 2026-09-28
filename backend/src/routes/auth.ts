@@ -214,7 +214,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   )
   .post(
     "/setup-password",
-    async ({ body, set }) => {
+    async ({ body, jwt, set }) => {
       const [setup] = await db
         .select({ id: passwordSetupTokens.id, userId: passwordSetupTokens.userId })
         .from(passwordSetupTokens)
@@ -231,7 +231,7 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       }
 
       const [targetUser] = await db
-        .select({ role: users.role })
+        .select()
         .from(users)
         .where(eq(users.id, setup.userId))
         .limit(1);
@@ -258,7 +258,18 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
       }
 
       await db.update(passwordSetupTokens).set({ usedAt: new Date() }).where(eq(passwordSetupTokens.id, setup.id));
-      return ok({ ready: true }, "ตั้งรหัสผ่านสำเร็จ");
+
+      const token = await jwt.sign({ sub: targetUser.id });
+      const user = {
+        id: targetUser.id,
+        email: targetUser.email,
+        name: targetUser.name,
+        affiliation: body.affiliation !== undefined ? body.affiliation : targetUser.affiliation,
+        phone: targetUser.phone,
+        role: targetUser.role,
+      };
+
+      return ok({ ready: true, token, user }, "ตั้งรหัสผ่านสำเร็จ");
     },
     {
       body: t.Object({
@@ -272,4 +283,52 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
   .use(requireAuth)
   .get("/me", ({ user }) => {
     return ok({ user });
-  });
+  })
+  .post(
+    "/change-password",
+    async ({ user, body, set }) => {
+      if (!user) {
+        set.status = 401;
+        return fail("UNAUTHORIZED", "กรุณาเข้าสู่ระบบ");
+      }
+
+      const [dbUser] = await db
+        .select({ passwordHash: users.passwordHash })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .limit(1);
+
+      if (!dbUser) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบบัญชีผู้ใช้");
+      }
+
+      if (dbUser.passwordHash) {
+        const valid = await Bun.password.verify(body.currentPassword, dbUser.passwordHash);
+        if (!valid) {
+          set.status = 400;
+          return fail("VALIDATION_ERROR", "รหัสผ่านปัจจุบันไม่ถูกต้อง");
+        }
+      }
+
+      if (body.newPassword.length < 8) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 8 ตัวอักษร");
+      }
+
+      const passwordHash = await Bun.password.hash(body.newPassword, {
+        algorithm: "bcrypt",
+        cost: 10,
+      });
+
+      await db.update(users).set({ passwordHash }).where(eq(users.id, user.id));
+
+      return ok({ updated: true }, "เปลี่ยนรหัสผ่านสำเร็จ");
+    },
+    {
+      body: t.Object({
+        currentPassword: t.String({ minLength: 1 }),
+        newPassword: t.String({ minLength: 8 }),
+      }),
+    },
+  );
