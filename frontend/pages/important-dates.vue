@@ -2,21 +2,22 @@
 const dates = [
   {
     title: "เปิดรับบทคัดย่อ (Abstract Submission)",
-    date: "1 เมษายน — 30 กันยายน 2569",
+    date: "1 เมษายน — 16 ตุลาคม 2569",
+    badge: "ขยายเวลาถึง 16 ต.ค. 69",
     icon: "i-heroicons-pencil-square",
     color: "primary",
     active: true,
   },
   {
     title: "ประกาศผลการพิจารณาบทคัดย่อ",
-    date: "7 ตุลาคม 2569",
+    date: "23 ตุลาคม 2569",
     icon: "i-heroicons-megaphone",
     color: "accent",
     active: false,
   },
   {
     title: "เปิดรับบทความฉบับสมบูรณ์ (Full Paper)",
-    date: "7 — 24 ตุลาคม 2569",
+    date: "27 ตุลาคม — 1 พฤศจิกายน 2569",
     icon: "i-heroicons-document-text",
     color: "primary",
     active: false,
@@ -63,9 +64,37 @@ const hotels = [
 <template>
   <div class="max-w-5xl mx-auto px-4 py-16">
     <section class="max-w-4xl mx-auto">
-      <div class="text-center mb-12">
+      <div class="text-center mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-3">กำหนดการที่สำคัญ</h1>
         <p class="text-gray-500 text-lg">Important Dates</p>
+      </div>
+
+      <!-- Extension Announcement Banner -->
+      <div class="mb-10 p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-rose-50 to-amber-50 border-2 border-amber-300/80 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-rose-500/20">
+            <UIcon name="i-heroicons-megaphone" class="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <div class="inline-flex items-center gap-2 mb-1">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">ประกาศขยายเวลา</span>
+              <span class="text-xs font-semibold text-rose-700">ขยายเวลาเปิดรับบทคัดย่อ</span>
+            </div>
+            <p class="font-bold text-stone-900 text-base sm:text-lg">
+              เปิดรับบทคัดย่อ (Abstract) ถึงวันที่ <span class="text-rose-600 underline decoration-rose-300 underline-offset-4">16 ตุลาคม 2569</span>
+            </p>
+            <p class="text-xs text-stone-600 mt-0.5">ผู้ที่สนใจสามารถส่งบทคัดย่อผ่านระบบออนไลน์ได้จนถึงวันดังกล่าว</p>
+          </div>
+        </div>
+        <UButton
+          to="/submit"
+          color="primary"
+          size="md"
+          class="flex-shrink-0 self-end sm:self-center font-semibold shadow-md"
+        >
+          ส่งบทคัดย่อเลย
+          <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
+        </UButton>
       </div>
 
       <div class="relative">
@@ -77,16 +106,25 @@ const hotels = [
             <!-- Timeline dot -->
             <div
               class="relative z-10 w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
-              :class="item.active ? 'bg-primary-600 ring-4 ring-primary-100' : 'bg-gray-100'"
+              :class="item.active ? 'bg-primary-600 ring-4 ring-primary-100 shadow-md shadow-primary-600/30' : 'bg-gray-100'"
             >
               <UIcon :name="item.icon" class="w-6 h-6" :class="item.active ? 'text-white' : 'text-gray-400'" />
             </div>
 
             <!-- Content -->
-            <UCard class="flex-1" :class="item.active ? 'ring-2 ring-primary-200' : ''">
+            <UCard class="flex-1" :class="item.active ? 'ring-2 ring-primary-200 border-primary-200 shadow-md' : ''">
               <div>
-                <h3 class="font-semibold text-gray-900 text-lg">{{ item.title }}</h3>
-                <p class="text-primary-600 font-medium mt-1">{{ item.date }}</p>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h3 class="font-semibold text-gray-900 text-lg">{{ item.title }}</h3>
+                  <span
+                    v-if="item.badge"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 shadow-sm animate-pulse"
+                  >
+                    <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+                    {{ item.badge }}
+                  </span>
+                </div>
+                <p class="text-primary-600 font-semibold mt-1">{{ item.date }}</p>
                 <UButton
                   v-if="item.link"
                   :to="item.link"

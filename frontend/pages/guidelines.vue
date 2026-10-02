@@ -29,6 +29,15 @@ const documents = [
     accent: "from-orange-400 to-amber-300",
     downloadUrl: `${appBaseUrl}/downloads/Full%20paper_Template.docx`,
   },
+  {
+    number: "04",
+    title: "โปสเตอร์ประชาสัมพันธ์โครงการ",
+    titleEn: "Official Conference Poster",
+    type: "รูปภาพความละเอียดสูง · .PNG",
+    icon: "i-heroicons-photo",
+    accent: "from-rose-500 to-amber-400",
+    downloadUrl: `${appBaseUrl}/images/poster-envicon2026.png`,
+  },
 ];
 </script>
 

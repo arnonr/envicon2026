@@ -27,6 +27,8 @@
           class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-full px-5 sm:px-6 py-2.5 mb-5 sm:mb-6 hero-fade hero-fade--1 shadow-lg shadow-meadow-950/30">
           <span class="w-2.5 h-2.5 rounded-full bg-meadow-400 animate-pulse shadow-sm shadow-meadow-300" />
           <span class="text-sm font-semibold tracking-wide text-white">TSHE-CON 2026</span>
+          <span class="hidden sm:inline-block w-1 h-1 rounded-full bg-white/40" />
+          <span class="hidden sm:inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/90 text-white shadow-sm">ขยายเวลารับบทคัดย่อถึง 16 ต.ค. 69</span>
         </div>
 
         <h1
@@ -119,18 +121,213 @@
             :style="ctaBubbleStyle(i)" />
 
           <div class="relative px-8 py-12 sm:py-16 text-center text-white">
-            <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 mb-5">
-              <span class="w-2 h-2 rounded-full bg-amber-300 animate-pulse" />
-              <span class="text-xs font-semibold tracking-wide">กำลังเปิดรับผลงาน</span>
+            <div class="inline-flex items-center gap-2 bg-rose-500/85 backdrop-blur-md rounded-full px-4 py-1.5 mb-5 border border-rose-300/40 shadow-lg">
+              <span class="w-2 h-2 rounded-full bg-white animate-ping" />
+              <span class="text-xs font-bold tracking-wide uppercase text-white">ขยายเวลาเปิดรับสมัคร</span>
             </div>
             <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
-              เปิดรับบทคัดย่อถึง <span class="text-amber-200 drop-shadow-md">30 กันยายน 2569</span>
+              ขยายเวลาเปิดรับบทคัดย่อถึง <span class="text-amber-200 drop-shadow-md">16 ตุลาคม 2569</span>
             </h2>
-            <p class="text-white/80 mb-7 max-w-lg mx-auto">ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอในการประชุมวิชาการ</p>
-            <button @click="goToAuthorDashboard"
-              class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-meadow-700 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-lg transition-all duration-300">
-              ส่งบทคัดย่อเลย →
-            </button>
+            <p class="text-white/90 mb-7 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
+              ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอผลงานในการประชุมวิชาการระดับชาติ TSHE-CON 2026
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+              <button @click="goToAuthorDashboard"
+                class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-meadow-800 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-xl transition-all duration-300">
+                ส่งบทคัดย่อเลย →
+              </button>
+              <a href="#poster-section"
+                class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 text-white font-semibold hover:bg-white/25 hover:scale-[1.03] transition-all duration-300">
+                <UIcon name="i-heroicons-photo" class="w-5 h-5 text-meadow-200" />
+                ดูโปสเตอร์ประชาสัมพันธ์
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ OFFICIAL POSTER & EXTENSION HIGHLIGHTS ═══════════ -->
+    <section id="poster-section" class="py-20 bg-gradient-to-b from-white via-meadow-50/50 to-white relative overflow-hidden">
+      <div class="max-w-6xl mx-auto px-6 relative z-10">
+        <div class="text-center mb-12 sm:mb-16">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-meadow-100 text-meadow-800 text-xs font-semibold uppercase tracking-[0.25em] mb-3">
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            Official Conference Poster
+          </div>
+          <h2 class="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-meadow-950">
+            โปสเตอร์ประชาสัมพันธ์โครงการ
+          </h2>
+          <p class="text-gray-600 mt-3 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+            การประชุมวิชาการระดับชาติ สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย ครั้งที่ 5
+            <br class="hidden sm:block" />
+            <span class="text-rose-600 font-semibold">ขยายเวลาเปิดรับบทคัดย่อ (Abstract) ถึงวันที่ 16 ตุลาคม 2569</span>
+          </p>
+          <div class="w-16 h-1.5 bg-gradient-to-r from-meadow-400 via-sky-400 to-amber-400 rounded-full mx-auto mt-4" />
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <!-- Poster Showcase (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col items-center">
+            <div
+              class="group relative w-full max-w-md rounded-3xl overflow-hidden bg-white p-2.5 sm:p-3 border-2 border-meadow-200 shadow-2xl shadow-meadow-900/15 transition-all duration-500 hover:border-meadow-400 hover:shadow-meadow-900/25 hover:-translate-y-1 cursor-pointer"
+              @click="showPosterModal = true"
+            >
+              <div class="relative rounded-2xl overflow-hidden bg-stone-100 aspect-[1/1.414]">
+                <img
+                  :src="posterImage"
+                  alt="โปสเตอร์การประชุมวิชาการระดับชาติ สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย ครั้งที่ 5 (TSHE-CON 2026)"
+                  class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                  loading="lazy"
+                />
+
+                <!-- Hover overlay -->
+                <div class="absolute inset-0 bg-meadow-950/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                  <div class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/95 text-meadow-950 font-bold text-sm shadow-xl transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                    <UIcon name="i-heroicons-magnifying-glass-plus" class="w-5 h-5 text-meadow-600" />
+                    คลิกดูภาพขยายเต็มจอ
+                  </div>
+                </div>
+
+                <!-- Top Badge -->
+                <div class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/90 text-white text-xs font-bold shadow-md backdrop-blur-sm">
+                  <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+                  ขยายเวลาถึง 16 ต.ค. 69
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-3 w-full max-w-md">
+              <button
+                type="button"
+                @click="showPosterModal = true"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-meadow-200 text-meadow-800 text-xs sm:text-sm font-semibold hover:bg-meadow-50 transition-colors shadow-sm"
+              >
+                <UIcon name="i-heroicons-arrows-pointing-out" class="w-4 h-4 text-meadow-600" />
+                ดูโปสเตอร์ขนาดเต็ม
+              </button>
+              <a
+                :href="posterImage"
+                download="TSHE-CON-2026-Poster.png"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-meadow-600 text-white text-xs sm:text-sm font-semibold hover:bg-meadow-700 transition-colors shadow-sm"
+              >
+                <UIcon name="i-heroicons-arrow-down-tray" class="w-4 h-4" />
+                ดาวน์โหลดโปสเตอร์ (HD)
+              </a>
+            </div>
+          </div>
+
+          <!-- Poster Info & Key Highlights (7 cols) -->
+          <div class="lg:col-span-7 space-y-5">
+            <!-- Extension Alert Card -->
+            <div class="rounded-2xl bg-gradient-to-br from-rose-50 via-amber-50/60 to-white border-2 border-rose-200 p-5 sm:p-6 shadow-sm">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-rose-500/25">
+                  <UIcon name="i-heroicons-bell-alert" class="w-6 h-6 animate-pulse" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="inline-flex items-center gap-2 mb-1">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">
+                      ประกาศสำคัญ
+                    </span>
+                    <span class="text-xs font-semibold text-rose-800">ขยายเวลารับบทคัดย่อ</span>
+                  </div>
+                  <h3 class="text-lg sm:text-xl font-bold text-stone-900 leading-snug">
+                    ขยายเวลาเปิดรับบทคัดย่อ: วันนี้ — 16 ตุลาคม 2569
+                  </h3>
+                  <p class="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
+                    เปิดโอกาสให้นักวิจัย คณาจารย์ นิสิตและนักศึกษา ส่งผลงานเข้าร่วมพิจารณาในการประชุมวิชาการระดับชาติ ครั้งที่ 5
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Schedule Highlights Box -->
+            <div class="rounded-2xl bg-white border border-meadow-100 p-5 sm:p-6 shadow-md shadow-meadow-900/5 space-y-3">
+              <h4 class="text-sm font-bold uppercase tracking-wider text-meadow-900 flex items-center gap-2">
+                <UIcon name="i-heroicons-calendar-days" class="w-4 h-4 text-meadow-600" />
+                กำหนดการสำคัญตามโปสเตอร์ประชาสัมพันธ์
+              </h4>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-1">
+                <div class="p-3 rounded-xl bg-rose-50/80 border border-rose-200">
+                  <div class="text-[11px] font-bold uppercase tracking-wider text-rose-700">ขยายเวลารับบทคัดย่อ</div>
+                  <div class="font-bold text-stone-900 mt-0.5">1 เม.ย. — 16 ต.ค. 69</div>
+                </div>
+                <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                  <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">ประกาศผลพิจารณาบทคัดย่อ</div>
+                  <div class="font-bold text-stone-900 mt-0.5">23 ต.ค. 69</div>
+                </div>
+                <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                  <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">เปิดรับบทความฉบับสมบูรณ์</div>
+                  <div class="font-bold text-stone-900 mt-0.5">27 ต.ค. — 1 พ.ย. 69</div>
+                </div>
+                <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                  <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">ประกาศโปรแกรมนำเสนอ</div>
+                  <div class="font-bold text-stone-900 mt-0.5">31 ต.ค. 69</div>
+                </div>
+              </div>
+
+              <div class="p-3 rounded-xl bg-meadow-50 border border-meadow-200 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-heroicons-academic-cap" class="w-5 h-5 text-meadow-700 shrink-0" />
+                  <div>
+                    <span class="text-xs font-bold text-meadow-900">วันจัดงานประชุมวิชาการ</span>
+                    <span class="text-xs text-meadow-700 block">ณ อาคาร 99 อุทยานเทคโนโลยี มจพ.</span>
+                  </div>
+                </div>
+                <span class="text-sm font-bold text-meadow-900">12 — 13 พ.ย. 69</span>
+              </div>
+            </div>
+
+            <!-- Registration Rates Box -->
+            <div class="rounded-2xl bg-white border border-meadow-100 p-5 sm:p-6 shadow-md shadow-meadow-900/5">
+              <h4 class="text-sm font-bold uppercase tracking-wider text-meadow-900 flex items-center justify-between mb-3">
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-heroicons-banknotes" class="w-4 h-4 text-meadow-600" />
+                  อัตราค่าลงทะเบียนผู้นำเสนอผลงาน
+                </span>
+                <span class="text-xs font-normal text-gray-500">Early Bird ก่อน 14 ต.ค. 69</span>
+              </h4>
+
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="rounded-xl border border-sky-200 bg-sky-50/60 p-3">
+                  <div class="text-xs text-sky-800 font-semibold">นิสิต / นักศึกษา</div>
+                  <div class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-xl font-bold text-sky-950">500</span>
+                    <span class="text-xs text-sky-700">บาท (Early Bird)</span>
+                  </div>
+                  <div class="text-[11px] text-gray-500 mt-0.5">ปกติ 700 บาท</div>
+                </div>
+
+                <div class="rounded-xl border border-meadow-200 bg-meadow-50/60 p-3">
+                  <div class="text-xs text-meadow-800 font-semibold">อาจารย์ / นักวิจัย / บุคคลทั่วไป</div>
+                  <div class="mt-1 flex items-baseline gap-1.5">
+                    <span class="text-xl font-bold text-meadow-950">2,000</span>
+                    <span class="text-xs text-meadow-700">บาท (Early Bird)</span>
+                  </div>
+                  <div class="text-[11px] text-gray-500 mt-0.5">ปกติ 2,500 บาท</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CTAs -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                @click="goToAuthorDashboard"
+                class="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-meadow-600 to-meadow-700 text-white font-bold text-base shadow-lg shadow-meadow-600/30 hover:shadow-xl hover:from-meadow-500 hover:to-meadow-600 hover:scale-[1.01] transition-all duration-300"
+              >
+                ส่งบทคัดย่อ
+                <UIcon name="i-heroicons-arrow-right" class="w-4 h-4" />
+              </button>
+              <button
+                @click="showRegModal = true"
+                class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-meadow-300 bg-white text-meadow-800 font-semibold text-base hover:bg-meadow-50 hover:border-meadow-400 transition-all duration-300 shadow-sm"
+              >
+                ลงทะเบียนเข้าร่วมงาน
+                <UIcon name="i-heroicons-ticket" class="w-4 h-4 text-meadow-600" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -223,9 +420,17 @@
                 :class="item.highlight
                   ? 'border-amber-200/70 bg-amber-50/95 shadow-amber-950/20'
                   : 'border-white/70 bg-white/[0.92] shadow-meadow-950/15'">
-                <div class="font-bold text-meadow-950 mb-1">{{ item.title }}</div>
-                <div class="text-sm font-semibold" :class="item.highlight ? 'text-amber-800' : 'text-sky-900'">{{ item.date
-                }}</div>
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <span class="font-bold text-meadow-950">{{ item.title }}</span>
+                  <span
+                    v-if="item.badge"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+                    {{ item.badge }}
+                  </span>
+                </div>
+                <div class="text-sm font-semibold" :class="item.highlight ? 'text-amber-800' : 'text-sky-900'">{{ item.date }}</div>
               </div>
             </div>
           </div>
@@ -397,6 +602,62 @@
     </section>
 
     <HomeRegistrationModal v-model="showRegModal" />
+
+    <!-- Modal for Lightbox Zoom of the Poster -->
+    <UModal v-model="showPosterModal" :ui="{ width: 'sm:max-w-4xl' }">
+      <div class="overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div class="flex items-center justify-between border-b border-stone-200 px-6 py-4 bg-stone-50">
+          <div>
+            <div class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600">
+              <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+              ขยายเวลาเปิดรับบทคัดย่อถึง 16 ตุลาคม 2569
+            </div>
+            <h3 class="text-base sm:text-lg font-bold text-stone-900 mt-0.5">
+              โปสเตอร์ประชาสัมพันธ์ TSHE-CON 2026
+            </h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <a
+              :href="posterImage"
+              download="TSHE-CON-2026-Poster.png"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-meadow-600 text-white text-xs font-semibold hover:bg-meadow-700 transition-colors"
+            >
+              <UIcon name="i-heroicons-arrow-down-tray" class="w-4 h-4" />
+              <span class="hidden sm:inline">ดาวน์โหลด</span>
+            </a>
+            <button
+              type="button"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-stone-200 text-stone-700 hover:bg-stone-300 transition-colors"
+              aria-label="ปิด"
+              @click="showPosterModal = false"
+            >
+              <UIcon name="i-heroicons-x-mark" class="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4 sm:p-6 bg-stone-950 flex items-center justify-center max-h-[80vh] overflow-auto">
+          <img
+            :src="posterImage"
+            alt="โปสเตอร์ TSHE-CON 2026 ขนาดเต็ม"
+            class="max-h-[75vh] w-auto max-w-full rounded-lg object-contain shadow-2xl"
+          />
+        </div>
+
+        <div class="p-4 sm:p-5 bg-white border-t border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-600">
+          <span>สามารถสแกน QR Code บนโปสเตอร์เพื่อดูกำหนดการและส่งผลงาน หรือคลิกปุ่มส่งผลงานบนเว็บไซต์</span>
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              @click="goToAuthorDashboard(); showPosterModal = false"
+              class="font-semibold text-meadow-700 hover:underline"
+            >
+              ไปที่ระบบส่งผลงาน &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </UModal>
   </div>
 </template>
 
@@ -404,9 +665,11 @@
 const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
 const heroImage = `${appBaseUrl}/images/tshe-con-low-carbon-tech-hero-20260811.png`;
 const wellbeingImage = `${appBaseUrl}/images/tshe-con-wellbeing-family-20260811.png`;
+const posterImage = `${appBaseUrl}/images/poster-envicon2026.png`;
 
 const authStore = useAuthStore();
 const showRegModal = ref(false);
+const showPosterModal = ref(false);
 
 const goToAuthorDashboard = async () => {
   if (!authStore.initialized) {
@@ -526,11 +789,37 @@ const tracks = [
 ];
 
 const timeline = [
-  { title: "เปิดรับบทคัดย่อ", date: "1 เมษายน — 30 กันยายน 2569", highlight: true, icon: "i-heroicons-pencil-square" },
-  { title: "ประกาศผลการพิจารณาบทคัดย่อ", date: "7 ตุลาคม 2569", highlight: false, icon: "i-heroicons-megaphone" },
-  { title: "เปิดรับบทความฉบับสมบูรณ์", date: "7 — 24 ตุลาคม 2569", highlight: false, icon: "i-heroicons-document-text" },
-  { title: "ประกาศโปรแกรมการนำเสนอผลงาน", date: "31 ตุลาคม 2569", highlight: false, icon: "i-heroicons-calendar-days" },
-  { title: "วันจัดงานประชุม", date: "12 — 13 พฤศจิกายน 2569", highlight: true, icon: "i-heroicons-academic-cap" },
+  {
+    title: "เปิดรับบทคัดย่อ (Abstract Submission)",
+    date: "1 เมษายน — 16 ตุลาคม 2569",
+    highlight: true,
+    badge: "ขยายเวลาถึง 16 ต.ค. 69",
+    icon: "i-heroicons-pencil-square"
+  },
+  {
+    title: "ประกาศผลการพิจารณาบทคัดย่อ",
+    date: "23 ตุลาคม 2569",
+    highlight: false,
+    icon: "i-heroicons-megaphone"
+  },
+  {
+    title: "เปิดรับบทความฉบับสมบูรณ์",
+    date: "27 ตุลาคม — 1 พฤศจิกายน 2569",
+    highlight: false,
+    icon: "i-heroicons-document-text"
+  },
+  {
+    title: "ประกาศโปรแกรมการนำเสนอผลงาน",
+    date: "31 ตุลาคม 2569",
+    highlight: false,
+    icon: "i-heroicons-calendar-days"
+  },
+  {
+    title: "วันจัดงานประชุม",
+    date: "12 — 13 พฤศจิกายน 2569",
+    highlight: true,
+    icon: "i-heroicons-academic-cap"
+  },
 ];
 
 const organizers = [

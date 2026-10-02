@@ -767,7 +767,7 @@ const stats: Stat[] = [
         </p>
         <div class="flex flex-col sm:flex-row gap-3 justify-center mt-8">
           <a
-            href="mailto:sponsor@envicon2026.ac.th"
+            href="mailto:fiit@technopark.kmutnb.ac.th"
             class="group inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white text-meadow-700 font-semibold shadow-xl hover:bg-meadow-50 hover:shadow-2xl transition-all duration-300"
           >
             <UIcon name="i-heroicons-envelope" class="w-4 h-4" />
