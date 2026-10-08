@@ -74,9 +74,9 @@ const committees: CommitteeGroup[] = [
     members: [
       { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "สตรีไทย", lastName: "พุ่มไม้", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
       { prefix: "ผู้ช่วยศาสตราจารย์ ดร.", firstName: "ชิดหทัย", lastName: "เพชรช่วย", affiliation: "คณะวิทยาศาสตร์ มหาวิทยาลัยอุบลราชธานี" },
-      { prefix: "นางสาว", firstName: "ปุณยานุช", lastName: "แดงจะนะ", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "นางสาว", firstName: "ปุณยานุช", lastName: "แดงจะนะ", affiliation: "" },
       { prefix: "นางสาว", firstName: "ณัฐนริน", lastName: "ทองดี", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
-      { prefix: "นางสาว", firstName: "อมรรัตน์", lastName: "รักงาม", affiliation: "คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์" },
+      { prefix: "นางสาว", firstName: "อมรรัตน์", lastName: "รักงาม", affiliation: "" },
     ],
   },
   {
@@ -318,7 +318,7 @@ function pad(n: number, width = 2): string {
                         {{ m.firstName }} {{ m.lastName }}
                       </span>
                     </h3>
-                    <p class="mt-1 text-xs font-medium text-stone-500 leading-relaxed">
+                    <p v-if="m.affiliation" class="mt-1 text-xs font-medium text-stone-500 leading-relaxed">
                       {{ m.affiliation }}
                     </p>
                   </div>
