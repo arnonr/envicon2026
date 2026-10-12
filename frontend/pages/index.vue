@@ -287,7 +287,7 @@
                   <UIcon name="i-heroicons-banknotes" class="w-4 h-4 text-meadow-600" />
                   อัตราค่าลงทะเบียนผู้นำเสนอผลงาน
                 </span>
-                <span class="text-xs font-normal text-gray-500">Early Bird ก่อน 14 ต.ค. 69</span>
+                <span class="text-xs font-normal text-gray-500">Early Bird ภายใน 14 ต.ค. 69</span>
               </h4>
 
               <div class="grid grid-cols-2 gap-3 text-sm">
