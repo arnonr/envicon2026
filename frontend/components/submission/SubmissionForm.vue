@@ -47,7 +47,7 @@ const PRESENTATION_FORMAT_OPTIONS = [
   { label: 'Poster Presentation', value: 'poster' },
 ];
 
-const { studentLabel, generalLabel } = useFees();
+const { isEarlyBird, studentLabel, generalLabel } = useFees();
 
 const creators = ref<Creator[]>(
   props.initialCreators?.length
@@ -111,6 +111,15 @@ defineExpose({ creators });
         ]"
         @update:model-value="update('submitterType', $event as string)"
       />
+      <p
+        v-if="isEarlyBird"
+        class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2 flex items-start gap-1.5 leading-relaxed"
+      >
+        <UIcon name="i-heroicons-information-circle" class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+        <span>
+          ราคานี้เป็นอัตรา <strong>Early Bird ถึงวันที่ 14 ต.ค. 2569 เท่านั้น</strong> (หลังวันที่ 14 ต.ค. จะปรับเป็นราคาปกติ: นิสิต/นักศึกษา 700 บาท, อาจารย์/นักวิจัย/บุคคลทั่วไป 2,500 บาท)
+        </span>
+      </p>
     </UFormGroup>
 
     <UFormGroup label="ระดับการศึกษา (Education Level)" required>

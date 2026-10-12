@@ -1,7 +1,7 @@
-const EARLY_BIRD_DEADLINE = new Date('2026-10-14T00:00:00+07:00');
+const EARLY_BIRD_DEADLINE = new Date('2026-10-14T23:59:59+07:00');
 
 export function useFees() {
-  const isEarlyBird = computed(() => new Date() < EARLY_BIRD_DEADLINE);
+  const isEarlyBird = computed(() => new Date() <= EARLY_BIRD_DEADLINE);
 
   const fees = computed(() => ({
     student: isEarlyBird.value ? 500 : 700,

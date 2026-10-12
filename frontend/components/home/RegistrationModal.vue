@@ -211,9 +211,30 @@ function close() {
               :class="form.feeType === fee.type ? 'border-meadow-500 bg-meadow-50' : 'border-gray-200'"
             >
               <input v-model="form.feeType" type="radio" name="event-fee-type" :value="fee.type" />
-              <span class="text-sm">{{ fee.label }}<br /><strong v-if="EVENT_REGISTRATION_PAYMENT_ENABLED">{{ getFeeAmount(fee).toLocaleString() }} บาท</strong><strong v-else>ไม่เสียค่าใช้จ่าย</strong></span>
+              <span class="text-sm">
+                {{ fee.label }}<br />
+                <template v-if="EVENT_REGISTRATION_PAYMENT_ENABLED">
+                  <strong class="font-semibold text-meadow-900">{{ getFeeAmount(fee).toLocaleString() }} บาท</strong>
+                  <span
+                    v-if="isEarlyBird"
+                    class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-medium bg-amber-100 text-amber-800"
+                  >
+                    Early Bird
+                  </span>
+                </template>
+                <strong v-else>ไม่เสียค่าใช้จ่าย</strong>
+              </span>
             </label>
           </div>
+          <p
+            v-if="isEarlyBird && EVENT_REGISTRATION_PAYMENT_ENABLED"
+            class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2.5 flex items-start gap-1.5 leading-relaxed"
+          >
+            <UIcon name="i-heroicons-information-circle" class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+            <span>
+              ราคานี้เป็นอัตรา <strong>Early Bird ถึงวันที่ 14 ต.ค. 2569 เท่านั้น</strong> (หลังวันที่ 14 ต.ค. จะปรับเป็นราคาปกติ: นิสิต/นักศึกษา 700 บาท, อาจารย์/นักวิจัย/บุคคลทั่วไป 2,500 บาท)
+            </span>
+          </p>
         </UFormGroup>
 
         <div class="border-t border-gray-200 pt-4 space-y-4">

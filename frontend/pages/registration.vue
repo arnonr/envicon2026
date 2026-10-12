@@ -25,11 +25,12 @@ const feeTable = [
   { category: "อาจารย์/นักวิจัย/บุคคลทั่วไป", type: "general" as const, earlyBird: 2000, regular: 2500 },
 ];
 
+const isEarlyBird = computed(() => new Date() <= new Date("2026-10-14T23:59:59+07:00"));
+
 const currentFee = computed(() => {
   const row = feeTable.find((f) => f.type === selectedType.value);
   if (!row) return 0;
-  const deadline = new Date("2026-10-14T23:59:59+07:00");
-  return new Date() <= deadline ? row.earlyBird : row.regular;
+  return isEarlyBird.value ? row.earlyBird : row.regular;
 });
 
 async function fetchRegistration() {
@@ -182,6 +183,15 @@ onMounted(() => {
         <div class="bg-gray-50 rounded-lg p-4 text-center">
           <p class="text-sm text-gray-500">ค่าลงทะเบียน</p>
           <p class="text-2xl font-bold text-primary-600">{{ currentFee.toLocaleString() }} บาท</p>
+          <p
+            v-if="isEarlyBird"
+            class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-3 flex items-start gap-1.5 text-left leading-relaxed"
+          >
+            <UIcon name="i-heroicons-information-circle" class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+            <span>
+              ราคานี้เป็นอัตรา <strong>Early Bird ถึงวันที่ 14 ต.ค. 2569 เท่านั้น</strong> (หลังวันที่ 14 ต.ค. จะปรับเป็นราคาปกติ: นิสิต/นักศึกษา 700 บาท, อาจารย์/นักวิจัย/บุคคลทั่วไป 2,500 บาท)
+            </span>
+          </p>
         </div>
         <UButton color="primary" block size="lg" :loading="submitting" @click="handleSubmit">
           ลงทะเบียน
