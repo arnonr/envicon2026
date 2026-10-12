@@ -285,7 +285,7 @@
               <h4 class="text-sm font-bold uppercase tracking-wider text-meadow-900 flex items-center justify-between mb-3">
                 <span class="flex items-center gap-2">
                   <UIcon name="i-heroicons-banknotes" class="w-4 h-4 text-meadow-600" />
-                  อัตราค่าลงทะเบียนผู้นำเสนอผลงาน
+                  อัตราค่าลงทะเบียนผู้นำเสนอผลงานและผู้เข้าร่วมงาน
                 </span>
                 <span class="text-xs font-normal text-gray-500">Early Bird ภายใน 14 ต.ค. 69</span>
               </h4>
