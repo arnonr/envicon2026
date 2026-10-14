@@ -30,7 +30,7 @@ function passwordResetEmailHtml(user: { name: string }, link: string) {
               </a>
             </p>
             <p style="margin:0 0 14px;font-size:14px;line-height:1.7;color:#526173;">
-              ลิงก์นี้มีอายุ 72 ชั่วโมง และใช้ได้ครั้งเดียวเท่านั้น
+              ลิงก์นี้มีอายุ 30 วัน และใช้ได้ครั้งเดียวเท่านั้น
             </p>
             <p style="margin:0;font-size:14px;line-height:1.7;color:#526173;">
               หากท่านไม่ได้ร้องขอ สามารถละเว้นอีเมลนี้ได้ รหัสผ่านเดิมจะยังไม่ถูกเปลี่ยนจนกว่าจะมีการตั้งรหัสผ่านใหม่สำเร็จ
@@ -148,14 +148,23 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
     async ({ body }) => {
       const email = body.email.trim().toLowerCase();
       const [user] = await db
-        .select({ id: users.id, email: users.email, name: users.name })
+        .select({
+          id: users.id,
+          email: users.email,
+          name: users.name,
+          role: users.role,
+          passwordHash: users.passwordHash,
+          affiliation: users.affiliation,
+        })
         .from(users)
         .where(eq(users.email, email))
         .limit(1);
 
       if (user) {
         const token = await issuePasswordSetupToken(user.id);
-        const link = appUrl(`/auth/reset-password?token=${encodeURIComponent(token)}`);
+        const needsReviewerSetup = user.role === "reviewer" && (!user.passwordHash || !user.affiliation);
+        const path = needsReviewerSetup ? "/auth/setup-password" : "/auth/reset-password";
+        const link = appUrl(`${path}?token=${encodeURIComponent(token)}`);
         await sendTrackedEmail({
           type: "password_reset",
           recipientEmail: user.email,
@@ -257,7 +266,10 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         );
       }
 
-      await db.update(passwordSetupTokens).set({ usedAt: new Date() }).where(eq(passwordSetupTokens.id, setup.id));
+      await db
+        .update(passwordSetupTokens)
+        .set({ usedAt: new Date() })
+        .where(and(eq(passwordSetupTokens.userId, setup.userId), isNull(passwordSetupTokens.usedAt)));
 
       const token = await jwt.sign({ sub: targetUser.id });
       const user = {

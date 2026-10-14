@@ -5,9 +5,16 @@ const route = useRoute();
 const router = useRouter();
 const { register, login, isLoggedIn } = useAuth();
 
+function resolveRedirect(defaultPath: string) {
+  const raw = typeof route.query.redirect === "string" ? route.query.redirect.trim() : "";
+  const cleaned = raw.replace(/^\/envicon2026(?=\/|$)/, "");
+  return cleaned.startsWith("/") ? cleaned : defaultPath;
+}
+
 if (isLoggedIn.value) {
   const authStore = useAuthStore();
-  router.replace(authStore.isAdmin ? "/admin" : authStore.user?.role === "reviewer" ? "/reviewer" : "/dashboard");
+  const defaultRedirect = authStore.isAdmin ? "/admin" : authStore.user?.role === "reviewer" ? "/reviewer" : "/dashboard";
+  router.replace(resolveRedirect(defaultRedirect));
 }
 const { handleApiCall, showError, showSuccess } = useApiError();
 
@@ -140,8 +147,7 @@ async function handleSubmit() {
 
   const authStore = useAuthStore();
   const defaultRedirect = authStore.isAdmin ? "/admin" : authStore.user?.role === "reviewer" ? "/reviewer" : "/dashboard";
-  const redirect = (route.query.redirect as string) || defaultRedirect;
-  router.push(redirect);
+  router.push(resolveRedirect(defaultRedirect));
 }
 </script>
 
@@ -208,7 +214,7 @@ async function handleSubmit() {
 
           <div v-if="!isRegisterMode" class="flex justify-end -mt-2">
             <NuxtLink to="/auth/forgot-password" class="text-sm font-medium text-primary-600 hover:underline">
-              ลืมรหัสผ่าน?
+              ลืมรหัสผ่าน / ขอลิงก์ตั้งรหัสผ่านใหม่?
             </NuxtLink>
           </div>
 

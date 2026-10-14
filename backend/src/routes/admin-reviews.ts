@@ -29,18 +29,18 @@ function generateSecurePassword(): string {
   const all = upper + lower + digits + special;
 
   const bytes = crypto.getRandomValues(new Uint8Array(10));
-  const chars = [
-    upper[bytes[0] % upper.length],
-    lower[bytes[1] % lower.length],
-    digits[bytes[2] % digits.length],
-    special[bytes[3] % special.length],
+  const chars: string[] = [
+    upper[bytes[0]! % upper.length]!,
+    lower[bytes[1]! % lower.length]!,
+    digits[bytes[2]! % digits.length]!,
+    special[bytes[3]! % special.length]!,
   ];
   for (let i = 4; i < 10; i++) {
-    chars.push(all[bytes[i] % all.length]);
+    chars.push(all[bytes[i]! % all.length]!);
   }
   for (let i = chars.length - 1; i > 0; i--) {
-    const j = bytes[i] % (i + 1);
-    [chars[i], chars[j]] = [chars[j], chars[i]];
+    const j = bytes[i]! % (i + 1);
+    [chars[i], chars[j]] = [chars[j]!, chars[i]!];
   }
   return chars.join("");
 }
@@ -534,10 +534,11 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         return fail("VALIDATION_ERROR", "ไม่พบไฟล์ผลงานสำหรับรอบพิจารณานี้ กรุณาให้เจ้าของผลงานแนบไฟล์ใหม่ก่อนส่งพิจารณา");
       }
 
-      const reviewLink = appUrl(`/reviewer/reviews/${assignment.id}`);
+      const reviewPath = `/reviewer/reviews/${assignment.id}`;
+      const reviewLink = appUrl(reviewPath);
       const setupLink = assignment.passwordHash
         ? undefined
-        : appUrl(`/auth/setup-password?token=${encodeURIComponent(await issuePasswordSetupToken(assignment.reviewerId))}`);
+        : appUrl(`/auth/setup-password?token=${encodeURIComponent(await issuePasswordSetupToken(assignment.reviewerId))}&redirect=${encodeURIComponent(reviewPath)}`);
       const { subject, htmlBody } = buildReviewAssignmentEmail({
         reviewerName: assignment.reviewerName,
         title: assignment.title,

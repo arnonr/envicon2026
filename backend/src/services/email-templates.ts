@@ -33,7 +33,7 @@ export function buildReviewerInvitationEmail(data: ReviewerInvitationData): { su
       ท่านสามารถเข้าสู่ระบบเพื่อดำเนินการได้โดยกดปุ่มด้านล่าง
     </p>
     <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 20px">
-      (ลิงก์มีอายุ 72 ชั่วโมง นับจากอีเมลฉบับนี้ส่ง)
+      (ลิงก์มีอายุ 30 วัน นับจากอีเมลฉบับนี้ส่ง)
     </p>
 
     <div style="text-align:center;margin:8px 0 28px">
@@ -67,12 +67,15 @@ export function buildReviewAssignmentEmail(data: ReviewAssignmentData): { subjec
 
   const setupHtml = setupLink ? `
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef3c7;border:1px solid #fcd34d;border-radius:6px;margin:24px 0">
-      <tr><td style="padding:16px 20px">
-        <div style="font-size:14px;font-weight:600;color:#92400e;margin-bottom:6px">ก่อนเริ่มประเมิน</div>
-        <div style="font-size:14px;color:#78350f;line-height:1.7">
-          ท่านยังไม่ได้ตั้งรหัสผ่าน กรุณา
-          <a href="${setupLink}" style="color:#059669;font-weight:600;text-decoration:underline">ตั้งรหัสผ่าน</a>
-          ก่อนเข้าสู่ระบบ
+      <tr><td style="padding:18px 20px;text-align:center">
+        <div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:6px">ขั้นตอนที่ 1: สำหรับผู้ประเมินที่ยังไม่เคยตั้งรหัสผ่าน</div>
+        <div style="font-size:14px;color:#78350f;line-height:1.7;margin-bottom:14px">
+          หากท่านเพิ่งเข้าใช้งานครั้งแรก กรุณากดปุ่มด้านล่างเพื่อตั้งรหัสผ่านก่อนเข้าประเมินผลงาน
+        </div>
+        <div>
+          <a href="${setupLink}" style="display:inline-block;background-color:#d97706;color:#ffffff;text-decoration:none;padding:11px 24px;border-radius:6px;font-size:14px;font-weight:600">
+            ตั้งรหัสผ่านและเข้าสู่แบบประเมิน
+          </a>
         </div>
       </td></tr>
     </table>
@@ -108,7 +111,7 @@ export function buildReviewAssignmentEmail(data: ReviewAssignmentData): { subjec
     ${setupHtml}
 
     <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:0 0 20px">
-      กรุณาดำเนินการประเมินผลงานภายในกำหนดเวลาที่ระบุ โดยกดปุ่มด้านล่างเพื่อเข้าสู่แบบประเมิน
+      ${setupLink ? "หากท่านเคยตั้งรหัสผ่านไว้แล้ว สามารถกดปุ่มด้านล่างเพื่อเข้าสู่ระบบและเปิดแบบประเมินได้ทันที:" : "กรุณาดำเนินการประเมินผลงานภายในกำหนดเวลาที่ระบุ โดยกดปุ่มด้านล่างเพื่อเข้าสู่แบบประเมิน"}
     </p>
 
     <div style="text-align:center;margin:8px 0 28px">

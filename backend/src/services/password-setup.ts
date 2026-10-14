@@ -1,8 +1,7 @@
-import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { passwordSetupTokens } from "../db/schema";
 
-const TOKEN_EXPIRY_HOURS = 72;
+const TOKEN_EXPIRY_HOURS = 720;
 
 export async function hashSetupToken(token: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
@@ -10,11 +9,6 @@ export async function hashSetupToken(token: string) {
 }
 
 export async function issuePasswordSetupToken(userId: string) {
-  await db
-    .update(passwordSetupTokens)
-    .set({ usedAt: new Date() })
-    .where(and(eq(passwordSetupTokens.userId, userId), isNull(passwordSetupTokens.usedAt)));
-
   const token = `${crypto.randomUUID()}${crypto.randomUUID().replaceAll("-", "")}`;
   await db.insert(passwordSetupTokens).values({
     id: crypto.randomUUID(),

@@ -141,8 +141,22 @@ async function submit() {
         </UFormGroup>
         <UButton type="submit" block color="primary" :loading="saving">บันทึกรหัสผ่านใหม่</UButton>
       </form>
-      <div v-else class="text-center py-8 text-gray-500">
-        ลิงก์ตั้งรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว
+      <div v-else class="text-center py-6 space-y-4">
+        <UIcon name="i-heroicons-exclamation-circle" class="w-12 h-12 text-amber-500 mx-auto" />
+        <div class="space-y-1">
+          <h2 class="text-lg font-semibold text-gray-900">ลิงก์ตั้งรหัสผ่านไม่ถูกต้องหรือหมดอายุแล้ว</h2>
+          <p class="text-sm text-gray-500">
+            ลิงก์นี้อาจถูกใช้งานไปแล้ว หมดอายุ หรือมีอีเมลฉบับใหม่ที่ส่งลิงก์ล่าสุดไปแทน
+          </p>
+        </div>
+        <div class="space-y-2 pt-2">
+          <UButton to="/auth/forgot-password" color="primary" block>
+            ขอลิงก์ตั้งรหัสผ่านใหม่ทางอีเมล
+          </UButton>
+          <UButton to="/auth/login" color="gray" variant="soft" block>
+            เข้าสู่ระบบ (กรณีตั้งรหัสผ่านแล้ว)
+          </UButton>
+        </div>
       </div>
     </UCard>
   </div>
