@@ -440,7 +440,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
     "/review-rounds/:roundId/assignments",
     async ({ params, body, set }) => {
       const [round] = await db.select().from(reviewRounds).where(eq(reviewRounds.id, params.roundId)).limit(1);
-      if (!round || !["assigning", "in_review"].includes(round.status)) {
+      if (!round || !["assigning", "in_review", "ready_for_decision"].includes(round.status)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "รอบพิจารณานี้ไม่สามารถเพิ่มผู้รีวิวได้");
       }

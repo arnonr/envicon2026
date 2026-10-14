@@ -307,6 +307,7 @@ const assignReviewers = async () => {
   if (error) { showError(error); return; }
   selectedReviewerIds.value = [];
   showSuccess("กำหนดผู้รีวิวเรียบร้อย");
+  emit("status-changed");
   await fetchWorkflow();
 };
 
@@ -315,6 +316,7 @@ const removeAssignment = async (id: string) => {
     $fetch(`${apiBase}/admin/reviews/${id}`, { method: "DELETE", headers: headers.value })
   );
   if (error) { showError(error); return; }
+  emit("status-changed");
   await fetchWorkflow();
 };
 
