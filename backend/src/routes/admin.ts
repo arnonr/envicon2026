@@ -9,6 +9,7 @@ import { ok, fail, paginated } from "../utils/response";
 import { calculateFee } from "../utils/fees";
 import { STATUS_LABEL, type SubmissionStatus } from "../db/schema";
 import { ALL_NON_DRAFT, RE_REVIEW_STATUSES } from "../utils/submission-status";
+import { syncEventRegistrationPaymentToSubmission } from "../services/event-registration-sync";
 
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
@@ -150,7 +151,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           wantsFullPaper: submissions.wantsFullPaper,
           status: submissions.status,
           abstractFileUrl: submissions.abstractFileUrl,
+          abstractWordFileUrl: submissions.abstractWordFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
+          fullPaperWordFileUrl: submissions.fullPaperWordFileUrl,
           round1FileUrl: submissions.round1FileUrl,
           round1FileType: submissions.round1FileType,
           paymentSlipUrl: submissions.paymentSlipUrl,
@@ -211,6 +214,8 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       const progress = roundId ? progressByRound.get(roundId) : undefined;
       return {
         ...submission,
+        abstractFileUrl: submission.abstractFileUrl ?? (submission.round1FileType === "abstract" ? submission.round1FileUrl : null),
+        fullPaperFileUrl: submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null),
         completedReviewCount: progress?.completed ?? 0,
         assignedReviewerCount: progress?.assigned ?? 0,
       };
@@ -252,7 +257,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         presentationFormat: submissions.presentationFormat,
         status: submissions.status,
         abstractFileUrl: submissions.abstractFileUrl,
+        abstractWordFileUrl: submissions.abstractWordFileUrl,
         fullPaperFileUrl: submissions.fullPaperFileUrl,
+        fullPaperWordFileUrl: submissions.fullPaperWordFileUrl,
         round1FileUrl: submissions.round1FileUrl,
         round1FileType: submissions.round1FileType,
         paymentSlipUrl: submissions.paymentSlipUrl,
@@ -295,8 +302,10 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       { header: "บทคัดย่อ", key: "abstract", width: 70 },
       { header: "วันที่ส่ง", key: "submittedAt", width: 22 },
       { header: "วันที่แก้ไขล่าสุด", key: "updatedAt", width: 22 },
-      { header: "ลิงก์ไฟล์บทคัดย่อ", key: "abstractFileUrl", width: 55 },
-      { header: "ลิงก์ไฟล์ฉบับเต็ม", key: "fullPaperFileUrl", width: 55 },
+      { header: "ลิงก์ไฟล์บทคัดย่อ (PDF)", key: "abstractFileUrl", width: 55 },
+      { header: "ลิงก์ไฟล์บทคัดย่อ (Word)", key: "abstractWordFileUrl", width: 55 },
+      { header: "ลิงก์ไฟล์ฉบับเต็ม (PDF)", key: "fullPaperFileUrl", width: 55 },
+      { header: "ลิงก์ไฟล์ฉบับเต็ม (Word)", key: "fullPaperWordFileUrl", width: 55 },
       { header: "ลิงก์หลักฐานชำระเงิน", key: "paymentSlipUrl", width: 55 },
       { header: "สถานะการชำระเงิน", key: "paymentStatus", width: 20 },
       { header: "ชื่อสำหรับออกใบเสร็จ", key: "receiptName", width: 30 },
@@ -306,8 +315,12 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
 
     const origin = new URL(request.url).origin;
     rows.forEach((submission, index) => {
-      const abstractFileUrl = absoluteFileUrl(submission.abstractFileUrl, origin);
-      const fullPaperFileUrl = absoluteFileUrl(submission.fullPaperFileUrl, origin);
+      const resolvedAbstractPdf = submission.abstractFileUrl ?? (submission.round1FileType === "abstract" ? submission.round1FileUrl : null);
+      const resolvedFullPaperPdf = submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null);
+      const abstractFileUrl = absoluteFileUrl(resolvedAbstractPdf, origin);
+      const abstractWordFileUrl = absoluteFileUrl(submission.abstractWordFileUrl, origin);
+      const fullPaperFileUrl = absoluteFileUrl(resolvedFullPaperPdf, origin);
+      const fullPaperWordFileUrl = absoluteFileUrl(submission.fullPaperWordFileUrl, origin);
       const paymentSlipUrl = absoluteFileUrl(submission.paymentSlipUrl, origin);
       const row = worksheet.addRow({
         sequence: index + 1,
@@ -328,7 +341,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         submittedAt: formatExportDate(submission.submittedAt),
         updatedAt: formatExportDate(submission.updatedAt),
         abstractFileUrl,
+        abstractWordFileUrl,
         fullPaperFileUrl,
+        fullPaperWordFileUrl,
         paymentSlipUrl,
         paymentStatus: PAYMENT_STATUS_NAMES[submission.paymentStatus] ?? submission.paymentStatus,
         receiptName: submission.receiptName ?? "",
@@ -338,7 +353,9 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
 
       for (const [key, url] of [
         ["abstractFileUrl", abstractFileUrl],
+        ["abstractWordFileUrl", abstractWordFileUrl],
         ["fullPaperFileUrl", fullPaperFileUrl],
+        ["fullPaperWordFileUrl", fullPaperWordFileUrl],
         ["paymentSlipUrl", paymentSlipUrl],
       ] as const) {
         if (!url) continue;
@@ -348,7 +365,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:X1";
+    worksheet.autoFilter = "A1:Z1";
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -378,46 +395,83 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     }),
   })
   .get("/registrations", async () => {
-    const rows = await db
-      .select({
-        id: eventRegistrations.id,
-        fullName: eventRegistrations.fullName,
-        affiliation: eventRegistrations.affiliation,
-        phone: eventRegistrations.phone,
-        email: eventRegistrations.email,
-        feeType: eventRegistrations.feeType,
-        fee: eventRegistrations.fee,
-        paymentSlipUrl: eventRegistrations.paymentSlipUrl,
-        paymentStatus: eventRegistrations.paymentStatus,
-        receiptName: eventRegistrations.receiptName,
-        receiptTaxId: eventRegistrations.receiptTaxId,
-        receiptAddress: eventRegistrations.receiptAddress,
-        createdAt: eventRegistrations.createdAt,
-      })
-      .from(eventRegistrations)
-      .orderBy(desc(eventRegistrations.createdAt));
+    const [rows, authorEmailsWithSubs] = await Promise.all([
+      db
+        .select({
+          id: eventRegistrations.id,
+          fullName: eventRegistrations.fullName,
+          affiliation: eventRegistrations.affiliation,
+          phone: eventRegistrations.phone,
+          email: eventRegistrations.email,
+          feeType: eventRegistrations.feeType,
+          fee: eventRegistrations.fee,
+          paymentSlipUrl: eventRegistrations.paymentSlipUrl,
+          paymentStatus: eventRegistrations.paymentStatus,
+          receiptName: eventRegistrations.receiptName,
+          receiptTaxId: eventRegistrations.receiptTaxId,
+          receiptAddress: eventRegistrations.receiptAddress,
+          createdAt: eventRegistrations.createdAt,
+        })
+        .from(eventRegistrations)
+        .orderBy(desc(eventRegistrations.createdAt)),
+      db
+        .select({
+          email: users.email,
+          count: sql<number>`count(${submissions.id})`,
+        })
+        .from(submissions)
+        .innerJoin(users, eq(submissions.authorId, users.id))
+        .groupBy(users.email),
+    ]);
 
-    return ok(rows);
+    const subCountByEmail = new Map(
+      authorEmailsWithSubs.map((r) => [r.email.trim().toLowerCase(), Number(r.count)]),
+    );
+
+    return ok(
+      rows.map((reg) => {
+        const submissionCount = subCountByEmail.get(reg.email.trim().toLowerCase()) ?? 0;
+        return {
+          ...reg,
+          hasSubmission: submissionCount > 0,
+          submissionCount,
+        };
+      }),
+    );
   })
   .get("/registrations/export", async ({ request }) => {
-    const rows = await db
-      .select({
-        id: eventRegistrations.id,
-        fullName: eventRegistrations.fullName,
-        affiliation: eventRegistrations.affiliation,
-        phone: eventRegistrations.phone,
-        email: eventRegistrations.email,
-        feeType: eventRegistrations.feeType,
-        fee: eventRegistrations.fee,
-        paymentSlipUrl: eventRegistrations.paymentSlipUrl,
-        paymentStatus: eventRegistrations.paymentStatus,
-        receiptName: eventRegistrations.receiptName,
-        receiptTaxId: eventRegistrations.receiptTaxId,
-        receiptAddress: eventRegistrations.receiptAddress,
-        createdAt: eventRegistrations.createdAt,
-      })
-      .from(eventRegistrations)
-      .orderBy(desc(eventRegistrations.createdAt));
+    const [rows, authorEmailsWithSubs] = await Promise.all([
+      db
+        .select({
+          id: eventRegistrations.id,
+          fullName: eventRegistrations.fullName,
+          affiliation: eventRegistrations.affiliation,
+          phone: eventRegistrations.phone,
+          email: eventRegistrations.email,
+          feeType: eventRegistrations.feeType,
+          fee: eventRegistrations.fee,
+          paymentSlipUrl: eventRegistrations.paymentSlipUrl,
+          paymentStatus: eventRegistrations.paymentStatus,
+          receiptName: eventRegistrations.receiptName,
+          receiptTaxId: eventRegistrations.receiptTaxId,
+          receiptAddress: eventRegistrations.receiptAddress,
+          createdAt: eventRegistrations.createdAt,
+        })
+        .from(eventRegistrations)
+        .orderBy(desc(eventRegistrations.createdAt)),
+      db
+        .select({
+          email: users.email,
+          count: sql<number>`count(${submissions.id})`,
+        })
+        .from(submissions)
+        .innerJoin(users, eq(submissions.authorId, users.id))
+        .groupBy(users.email),
+    ]);
+
+    const subCountByEmail = new Map(
+      authorEmailsWithSubs.map((r) => [r.email.trim().toLowerCase(), Number(r.count)]),
+    );
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "TSHE-CON 2026";
@@ -434,6 +488,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       { header: "เบอร์โทรศัพท์", key: "phone", width: 18 },
       { header: "อีเมล", key: "email", width: 30 },
       { header: "ประเภทผู้เข้าร่วม", key: "feeType", width: 20 },
+      { header: "สถานะผู้นำเสนอ", key: "presenterStatus", width: 30 },
       { header: "ค่าลงทะเบียน (บาท)", key: "fee", width: 18 },
       { header: "สถานะการชำระเงิน", key: "paymentStatus", width: 20 },
       { header: "ลิงก์หลักฐานชำระเงิน", key: "paymentSlipUrl", width: 55 },
@@ -446,6 +501,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     const origin = new URL(request.url).origin;
     rows.forEach((reg, index) => {
       const paymentSlipUrl = absoluteFileUrl(reg.paymentSlipUrl, origin);
+      const hasSub = (subCountByEmail.get(reg.email.trim().toLowerCase()) ?? 0) > 0;
       const row = worksheet.addRow({
         sequence: index + 1,
         id: reg.id,
@@ -454,6 +510,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         phone: reg.phone ?? "",
         email: reg.email,
         feeType: EVENT_FEE_TYPE_NAMES[reg.feeType] ?? reg.feeType,
+        presenterStatus: hasSub ? "เปลี่ยนเป็นผู้นำเสนอแล้ว (ส่งผลงาน)" : "ผู้เข้าร่วมงานทั่วไป",
         fee: reg.fee,
         paymentStatus: EVENT_PAYMENT_STATUS_NAMES[reg.paymentStatus] ?? reg.paymentStatus,
         paymentSlipUrl,
@@ -470,7 +527,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:N1";
+    worksheet.autoFilter = "A1:O1";
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -510,6 +567,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       await db.update(eventRegistrations)
         .set({ paymentStatus: body.paymentStatus })
         .where(eq(eventRegistrations.id, params.id));
+      await syncEventRegistrationPaymentToSubmission(params.id);
       return ok({ id: params.id, paymentStatus: body.paymentStatus });
     },
     {

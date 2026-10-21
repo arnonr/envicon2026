@@ -1,8 +1,14 @@
 <script setup lang="ts">
+import type { SelectedSubmissionFiles } from '~/components/submission/FileSlotsGrid.vue';
+
 interface Revision {
   id: string;
   version: number;
   fileUrl: string;
+  abstractFileUrl: string | null;
+  abstractWordFileUrl: string | null;
+  fullPaperFileUrl: string | null;
+  fullPaperWordFileUrl: string | null;
   changelog: string | null;
   submittedAt: string;
 }
@@ -27,9 +33,12 @@ interface Submission {
   presentationFormat: string;
   status: string;
   abstractFileUrl: string | null;
+  abstractWordFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  fullPaperWordFileUrl: string | null;
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
+  canUpdateFiles?: boolean;
   paymentSlipUrl: string | null;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   paymentNote: string | null;
@@ -65,9 +74,62 @@ const fileLink = (url: string | null) => {
 
 const submission = ref<Submission | null>(null);
 const loading = ref(false);
-const uploadingPaper = ref(false);
 const uploadingSlip = ref(false);
 const slipPreviewOpen = ref(false);
+
+const isEditingFiles = ref(false);
+const savingFiles = ref(false);
+const fileUpdateChangelog = ref('');
+const fileSlots = ref<SelectedSubmissionFiles>({
+  abstractPdf: null,
+  abstractWord: null,
+  fullPaperPdf: null,
+  fullPaperWord: null,
+});
+
+const hasAnyFileToUpload = computed(() =>
+  Boolean(
+    fileSlots.value.abstractPdf ||
+      fileSlots.value.abstractWord ||
+      fileSlots.value.fullPaperPdf ||
+      fileSlots.value.fullPaperWord
+  )
+);
+
+const resetFileUpdateForm = () => {
+  fileSlots.value = {
+    abstractPdf: null,
+    abstractWord: null,
+    fullPaperPdf: null,
+    fullPaperWord: null,
+  };
+  fileUpdateChangelog.value = '';
+  isEditingFiles.value = false;
+};
+
+const saveFileUpdates = async () => {
+  if (!props.submissionId || !hasAnyFileToUpload.value) return;
+  savingFiles.value = true;
+  const formData = new FormData();
+  if (fileSlots.value.abstractPdf) formData.append('abstractPdf', fileSlots.value.abstractPdf);
+  if (fileSlots.value.abstractWord) formData.append('abstractWord', fileSlots.value.abstractWord);
+  if (fileSlots.value.fullPaperPdf) formData.append('fullPaperPdf', fileSlots.value.fullPaperPdf);
+  if (fileSlots.value.fullPaperWord) formData.append('fullPaperWord', fileSlots.value.fullPaperWord);
+  if (fileUpdateChangelog.value.trim()) formData.append('changelog', fileUpdateChangelog.value.trim());
+
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/submissions/${props.submissionId}/upload-files`, {
+      method: 'POST',
+      headers: headers.value,
+      body: formData,
+    })
+  );
+  savingFiles.value = false;
+  if (error) { showError(error); return; }
+  showSuccess('อัปเดตไฟล์ผลงานเรียบร้อยแล้ว');
+  resetFileUpdateForm();
+  await fetchSubmission();
+};
 
 const receiptForm = ref({
   name: '',
@@ -110,24 +172,6 @@ const fetchSubmission = async () => {
     taxId: submission.value.receiptTaxId || '',
     address: submission.value.receiptAddress || '',
   };
-};
-
-const uploadFullPaper = async (file: File) => {
-  if (!props.submissionId) return;
-  uploadingPaper.value = true;
-  const formData = new FormData();
-  formData.append('file', file);
-  const { error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/submissions/${props.submissionId}/upload-paper`, {
-      method: 'POST',
-      headers: headers.value,
-      body: formData,
-    })
-  );
-  uploadingPaper.value = false;
-  if (error) { showError(error); return; }
-  showSuccess('อัปโหลดบทความฉบับสมบูรณ์เรียบร้อยแล้ว');
-  await fetchSubmission();
 };
 
 const selectedSlipFile = ref<File | null>(null);
@@ -206,6 +250,7 @@ const parsedKeywords = computed(() => {
 watch(() => props.modelValue, (open) => {
   if (open) {
     submission.value = null;
+    resetFileUpdateForm();
     fetchSubmission();
   }
 });
@@ -286,38 +331,46 @@ watch(() => props.modelValue, (open) => {
 
         <!-- Files -->
         <div>
-          <h3 class="text-xs font-semibold text-gray-600 mb-2">ไฟล์ที่แนบ</h3>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-document" class="w-4 h-4 text-gray-400" />
-                <span class="text-gray-700">
-                  บทคัดย่อ
-                  <span v-if="submission.round1FileType === 'full_paper'" class="text-xs text-gray-500">(บทความฉบับสมบูรณ์)</span>
-                </span>
-              </div>
-              <a v-if="submission.round1FileUrl" :href="fileLink(submission.round1FileUrl)" target="_blank"
-                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-                ดาวน์โหลด
-              </a>
-              <a v-else-if="submission.abstractFileUrl" :href="fileLink(submission.abstractFileUrl)" target="_blank"
-                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-                ดาวน์โหลด
-              </a>
-              <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
-            </div>
-            <div v-if="submission.fullPaperFileUrl" class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-gray-400" />
-                <span class="text-gray-700">บทความฉบับสมบูรณ์ (Full Paper)</span>
-              </div>
-              <a :href="fileLink(submission.fullPaperFileUrl)" target="_blank"
-                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-                ดาวน์โหลด
-              </a>
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <h3 class="text-xs font-semibold text-gray-600">ไฟล์ที่แนบ</h3>
+            <UButton
+              v-if="submission.canUpdateFiles && !isEditingFiles"
+              color="primary"
+              variant="soft"
+              size="xs"
+              icon="i-heroicons-arrow-up-tray"
+              @click="isEditingFiles = true"
+            >
+              อัปโหลดเพิ่ม / อัปเดตไฟล์
+            </UButton>
+          </div>
+          <SubmissionFileSlotsGrid
+            v-model="fileSlots"
+            :current-urls="submission"
+            :editable="isEditingFiles"
+            :loading="savingFiles"
+          />
+          <div v-if="isEditingFiles" class="mt-3 pt-3 border-t border-gray-100 space-y-3">
+            <UFormGroup label="รายละเอียดการอัปเดตไฟล์ (ถ้ามี)" size="sm">
+              <UTextarea
+                v-model="fileUpdateChangelog"
+                :rows="2"
+                placeholder="เช่น เพิ่มไฟล์ Word ของบทความฉบับสมบูรณ์ หรืออัปเดตไฟล์ PDF"
+              />
+            </UFormGroup>
+            <div class="flex justify-end gap-2">
+              <UButton color="gray" variant="ghost" size="xs" :disabled="savingFiles" @click="resetFileUpdateForm">
+                ยกเลิก
+              </UButton>
+              <UButton
+                color="primary"
+                size="xs"
+                :loading="savingFiles"
+                :disabled="!hasAnyFileToUpload"
+                @click="saveFileUpdates"
+              >
+                บันทึกไฟล์เวอร์ชันใหม่
+              </UButton>
             </div>
           </div>
         </div>
@@ -477,12 +530,16 @@ watch(() => props.modelValue, (open) => {
         </UModal>
 
         <!-- Upload full paper (passed round 1, no file yet) -->
-        <div v-if="submission.status === 'passed_round1' && !submission.fullPaperFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
-          <div class="flex items-center gap-2 mb-3">
-            <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
-            <h3 class="text-sm font-semibold text-green-700">บทคัดย่อได้รับการอนุมัติ — กรุณาส่งบทความฉบับสมบูรณ์</h3>
+        <div v-if="submission.status === 'passed_round1' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
+              <h3 class="text-sm font-semibold text-green-700">บทคัดย่อได้รับการอนุมัติ — กรุณาส่งบทความฉบับสมบูรณ์</h3>
+            </div>
+            <UButton color="green" variant="soft" size="xs" @click="isEditingFiles = true">
+              อัปโหลดไฟล์
+            </UButton>
           </div>
-          <CommonFileUpload :loading="uploadingPaper" :max-size-mb="50" @change="uploadFullPaper" />
         </div>
 
         <!-- Revision requested -->
@@ -519,15 +576,71 @@ watch(() => props.modelValue, (open) => {
 
         <!-- Revision history -->
         <div v-if="submission.revisions.length > 0">
-          <h3 class="text-xs font-semibold text-gray-600 mb-2">ประวัติการแก้ไข</h3>
+          <h3 class="text-xs font-semibold text-gray-600 mb-2">ประวัติการแก้ไข / อัปเดตไฟล์</h3>
           <ul class="space-y-2">
-            <li v-for="rev in submission.revisions" :key="rev.id" class="flex items-start justify-between text-sm">
+            <li v-for="rev in submission.revisions" :key="rev.id" class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 text-sm border-b last:border-0 pb-2 last:pb-0">
               <div>
                 <span class="font-medium">ครั้งที่ {{ rev.version }}</span>
                 <span class="text-gray-400 ml-2">{{ formatDate(rev.submittedAt) }}</span>
                 <p v-if="rev.changelog" class="text-gray-500 text-xs mt-0.5">{{ rev.changelog }}</p>
               </div>
-              <UButton size="xs" color="gray" variant="ghost" icon="i-heroicons-arrow-down-tray" :to="rev.fileUrl" target="_blank" />
+              <div class="flex flex-wrap gap-1.5">
+                <UButton
+                  v-if="rev.abstractFileUrl"
+                  size="2xs"
+                  color="gray"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.abstractFileUrl)"
+                  target="_blank"
+                >
+                  บทคัดย่อ PDF
+                </UButton>
+                <UButton
+                  v-if="rev.abstractWordFileUrl"
+                  size="2xs"
+                  color="blue"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.abstractWordFileUrl)"
+                  target="_blank"
+                >
+                  บทคัดย่อ Word
+                </UButton>
+                <UButton
+                  v-if="rev.fullPaperFileUrl"
+                  size="2xs"
+                  color="gray"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.fullPaperFileUrl)"
+                  target="_blank"
+                >
+                  ฉบับสมบูรณ์ PDF
+                </UButton>
+                <UButton
+                  v-if="rev.fullPaperWordFileUrl"
+                  size="2xs"
+                  color="blue"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.fullPaperWordFileUrl)"
+                  target="_blank"
+                >
+                  ฉบับสมบูรณ์ Word
+                </UButton>
+                <UButton
+                  v-if="!rev.abstractFileUrl && !rev.abstractWordFileUrl && !rev.fullPaperFileUrl && !rev.fullPaperWordFileUrl && rev.fileUrl"
+                  size="2xs"
+                  color="gray"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.fileUrl)"
+                  target="_blank"
+                >
+                  ดาวน์โหลดไฟล์
+                </UButton>
+              </div>
             </li>
           </ul>
         </div>

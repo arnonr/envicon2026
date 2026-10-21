@@ -6,6 +6,7 @@ import { jwtPlugin, authPlugin, requireAuth } from "../middleware/auth";
 import { ok, fail } from "../utils/response";
 import { hashSetupToken, issuePasswordSetupToken } from "../services/password-setup";
 import { appUrl, escapeHtml, sendTrackedEmail } from "../services/email";
+import { findEventRegistrationByEmail } from "../services/event-registration-sync";
 
 const PASSWORD_RESET_RESPONSE = "หากอีเมลนี้อยู่ในระบบ เราจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้";
 
@@ -73,21 +74,25 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         cost: 10,
       });
 
+      const eventReg = await findEventRegistrationByEmail(email);
+      const resolvedAffiliation = affiliation || eventReg?.affiliation?.trim() || null;
+      const resolvedPhone = phone?.trim() || eventReg?.phone?.trim() || null;
+
       const id = crypto.randomUUID();
       await db.insert(users).values({
         id,
         email,
         passwordHash,
         name,
-        affiliation: affiliation || null,
-        phone: phone?.trim() || null,
+        affiliation: resolvedAffiliation,
+        phone: resolvedPhone,
         role: "author",
       });
 
       const token = await jwt.sign({ sub: id });
 
       set.status = 201;
-      return ok({ token, user: { id, email, name, affiliation: affiliation || null, phone: phone?.trim() || null, role: "author" as const } });
+      return ok({ token, user: { id, email, name, affiliation: resolvedAffiliation, phone: resolvedPhone, role: "author" as const } });
     },
     {
       body: t.Object({
@@ -112,6 +117,16 @@ export const authRoutes = new Elysia({ prefix: "/auth" })
         .limit(1);
 
       if (!user || !user.passwordHash) {
+        if (!user) {
+          const eventReg = await findEventRegistrationByEmail(email);
+          if (eventReg) {
+            set.status = 401;
+            return fail(
+              "EVENT_REGISTERED_NO_ACCOUNT",
+              "อีเมลนี้ลงทะเบียนเป็นผู้เข้าร่วมงานไว้แล้ว กรุณาตั้งรหัสผ่านเพื่อเข้าใช้งานระบบส่งผลงาน",
+            );
+          }
+        }
         set.status = 401;
         return fail("UNAUTHORIZED", "Invalid email or password");
       }

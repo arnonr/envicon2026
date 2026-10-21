@@ -20,6 +20,7 @@ import { buildAuthorResultEmail, buildReviewerInvitationEmail, buildReviewAssign
 import { issuePasswordSetupToken } from "../services/password-setup";
 import { fail, ok } from "../utils/response";
 import { storedFileExists } from "../services/storage";
+import { syncSubmissionPaymentToEventRegistration } from "../services/event-registration-sync";
 
 function generateSecurePassword(): string {
   const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
@@ -117,6 +118,9 @@ async function ensureCurrentSubmissionVersion(submission: typeof submissions.$in
     .limit(1);
   if (latestVersion) return latestVersion;
 
+  const abstractFileUrl = submission.abstractFileUrl ?? (submission.round1FileType === "abstract" ? submission.round1FileUrl : null);
+  const fullPaperFileUrl = submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null);
+
   const version = {
     id: crypto.randomUUID(),
     submissionId: submission.id,
@@ -131,7 +135,11 @@ async function ensureCurrentSubmissionVersion(submission: typeof submissions.$in
     educationLevel: submission.educationLevel,
     presentationFormat: submission.presentationFormat,
     submitterType: submission.submitterType,
-    fileUrl: submission.fullPaperFileUrl ?? submission.abstractFileUrl,
+    fileUrl: fullPaperFileUrl ?? submission.fullPaperWordFileUrl ?? abstractFileUrl ?? submission.abstractWordFileUrl ?? submission.round1FileUrl,
+    abstractFileUrl,
+    abstractWordFileUrl: submission.abstractWordFileUrl ?? null,
+    fullPaperFileUrl,
+    fullPaperWordFileUrl: submission.fullPaperWordFileUrl ?? null,
     changelog: null,
     submittedAt: submission.submittedAt ?? new Date(),
   };
@@ -148,10 +156,47 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       const email = body.email.trim().toLowerCase();
       const name = body.name.trim();
 
-      const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+      const [existing] = await db
+        .select({ id: users.id, role: users.role })
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
       if (existing) {
-        set.status = 409;
-        return fail("CONFLICT", "อีเมลนี้มีบัญชีในระบบแล้ว");
+        const [existingProfile] = await db
+          .select({ userId: reviewerProfiles.userId })
+          .from(reviewerProfiles)
+          .where(eq(reviewerProfiles.userId, existing.id))
+          .limit(1);
+        if (existingProfile) {
+          set.status = 409;
+          return fail("CONFLICT", "อีเมลนี้เป็นผู้ประเมินในระบบแล้ว");
+        }
+
+        const [existingSubmission] = await db
+          .select({ id: submissions.id })
+          .from(submissions)
+          .where(eq(submissions.authorId, existing.id))
+          .limit(1);
+        if (existingSubmission) {
+          set.status = 409;
+          return fail("CONFLICT", "อีเมลนี้มีบัญชีผู้ส่งบทความที่มีผลงานในระบบแล้ว");
+        }
+
+        await db
+          .update(users)
+          .set({
+            name,
+            role: existing.role === "admin" ? "admin" : "reviewer",
+          })
+          .where(eq(users.id, existing.id));
+        await db.insert(reviewerProfiles).values({
+          userId: existing.id,
+          maxConcurrentReviews: body.maxConcurrentReviews,
+        });
+
+        const invitation = await sendInvitation({ id: existing.id, name, email });
+        set.status = 201;
+        return ok({ id: existing.id, invitationStatus: invitation.status });
       }
 
       const id = crypto.randomUUID();
@@ -320,6 +365,10 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           versionTrack: submissionVersions.track,
           versionSubmitterType: submissionVersions.submitterType,
           versionFileUrl: submissionVersions.fileUrl,
+          versionAbstractFileUrl: submissionVersions.abstractFileUrl,
+          versionAbstractWordFileUrl: submissionVersions.abstractWordFileUrl,
+          versionFullPaperFileUrl: submissionVersions.fullPaperFileUrl,
+          versionFullPaperWordFileUrl: submissionVersions.fullPaperWordFileUrl,
           versionChangelog: submissionVersions.changelog,
           versionSubmittedAt: submissionVersions.submittedAt,
         })
@@ -374,6 +423,15 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
               track: round.versionTrack,
               submitterType: round.versionSubmitterType,
               fileUrl: round.versionFileUrl,
+              abstractFileUrl: round.versionAbstractFileUrl,
+              abstractWordFileUrl: round.versionAbstractWordFileUrl,
+              fullPaperFileUrl: round.versionFullPaperFileUrl,
+              fullPaperWordFileUrl: round.versionFullPaperWordFileUrl,
+              fileAvailable: await storedFileExists(round.versionFileUrl),
+              abstractFileAvailable: await storedFileExists(round.versionAbstractFileUrl),
+              abstractWordFileAvailable: await storedFileExists(round.versionAbstractWordFileUrl),
+              fullPaperFileAvailable: await storedFileExists(round.versionFullPaperFileUrl),
+              fullPaperWordFileAvailable: await storedFileExists(round.versionFullPaperWordFileUrl),
               changelog: round.versionChangelog,
               submittedAt: round.versionSubmittedAt,
             }
@@ -389,6 +447,10 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       const versions = await Promise.all(versionRows.map(async (version) => ({
         ...version,
         fileAvailable: await storedFileExists(version.fileUrl),
+        abstractFileAvailable: await storedFileExists(version.abstractFileUrl),
+        abstractWordFileAvailable: await storedFileExists(version.abstractWordFileUrl),
+        fullPaperFileAvailable: await storedFileExists(version.fullPaperFileUrl),
+        fullPaperWordFileAvailable: await storedFileExists(version.fullPaperWordFileUrl),
       })));
       return ok({
         submission,
@@ -501,9 +563,16 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           submissionId: reviews.submissionId,
           title: submissions.title,
           abstractFileUrl: submissions.abstractFileUrl,
+          abstractWordFileUrl: submissions.abstractWordFileUrl,
           fullPaperFileUrl: submissions.fullPaperFileUrl,
+          fullPaperWordFileUrl: submissions.fullPaperWordFileUrl,
           round1FileUrl: submissions.round1FileUrl,
+          round1FileType: submissions.round1FileType,
           versionFileUrl: submissionVersions.fileUrl,
+          versionAbstractFileUrl: submissionVersions.abstractFileUrl,
+          versionAbstractWordFileUrl: submissionVersions.abstractWordFileUrl,
+          versionFullPaperFileUrl: submissionVersions.fullPaperFileUrl,
+          versionFullPaperWordFileUrl: submissionVersions.fullPaperWordFileUrl,
           roundNumber: reviewRounds.roundNumber,
           reviewerId: users.id,
           reviewerName: users.name,
@@ -521,15 +590,20 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "งานนี้ถูกส่งไปแล้วหรือไม่พบการมอบหมาย");
       }
-      if ((assignment.roundNumber ?? 1) >= 2 && !assignment.fullPaperFileUrl) {
-        set.status = 400;
-        return fail("VALIDATION_ERROR", "ต้องแนบไฟล์ฉบับสมบูรณ์ก่อนเริ่มรอบที่ 2");
-      }
-      const reviewFileUrl = assignment.versionFileUrl
-        ?? assignment.fullPaperFileUrl
-        ?? assignment.round1FileUrl
-        ?? assignment.abstractFileUrl;
-      if (!await storedFileExists(reviewFileUrl)) {
+      const candidateUrls = [
+        assignment.versionFullPaperFileUrl,
+        assignment.versionFullPaperWordFileUrl,
+        assignment.versionAbstractFileUrl,
+        assignment.versionAbstractWordFileUrl,
+        assignment.versionFileUrl,
+        assignment.fullPaperFileUrl,
+        assignment.fullPaperWordFileUrl,
+        assignment.abstractFileUrl,
+        assignment.abstractWordFileUrl,
+        assignment.round1FileUrl,
+      ].filter(Boolean) as string[];
+      const availability = await Promise.all(candidateUrls.map((url) => storedFileExists(url)));
+      if (!availability.some(Boolean)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "ไม่พบไฟล์ผลงานสำหรับรอบพิจารณานี้ กรุณาให้เจ้าของผลงานแนบไฟล์ใหม่ก่อนส่งพิจารณา");
       }
@@ -701,6 +775,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .from(submissions)
         .where(eq(submissions.id, params.id))
         .limit(1);
+      if (updated) {
+        await syncSubmissionPaymentToEventRegistration(updated);
+      }
       return ok(updated);
     },
     {

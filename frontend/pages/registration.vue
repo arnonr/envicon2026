@@ -97,8 +97,8 @@ onMounted(() => {
           <div class="flex-1">
             <h2 class="font-bold text-lg text-gray-900">ลงทะเบียนส่งผลงาน</h2>
             <p class="mt-1 text-sm text-gray-500">สำหรับผู้ที่ต้องการส่งบทความเข้าร่วมพิจารณา</p>
-            <UButton color="primary" class="mt-4" :to="authStore.isLoggedIn ? '/submit' : '/auth/login'">
-              {{ authStore.isLoggedIn ? 'ดำเนินการส่งผลงาน' : 'เข้าสู่ระบบเพื่อส่งผลงาน' }}
+            <UButton color="primary" class="mt-4" :to="authStore.isLoggedIn ? '/submit' : '/auth/login?redirect=/submit'">
+              {{ authStore.isLoggedIn ? 'ดำเนินการส่งผลงาน' : 'เข้าสู่ระบบ / สมัครส่งผลงาน' }}
             </UButton>
           </div>
         </div>
@@ -115,6 +115,27 @@ onMounted(() => {
           </div>
         </div>
       </UCard>
+    </div>
+
+    <!-- Banner for attendees switching to presenter -->
+    <div class="mb-10 rounded-xl border border-blue-200 bg-blue-50/70 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <UIcon name="i-heroicons-information-circle" class="w-6 h-6 text-blue-600 shrink-0 mt-0.5" />
+        <div class="text-sm text-blue-900 space-y-1">
+          <p class="font-semibold">ลงทะเบียนเป็นผู้เข้าร่วมงานไปแล้ว แต่ต้องการเปลี่ยนเป็นผู้นำเสนอผลงาน?</p>
+          <p class="text-blue-700 leading-relaxed">
+            สามารถใช้ <strong>อีเมลเดิมที่เคยลงทะเบียนเข้าร่วมงาน</strong> กดตั้งรหัสผ่านเพื่อเข้าสู่ระบบส่งบทคัดย่อ/บทความได้ทันที โดยระบบจะดึงข้อมูลผู้ลงทะเบียน หลักฐานการชำระเงิน (สลิป) และข้อมูลใบเสร็จเดิมมาเชื่อมโยงให้อัตโนมัติ ไม่ต้องชำระเงินซ้ำ
+          </p>
+        </div>
+      </div>
+      <UButton
+        color="blue"
+        variant="solid"
+        class="shrink-0 self-start sm:self-center"
+        :to="authStore.isLoggedIn ? '/submit' : '/auth/login?mode=register&redirect=/submit'"
+      >
+        {{ authStore.isLoggedIn ? 'ไปหน้าส่งผลงาน' : 'เปลี่ยนเป็นผู้นำเสนอด้วยอีเมลเดิม' }}
+      </UButton>
     </div>
 
     <!-- Fee Table -->

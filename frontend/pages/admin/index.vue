@@ -13,7 +13,9 @@ interface Submission {
   status: string;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   abstractFileUrl: string | null;
+  abstractWordFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  fullPaperWordFileUrl: string | null;
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
   paymentSlipUrl: string | null;
@@ -135,6 +137,12 @@ function fileHref(url: string | null): string | null {
 function abstractFileHref(sub: Submission): string | null {
   if (sub.abstractFileUrl) return fileHref(sub.abstractFileUrl);
   if (sub.round1FileUrl && sub.round1FileType === "abstract") return fileHref(sub.round1FileUrl);
+  return null;
+}
+
+function fullPaperFileHref(sub: Submission): string | null {
+  if (sub.fullPaperFileUrl) return fileHref(sub.fullPaperFileUrl);
+  if (sub.round1FileUrl && sub.round1FileType === "full_paper") return fileHref(sub.round1FileUrl);
   return null;
 }
 
@@ -446,29 +454,53 @@ onBeforeUnmount(() => {
               </UBadge>
             </td>
             <td class="py-3 px-3 text-center">
-              <a
-                v-if="abstractFileHref(sub)"
-                :href="abstractFileHref(sub) ?? '#'"
-                target="_blank"
-                class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 hover:underline"
-                title="ดาวน์โหลดบทคัดย่อ"
-              >
-                <UIcon name="i-heroicons-document-text" class="w-4 h-4" />
-                <span class="text-xs">บทคัดย่อ</span>
-              </a>
+              <div v-if="abstractFileHref(sub) || sub.abstractWordFileUrl" class="flex items-center justify-center gap-2">
+                <a
+                  v-if="abstractFileHref(sub)"
+                  :href="abstractFileHref(sub) ?? '#'"
+                  target="_blank"
+                  class="inline-flex items-center gap-0.5 text-primary-600 hover:text-primary-700 hover:underline text-xs"
+                  title="ดาวน์โหลดบทคัดย่อ (PDF)"
+                >
+                  <UIcon name="i-heroicons-document-text" class="w-3.5 h-3.5" />
+                  <span>PDF</span>
+                </a>
+                <a
+                  v-if="sub.abstractWordFileUrl"
+                  :href="fileHref(sub.abstractWordFileUrl) ?? '#'"
+                  target="_blank"
+                  class="inline-flex items-center gap-0.5 text-blue-600 hover:text-blue-700 hover:underline text-xs"
+                  title="ดาวน์โหลดบทคัดย่อ (Word)"
+                >
+                  <UIcon name="i-heroicons-document" class="w-3.5 h-3.5" />
+                  <span>Word</span>
+                </a>
+              </div>
               <span v-else class="text-xs text-gray-300">—</span>
             </td>
             <td class="py-3 px-3 text-center">
-              <a
-                v-if="sub.fullPaperFileUrl"
-                :href="fileHref(sub.fullPaperFileUrl) ?? '#'"
-                target="_blank"
-                class="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 hover:underline"
-                title="ดาวน์โหลดบทความฉบับสมบูรณ์"
-              >
-                <UIcon name="i-heroicons-document-arrow-down" class="w-4 h-4" />
-                <span class="text-xs">ฉบับสมบูรณ์</span>
-              </a>
+              <div v-if="fullPaperFileHref(sub) || sub.fullPaperWordFileUrl" class="flex items-center justify-center gap-2">
+                <a
+                  v-if="fullPaperFileHref(sub)"
+                  :href="fullPaperFileHref(sub) ?? '#'"
+                  target="_blank"
+                  class="inline-flex items-center gap-0.5 text-primary-600 hover:text-primary-700 hover:underline text-xs"
+                  title="ดาวน์โหลดบทความฉบับสมบูรณ์ (PDF)"
+                >
+                  <UIcon name="i-heroicons-document-arrow-down" class="w-3.5 h-3.5" />
+                  <span>PDF</span>
+                </a>
+                <a
+                  v-if="sub.fullPaperWordFileUrl"
+                  :href="fileHref(sub.fullPaperWordFileUrl) ?? '#'"
+                  target="_blank"
+                  class="inline-flex items-center gap-0.5 text-blue-600 hover:text-blue-700 hover:underline text-xs"
+                  title="ดาวน์โหลดบทความฉบับสมบูรณ์ (Word)"
+                >
+                  <UIcon name="i-heroicons-document" class="w-3.5 h-3.5" />
+                  <span>Word</span>
+                </a>
+              </div>
               <span v-else class="text-xs text-gray-300">—</span>
             </td>
             <td class="py-3 px-3 text-center">

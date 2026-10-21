@@ -3,6 +3,8 @@ definePageMeta({ layout: "default" });
 
 const route = useRoute();
 const router = useRouter();
+const config = useRuntimeConfig();
+const apiBase = config.public.apiBase as string;
 const { register, login, isLoggedIn } = useAuth();
 
 function resolveRedirect(defaultPath: string) {
@@ -22,6 +24,7 @@ const isRegisterMode = ref(route.query.mode === "register");
 const loading = ref(false);
 const showPassword = ref(false);
 const serverError = ref("");
+const eventRegNotice = ref("");
 
 const form = reactive({
   name: "",
@@ -30,6 +33,37 @@ const form = reactive({
   email: typeof route.query.email === "string" ? route.query.email : "",
   password: "",
 });
+
+async function checkAttendeeEmail(rawEmail: string): Promise<boolean> {
+  const email = rawEmail.trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    eventRegNotice.value = "";
+    return false;
+  }
+  try {
+    const res = await $fetch<{
+      success: true;
+      data: {
+        foundInEventRegistration: boolean;
+        hasUserAccount: boolean;
+        prefill: { fullName: string; affiliation: string; phone: string; feeType: string } | null;
+      };
+    }>(`${apiBase}/public/check-event-registration?email=${encodeURIComponent(email)}`);
+    if (res.data.foundInEventRegistration && !res.data.hasUserAccount && res.data.prefill) {
+      if (!form.name.trim()) form.name = res.data.prefill.fullName;
+      if (!form.affiliation.trim()) form.affiliation = res.data.prefill.affiliation;
+      if (!form.phone.trim()) form.phone = res.data.prefill.phone;
+      errors.name = "";
+      eventRegNotice.value =
+        "พบข้อมูลการลงทะเบียนเข้าร่วมงานของอีเมลนี้แล้ว — ระบบได้ดึงชื่อ สังกัด และเบอร์โทรมาให้อัตโนมัติ (หลักฐานการชำระเงินและข้อมูลใบเสร็จเดิมจะถูกเชื่อมโยงเข้ากับผลงานทันที)";
+      return true;
+    }
+    eventRegNotice.value = "";
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 const errors = reactive({
   name: "",
@@ -59,10 +93,13 @@ function validateField(field: "name" | "email" | "password") {
   }
 }
 
-function onBlur(field: "name" | "email" | "password") {
+async function onBlur(field: "name" | "email" | "password") {
   touched[field] = true;
   if (field === "email") {
     form.email = form.email.trim();
+    if (isRegisterMode.value) {
+      await checkAttendeeEmail(form.email);
+    }
   }
   if (field === "name") {
     form.name = form.name.trim();
@@ -70,7 +107,7 @@ function onBlur(field: "name" | "email" | "password") {
   validateField(field);
 }
 
-function switchMode(register: boolean) {
+async function switchMode(register: boolean) {
   isRegisterMode.value = register;
   errors.name = "";
   errors.email = "";
@@ -79,6 +116,11 @@ function switchMode(register: boolean) {
   touched.email = false;
   touched.password = false;
   serverError.value = "";
+  if (register && form.email.trim()) {
+    await checkAttendeeEmail(form.email);
+  } else {
+    eventRegNotice.value = "";
+  }
 }
 
 function validate(): boolean {
@@ -139,6 +181,17 @@ async function handleSubmit() {
       login(form.email.trim().toLowerCase(), form.password),
     );
     if (error) {
+      if (error.error === "EVENT_REGISTERED_NO_ACCOUNT") {
+        isRegisterMode.value = true;
+        serverError.value = "";
+        await checkAttendeeEmail(form.email);
+        if (!eventRegNotice.value) {
+          eventRegNotice.value =
+            "อีเมลนี้ลงทะเบียนเป็นผู้เข้าร่วมงานไว้แล้ว กรุณาตรวจสอบข้อมูลและกด 'ลงทะเบียน' ด้านล่างเพื่อตั้งรหัสผ่านสำหรับส่งผลงาน";
+        }
+        loading.value = false;
+        return;
+      }
       serverError.value = getErrorMessage(error);
       loading.value = false;
       return;
@@ -164,6 +217,25 @@ async function handleSubmit() {
       <UCard>
         <form novalidate @submit.prevent="handleSubmit" class="space-y-4">
           <UAlert v-if="serverError" icon="i-heroicons-exclamation-triangle" color="red" variant="soft" :title="serverError" :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'gray', variant: 'link' }" @close="serverError = ''" />
+          <UAlert
+            v-if="eventRegNotice"
+            icon="i-heroicons-information-circle"
+            color="blue"
+            variant="soft"
+            :description="eventRegNotice"
+          />
+
+          <UFormGroup label="อีเมล (Email)" :error="touched.email ? errors.email : ''">
+            <UInput
+              v-model.trim="form.email"
+              type="email"
+              placeholder="email@example.com"
+              icon="i-heroicons-envelope"
+              autocomplete="email"
+              @blur="onBlur('email')"
+            />
+          </UFormGroup>
+
           <template v-if="isRegisterMode">
             <UFormGroup label="ชื่อ-นามสกุล (Full Name)" :error="touched.name ? errors.name : ''">
               <UInput
@@ -180,17 +252,6 @@ async function handleSubmit() {
               <UInput v-model="form.phone" placeholder="08X-XXX-XXXX" icon="i-heroicons-phone" />
             </UFormGroup>
           </template>
-
-          <UFormGroup label="อีเมล (Email)" :error="touched.email ? errors.email : ''">
-            <UInput
-              v-model.trim="form.email"
-              type="email"
-              placeholder="email@example.com"
-              icon="i-heroicons-envelope"
-              autocomplete="email"
-              @blur="onBlur('email')"
-            />
-          </UFormGroup>
 
           <UFormGroup label="รหัสผ่าน (Password)" :error="touched.password ? errors.password : ''">
             <UInput
@@ -224,19 +285,24 @@ async function handleSubmit() {
         </form>
 
         <template #footer>
-          <div class="text-center text-sm">
-            <template v-if="isRegisterMode">
-              มีบัญชีอยู่แล้ว?
-              <button class="text-primary-600 font-semibold hover:underline" @click="switchMode(false)">
-                เข้าสู่ระบบ
-              </button>
-            </template>
-            <template v-else>
-              ยังไม่มีบัญชี?
-              <button class="text-primary-600 font-semibold hover:underline" @click="switchMode(true)">
-                ลงทะเบียน
-              </button>
-            </template>
+          <div class="text-center text-sm space-y-2">
+            <div>
+              <template v-if="isRegisterMode">
+                มีบัญชีอยู่แล้ว?
+                <button class="text-primary-600 font-semibold hover:underline" @click="switchMode(false)">
+                  เข้าสู่ระบบ
+                </button>
+              </template>
+              <template v-else>
+                ยังไม่มีบัญชีสำหรับส่งผลงาน?
+                <button class="text-primary-600 font-semibold hover:underline" @click="switchMode(true)">
+                  ลงทะเบียน / เปลี่ยนเป็นผู้นำเสนอ
+                </button>
+              </template>
+            </div>
+            <p v-if="!isRegisterMode" class="text-xs text-gray-500">
+              หากเคยลงทะเบียนเป็นผู้เข้าร่วมงานไว้แล้ว สามารถกด <strong>ลงทะเบียน / เปลี่ยนเป็นผู้นำเสนอ</strong> ด้วยอีเมลเดิมเพื่อตั้งรหัสผ่านส่งผลงานได้ทันที
+            </p>
           </div>
         </template>
       </UCard>

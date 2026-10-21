@@ -19,6 +19,7 @@ interface _GlobalComponents {
   HomeRegistrationModal: typeof import("../../components/home/RegistrationModal.vue")['default']
   LayoutFooter: typeof import("../../components/layout/Footer.vue")['default']
   LayoutNavbar: typeof import("../../components/layout/Navbar.vue")['default']
+  SubmissionFileSlotsGrid: typeof import("../../components/submission/FileSlotsGrid.vue")['default']
   SubmissionPaymentStatusBadge: typeof import("../../components/submission/PaymentStatusBadge.vue")['default']
   SubmissionRoundIndicator: typeof import("../../components/submission/RoundIndicator.vue")['default']
   SubmissionStatusBadge: typeof import("../../components/submission/StatusBadge.vue")['default']
@@ -103,6 +104,7 @@ interface _GlobalComponents {
   LazyHomeRegistrationModal: LazyComponent<typeof import("../../components/home/RegistrationModal.vue")['default']>
   LazyLayoutFooter: LazyComponent<typeof import("../../components/layout/Footer.vue")['default']>
   LazyLayoutNavbar: LazyComponent<typeof import("../../components/layout/Navbar.vue")['default']>
+  LazySubmissionFileSlotsGrid: LazyComponent<typeof import("../../components/submission/FileSlotsGrid.vue")['default']>
   LazySubmissionPaymentStatusBadge: LazyComponent<typeof import("../../components/submission/PaymentStatusBadge.vue")['default']>
   LazySubmissionRoundIndicator: LazyComponent<typeof import("../../components/submission/RoundIndicator.vue")['default']>
   LazySubmissionStatusBadge: LazyComponent<typeof import("../../components/submission/StatusBadge.vue")['default']>

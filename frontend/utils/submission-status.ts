@@ -56,6 +56,12 @@ export const canRevise = (s: SubmissionStatus) =>
 export const canCameraReady = (s: SubmissionStatus) =>
   s === "passed_round1" || s === "passed_round2";
 
+export const canUpdateFiles = (s: SubmissionStatus) =>
+  s !== "under_review_round1"
+  && s !== "under_review_round2"
+  && s !== "rejected_round1"
+  && s !== "rejected_round2";
+
 export const TERMINAL_STATUSES: SubmissionStatus[] = [
   "passed_round1",
   "passed_round1_with_revisions",

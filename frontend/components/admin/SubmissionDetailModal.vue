@@ -3,9 +3,17 @@ interface Revision {
   id: string;
   version: number;
   fileUrl: string;
+  abstractFileUrl: string | null;
+  abstractWordFileUrl: string | null;
+  fullPaperFileUrl: string | null;
+  fullPaperWordFileUrl: string | null;
   changelog: string | null;
   submittedAt: string;
   fileAvailable: boolean;
+  abstractFileAvailable?: boolean;
+  abstractWordFileAvailable?: boolean;
+  fullPaperFileAvailable?: boolean;
+  fullPaperWordFileAvailable?: boolean;
 }
 
 interface Submission {
@@ -22,7 +30,9 @@ interface Submission {
   wantsFullPaper: number;
   status: string;
   abstractFileUrl: string | null;
+  abstractWordFileUrl: string | null;
   fullPaperFileUrl: string | null;
+  fullPaperWordFileUrl: string | null;
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
   paymentSlipUrl: string | null;
@@ -63,9 +73,17 @@ interface SubmissionVersion {
   educationLevel: string;
   presentationFormat: string;
   fileUrl: string | null;
+  abstractFileUrl: string | null;
+  abstractWordFileUrl: string | null;
+  fullPaperFileUrl: string | null;
+  fullPaperWordFileUrl: string | null;
   changelog: string | null;
   submittedAt: string;
   fileAvailable: boolean;
+  abstractFileAvailable?: boolean;
+  abstractWordFileAvailable?: boolean;
+  fullPaperFileAvailable?: boolean;
+  fullPaperWordFileAvailable?: boolean;
 }
 
 interface WorkflowRound {
@@ -242,7 +260,10 @@ const comparisonRows = (version: SubmissionVersion, index: number) => {
     { label: "ประเภทผู้ส่ง", before: submitterLabel(previous.submitterType), after: submitterLabel(version.submitterType) },
     { label: "ระดับการศึกษา", before: educationLabel(previous.educationLevel), after: educationLabel(version.educationLevel) },
     { label: "รูปแบบการนำเสนอ", before: presentationFormatLabel(previous.presentationFormat), after: presentationFormatLabel(version.presentationFormat) },
-    { label: "ไฟล์", before: previous.fileUrl, after: version.fileUrl },
+    { label: "ไฟล์บทคัดย่อ (PDF)", before: previous.abstractFileUrl, after: version.abstractFileUrl },
+    { label: "ไฟล์บทคัดย่อ (Word)", before: previous.abstractWordFileUrl, after: version.abstractWordFileUrl },
+    { label: "ไฟล์ฉบับเต็ม (PDF)", before: previous.fullPaperFileUrl, after: version.fullPaperFileUrl },
+    { label: "ไฟล์ฉบับเต็ม (Word)", before: previous.fullPaperWordFileUrl, after: version.fullPaperWordFileUrl },
   ];
   return fields.filter(field => (field.before ?? "") !== (field.after ?? ""));
 };
@@ -540,39 +561,10 @@ watch(() => props.modelValue, (open) => {
         <!-- Files -->
         <div>
           <h3 class="text-xs font-semibold text-gray-600 mb-2">ไฟล์ที่แนบ</h3>
-          <div class="space-y-2">
-            <div class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-document" class="w-4 h-4 text-gray-400" />
-                <span class="text-gray-700">
-                  บทคัดย่อ
-                  <span v-if="submission.round1FileType === 'full_paper'" class="text-xs text-gray-500">(บทความฉบับสมบูรณ์)</span>
-                </span>
-              </div>
-              <a v-if="submission.round1FileUrl" :href="fileLink(submission.round1FileUrl)" target="_blank"
-                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-                ดาวน์โหลด
-              </a>
-              <a v-else-if="submission.abstractFileUrl" :href="fileLink(submission.abstractFileUrl)" target="_blank"
-                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-                ดาวน์โหลด
-              </a>
-              <span v-else class="text-xs text-gray-400">ยังไม่มีไฟล์</span>
-            </div>
-            <div v-if="submission.fullPaperFileUrl" class="flex items-center justify-between text-sm">
-              <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-gray-400" />
-                <span class="text-gray-700">บทความฉบับสมบูรณ์ (Full Paper)</span>
-              </div>
-              <a :href="fileLink(submission.fullPaperFileUrl)" target="_blank"
-                class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline">
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-                ดาวน์โหลด
-              </a>
-            </div>
-          </div>
+          <SubmissionFileSlotsGrid
+            :current-urls="submission"
+            :editable="false"
+          />
         </div>
 
         <!-- Payment slip -->
@@ -602,16 +594,72 @@ watch(() => props.modelValue, (open) => {
 
         <!-- Revision history -->
         <div v-if="submission.revisions.length > 0">
-          <h3 class="text-xs font-semibold text-gray-600 mb-2">ประวัติการแก้ไข</h3>
+          <h3 class="text-xs font-semibold text-gray-600 mb-2">ประวัติการแก้ไข / อัปเดตไฟล์</h3>
           <ul class="space-y-2">
-            <li v-for="rev in submission.revisions" :key="rev.id" class="flex items-start justify-between text-sm">
+            <li v-for="rev in submission.revisions" :key="rev.id" class="flex flex-col sm:flex-row sm:items-start justify-between gap-2 text-sm border-b last:border-0 pb-2 last:pb-0">
               <div>
                 <span class="font-medium">ครั้งที่ {{ rev.version }}</span>
                 <span class="text-gray-400 ml-2">{{ formatDate(rev.submittedAt) }}</span>
                 <p v-if="rev.changelog" class="text-gray-500 text-xs mt-0.5">{{ rev.changelog }}</p>
                 <p v-if="!rev.fileAvailable" class="text-red-600 text-xs mt-0.5">ไม่พบไฟล์</p>
               </div>
-              <UButton v-if="rev.fileAvailable" size="xs" color="gray" variant="ghost" icon="i-heroicons-arrow-down-tray" :to="fileLink(rev.fileUrl)" target="_blank" />
+              <div v-if="rev.fileAvailable" class="flex flex-wrap gap-1.5">
+                <UButton
+                  v-if="rev.abstractFileUrl"
+                  size="2xs"
+                  color="gray"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.abstractFileUrl)"
+                  target="_blank"
+                >
+                  บทคัดย่อ PDF
+                </UButton>
+                <UButton
+                  v-if="rev.abstractWordFileUrl"
+                  size="2xs"
+                  color="blue"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.abstractWordFileUrl)"
+                  target="_blank"
+                >
+                  บทคัดย่อ Word
+                </UButton>
+                <UButton
+                  v-if="rev.fullPaperFileUrl"
+                  size="2xs"
+                  color="gray"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.fullPaperFileUrl)"
+                  target="_blank"
+                >
+                  ฉบับสมบูรณ์ PDF
+                </UButton>
+                <UButton
+                  v-if="rev.fullPaperWordFileUrl"
+                  size="2xs"
+                  color="blue"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.fullPaperWordFileUrl)"
+                  target="_blank"
+                >
+                  ฉบับสมบูรณ์ Word
+                </UButton>
+                <UButton
+                  v-if="!rev.abstractFileUrl && !rev.abstractWordFileUrl && !rev.fullPaperFileUrl && !rev.fullPaperWordFileUrl && rev.fileUrl"
+                  size="2xs"
+                  color="gray"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="fileLink(rev.fileUrl)"
+                  target="_blank"
+                >
+                  ดาวน์โหลดไฟล์
+                </UButton>
+              </div>
             </li>
           </ul>
         </div>
@@ -633,16 +681,50 @@ watch(() => props.modelValue, (open) => {
                   {{ round.status === 'released' ? decisionLabel(round.decision) : 'กำลังดำเนินการ' }}
                 </UBadge>
               </div>
-              <div v-if="round.submissionVersion?.fileUrl" class="text-xs">
-                <span class="text-gray-500">ไฟล์รอบนี้: </span>
-                <a
-                  v-if="round.submissionVersion.fileAvailable"
-                  :href="fileLink(round.submissionVersion.fileUrl)"
-                  target="_blank"
-                  class="text-primary-600 hover:underline"
-                >
-                  ดาวน์โหลด PDF
-                </a>
+              <div v-if="round.submissionVersion" class="text-xs flex flex-wrap items-center gap-2">
+                <span class="text-gray-500">ไฟล์รอบนี้:</span>
+                <template v-if="round.submissionVersion.fileAvailable">
+                  <a
+                    v-if="round.submissionVersion.abstractFileUrl"
+                    :href="fileLink(round.submissionVersion.abstractFileUrl)"
+                    target="_blank"
+                    class="text-primary-600 hover:underline"
+                  >
+                    บทคัดย่อ PDF
+                  </a>
+                  <a
+                    v-if="round.submissionVersion.abstractWordFileUrl"
+                    :href="fileLink(round.submissionVersion.abstractWordFileUrl)"
+                    target="_blank"
+                    class="text-blue-600 hover:underline"
+                  >
+                    บทคัดย่อ Word
+                  </a>
+                  <a
+                    v-if="round.submissionVersion.fullPaperFileUrl"
+                    :href="fileLink(round.submissionVersion.fullPaperFileUrl)"
+                    target="_blank"
+                    class="text-primary-600 hover:underline"
+                  >
+                    ฉบับสมบูรณ์ PDF
+                  </a>
+                  <a
+                    v-if="round.submissionVersion.fullPaperWordFileUrl"
+                    :href="fileLink(round.submissionVersion.fullPaperWordFileUrl)"
+                    target="_blank"
+                    class="text-blue-600 hover:underline"
+                  >
+                    ฉบับสมบูรณ์ Word
+                  </a>
+                  <a
+                    v-if="!round.submissionVersion.abstractFileUrl && !round.submissionVersion.abstractWordFileUrl && !round.submissionVersion.fullPaperFileUrl && !round.submissionVersion.fullPaperWordFileUrl && round.submissionVersion.fileUrl"
+                    :href="fileLink(round.submissionVersion.fileUrl)"
+                    target="_blank"
+                    class="text-primary-600 hover:underline"
+                  >
+                    ดาวน์โหลดไฟล์
+                  </a>
+                </template>
                 <span v-else class="text-red-600">ไม่พบไฟล์</span>
               </div>
               <p v-if="round.releasedAt" class="text-xs text-gray-500">แจ้งผลเมื่อ {{ formatDate(round.releasedAt) }}</p>
@@ -669,15 +751,34 @@ watch(() => props.modelValue, (open) => {
         <div v-if="workflow?.versions.length" class="border border-sky-200 rounded-lg p-4 bg-sky-50/30 space-y-3">
           <h3 class="font-semibold text-sm text-sky-800">ประวัติฉบับผลงานและการเปรียบเทียบ</h3>
           <div v-for="(version, index) in workflow.versions" :key="version.id" class="bg-white border rounded-lg p-3 space-y-2">
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p class="font-medium text-sm">{{ versionLabel(version) }}</p>
                 <p class="text-xs text-gray-500">{{ formatDate(version.submittedAt) }}</p>
               </div>
-              <a v-if="version.fileUrl && version.fileAvailable" :href="fileLink(version.fileUrl)" target="_blank" class="text-xs text-primary-600 hover:underline">
-                ดาวน์โหลด PDF
-              </a>
-              <span v-else-if="version.fileUrl" class="text-xs text-red-600">ไม่พบไฟล์ PDF</span>
+              <div v-if="version.fileAvailable" class="flex flex-wrap gap-2 text-xs">
+                <a v-if="version.abstractFileUrl" :href="fileLink(version.abstractFileUrl)" target="_blank" class="text-primary-600 hover:underline">
+                  บทคัดย่อ PDF
+                </a>
+                <a v-if="version.abstractWordFileUrl" :href="fileLink(version.abstractWordFileUrl)" target="_blank" class="text-blue-600 hover:underline">
+                  บทคัดย่อ Word
+                </a>
+                <a v-if="version.fullPaperFileUrl" :href="fileLink(version.fullPaperFileUrl)" target="_blank" class="text-primary-600 hover:underline">
+                  ฉบับสมบูรณ์ PDF
+                </a>
+                <a v-if="version.fullPaperWordFileUrl" :href="fileLink(version.fullPaperWordFileUrl)" target="_blank" class="text-blue-600 hover:underline">
+                  ฉบับสมบูรณ์ Word
+                </a>
+                <a
+                  v-if="!version.abstractFileUrl && !version.abstractWordFileUrl && !version.fullPaperFileUrl && !version.fullPaperWordFileUrl && version.fileUrl"
+                  :href="fileLink(version.fileUrl)"
+                  target="_blank"
+                  class="text-primary-600 hover:underline"
+                >
+                  ดาวน์โหลดไฟล์
+                </a>
+              </div>
+              <span v-else-if="version.fileUrl" class="text-xs text-red-600">ไม่พบไฟล์</span>
             </div>
             <p v-if="version.changelog" class="text-xs text-gray-600 whitespace-pre-line">{{ version.changelog }}</p>
             <div v-if="comparisonRows(version, index).length" class="border-t pt-2 space-y-2">

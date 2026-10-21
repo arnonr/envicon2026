@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Creator, SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
+import type { SelectedSlotFiles } from '~/components/submission/FileSlotsGrid.vue';
 
 definePageMeta({ middleware: ['auth', 'role'] });
 
@@ -16,6 +17,10 @@ interface DraftSubmission {
   educationLevel: string;
   presentationFormat: string;
   wantsFullPaper: boolean;
+  abstractFileUrl?: string | null;
+  abstractWordFileUrl?: string | null;
+  fullPaperFileUrl?: string | null;
+  fullPaperWordFileUrl?: string | null;
   round1FileType: 'abstract' | 'full_paper' | null;
 }
 
@@ -32,6 +37,7 @@ const uploading = ref(false);
 const savingDraft = ref(false);
 const loadingDraft = ref(false);
 const loadFailed = ref(false);
+const linkedEventRegistration = ref(false);
 
 const submissionFormRef = ref<{ creators: Creator[] } | null>(null);
 const initialCreators = ref<Creator[]>([]);
@@ -127,6 +133,26 @@ onMounted(async () => {
     return;
   }
   await checkExisting();
+  const userEmail = authStore.user?.email;
+  if (userEmail) {
+    try {
+      const res = await $fetch<{
+        success: true;
+        data: {
+          foundInEventRegistration: boolean;
+          feeType: 'student' | 'general' | null;
+        };
+      }>(`${apiBase}/public/check-event-registration?email=${encodeURIComponent(userEmail)}`);
+      if (res.data.foundInEventRegistration) {
+        linkedEventRegistration.value = true;
+        if (res.data.feeType) {
+          form.value.submitterType = res.data.feeType;
+        }
+      }
+    } catch {
+      // Ignore prefill errors
+    }
+  }
 });
 
 const createSubmission = async () => {
@@ -228,23 +254,39 @@ const saveDraft = async () => {
   }
 };
 
-const selectedFile = ref<File | null>(null);
+const selectedFiles = ref<SelectedSlotFiles>({
+  abstractPdf: null,
+  abstractWord: null,
+  fullPaperPdf: null,
+  fullPaperWord: null,
+});
 const round1FileType = ref<'abstract' | 'full_paper'>('abstract');
 
-const onFileSelected = (file: File) => {
-  selectedFile.value = file;
+const hasAnySelectedFile = computed(() =>
+  Boolean(
+    selectedFiles.value.abstractPdf
+    || selectedFiles.value.abstractWord
+    || selectedFiles.value.fullPaperPdf
+    || selectedFiles.value.fullPaperWord
+  )
+);
+
+const onFilesUpdated = (files: SelectedSlotFiles) => {
+  selectedFiles.value = files;
 };
 
-const uploadAbstract = async () => {
-  if (!submissionId.value || !selectedFile.value) return;
+const uploadInitialFiles = async () => {
+  if (!submissionId.value || !hasAnySelectedFile.value) return;
   uploading.value = true;
 
   const formData = new FormData();
-  formData.append('file', selectedFile.value);
-  formData.append('fileType', round1FileType.value);
+  if (selectedFiles.value.abstractPdf) formData.append('abstractPdf', selectedFiles.value.abstractPdf);
+  if (selectedFiles.value.abstractWord) formData.append('abstractWord', selectedFiles.value.abstractWord);
+  if (selectedFiles.value.fullPaperPdf) formData.append('fullPaperPdf', selectedFiles.value.fullPaperPdf);
+  if (selectedFiles.value.fullPaperWord) formData.append('fullPaperWord', selectedFiles.value.fullPaperWord);
 
-  const { data, error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/submissions/${submissionId.value}/upload-round1-file`, {
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/submissions/${submissionId.value}/upload-files`, {
       method: 'POST',
       headers: headers.value,
       body: formData,
@@ -258,9 +300,7 @@ const uploadAbstract = async () => {
     return;
   }
 
-  showSuccess(round1FileType.value === 'abstract'
-    ? 'ส่งบทคัดย่อเรียบร้อยแล้ว'
-    : 'ส่งบทความฉบับสมบูรณ์เรียบร้อยแล้ว');
+  showSuccess('ส่งไฟล์ผลงานเรียบร้อยแล้ว');
   step.value = 3;
 };
 </script>
@@ -288,7 +328,7 @@ const uploadAbstract = async () => {
     </div>
     <div class="flex justify-between text-xs text-gray-500 mb-8 -mt-6">
       <span>ข้อมูลผลงาน</span>
-      <span>อัปโหลด PDF</span>
+      <span>อัปโหลดไฟล์</span>
       <span>เสร็จสิ้น</span>
     </div>
 
@@ -311,6 +351,16 @@ const uploadAbstract = async () => {
         <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 1: ข้อมูลผลงาน</h2>
       </template>
 
+      <UAlert
+        v-if="linkedEventRegistration"
+        icon="i-heroicons-check-circle"
+        color="blue"
+        variant="soft"
+        class="mb-4"
+        title="พบข้อมูลการลงทะเบียนเข้าร่วมงานเดิมของคุณ"
+        description="เมื่อสร้างผลงาน ระบบจะดึงหลักฐานการชำระเงิน (สลิป) และข้อมูลใบเสร็จรับเงินที่คุณเคยแจ้งไว้มาผูกกับผลงานนี้ให้อัตโนมัติ"
+      />
+
       <SubmissionForm ref="submissionFormRef" v-model="form" :initial-creators="initialCreators" />
 
       <template #footer>
@@ -320,7 +370,7 @@ const uploadAbstract = async () => {
             บันทึกแบบร่าง
           </UButton>
           <UButton color="primary" :loading="submitting" :disabled="!isStep1Valid" @click="createSubmission">
-            ถัดไป: อัปโหลด PDF
+            ถัดไป: อัปโหลดไฟล์
             <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
           </UButton>
         </div>
@@ -330,59 +380,19 @@ const uploadAbstract = async () => {
     <!-- Step 2: Upload -->
     <UCard v-else-if="step === 2">
       <template #header>
-        <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 2: อัปโหลดไฟล์ผลงาน</h2>
+        <div>
+          <h2 class="font-semibold text-gray-900">ขั้นตอนที่ 2: อัปโหลดไฟล์ผลงาน (Word / PDF)</h2>
+          <p class="text-xs text-gray-500 mt-1">
+            อัปโหลดไฟล์ที่มีอย่างน้อย 1 ไฟล์เพื่อส่งผลงาน (สามารถเข้ามาอัปโหลดเพิ่มเติมหรืออัปเดตไฟล์ในภายหลังได้)
+          </p>
+        </div>
       </template>
 
-      <div class="space-y-5">
-        <div>
-          <p class="text-sm font-medium text-gray-700 mb-2">ประเภทไฟล์ที่ส่ง (Submission File Type) <span class="text-red-500">*</span></p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label
-              class="cursor-pointer border-2 rounded-lg p-4 transition-colors"
-              :class="round1FileType === 'abstract' ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-gray-300'"
-            >
-              <input type="radio" v-model="round1FileType" value="abstract" class="sr-only" />
-              <div class="flex items-start gap-3">
-                <UIcon
-                  :name="round1FileType === 'abstract' ? 'i-heroicons-check-circle' : 'i-heroicons-document'"
-                  class="w-5 h-5 mt-0.5 flex-shrink-0"
-                  :class="round1FileType === 'abstract' ? 'text-primary-600' : 'text-gray-400'"
-                />
-                <div>
-                  <p class="font-medium text-sm text-gray-900">เฉพาะบทคัดย่อ (Abstract Only)</p>
-                  <p class="text-xs text-gray-500 mt-1">ส่งเอกสารบทคัดย่อเพื่อให้คณะกรรมการพิจารณาเบื้องต้น</p>
-                </div>
-              </div>
-            </label>
-            <label
-              class="cursor-pointer border-2 rounded-lg p-4 transition-colors"
-              :class="round1FileType === 'full_paper' ? 'border-primary-500 bg-primary-50/30' : 'border-gray-200 hover:border-gray-300'"
-            >
-              <input type="radio" v-model="round1FileType" value="full_paper" class="sr-only" />
-              <div class="flex items-start gap-3">
-                <UIcon
-                  :name="round1FileType === 'full_paper' ? 'i-heroicons-check-circle' : 'i-heroicons-document-text'"
-                  class="w-5 h-5 mt-0.5 flex-shrink-0"
-                  :class="round1FileType === 'full_paper' ? 'text-primary-600' : 'text-gray-400'"
-                />
-                <div>
-                  <p class="font-medium text-sm text-gray-900">บทความฉบับสมบูรณ์ (Full Paper)</p>
-                  <p class="text-xs text-gray-500 mt-1">ส่งบทความฉบับเต็มตั้งแต่รอบแรก</p>
-                </div>
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <UDivider />
-
-        <div>
-          <p class="text-sm font-medium text-gray-700 mb-2">
-            ไฟล์ {{ round1FileType === 'abstract' ? 'บทคัดย่อ' : 'บทความฉบับสมบูรณ์' }} (PDF) <span class="text-red-500">*</span>
-          </p>
-          <CommonFileUpload :loading="uploading" :max-size-mb="50" @change="onFileSelected" />
-        </div>
-      </div>
+      <SubmissionFileSlotsGrid
+        editable
+        :loading="uploading"
+        @update:files="onFilesUpdated"
+      />
 
       <template #footer>
         <div class="flex justify-between">
@@ -397,12 +407,12 @@ const uploadAbstract = async () => {
             </UButton>
           </div>
           <div class="flex items-center gap-2">
-            <p v-if="!selectedFile" class="text-xs text-gray-400">เลือกไฟล์ก่อนส่ง</p>
+            <p v-if="!hasAnySelectedFile" class="text-xs text-gray-400">เลือกอย่างน้อย 1 ไฟล์ก่อนส่ง</p>
             <UButton
               v-else
               color="primary"
               :loading="uploading"
-              @click="uploadAbstract"
+              @click="uploadInitialFiles"
             >
               ส่งผลงาน
               <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 ml-1" />
@@ -423,10 +433,10 @@ const uploadAbstract = async () => {
           <UIcon name="i-heroicons-check-circle" class="w-10 h-10 text-primary-600" />
         </div>
         <h3 class="text-xl font-semibold text-gray-900">
-          ส่ง{{ round1FileType === 'abstract' ? 'บทคัดย่อ' : 'บทความฉบับสมบูรณ์' }}เรียบร้อยแล้ว!
+          ส่งผลงานเรียบร้อยแล้ว!
         </h3>
         <p class="text-gray-500 text-sm max-w-sm">
-          ขณะนี้ผลงานของคุณอยู่ในสถานะ<strong>ส่งแล้ว</strong> รอคณะกรรมการพิจารณา (สามารถชำระเงินภายหลังได้จากหน้ารายละเอียดผลงาน)
+          ขณะนี้ผลงานของคุณอยู่ในสถานะ<strong>ส่งแล้ว</strong> รอคณะกรรมการพิจารณา (สามารถอัปเดตไฟล์เพิ่มเติมหรือชำระเงินภายหลังได้จากหน้ารายละเอียดผลงาน)
         </p>
       </div>
 

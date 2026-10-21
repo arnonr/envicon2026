@@ -13,6 +13,7 @@ declare global {
   const canCameraReady: typeof import('../../utils/submission-status').canCameraReady
   const canEdit: typeof import('../../utils/submission-status').canEdit
   const canRevise: typeof import('../../utils/submission-status').canRevise
+  const canUpdateFiles: typeof import('../../utils/submission-status').canUpdateFiles
   const cancelIdleCallback: typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback').cancelIdleCallback
   const clearError: typeof import('../../node_modules/nuxt/dist/app/composables/error').clearError
   const clearNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').clearNuxtData
@@ -236,6 +237,7 @@ declare module 'vue' {
     readonly canCameraReady: UnwrapRef<typeof import('../../utils/submission-status')['canCameraReady']>
     readonly canEdit: UnwrapRef<typeof import('../../utils/submission-status')['canEdit']>
     readonly canRevise: UnwrapRef<typeof import('../../utils/submission-status')['canRevise']>
+    readonly canUpdateFiles: UnwrapRef<typeof import('../../utils/submission-status')['canUpdateFiles']>
     readonly cancelIdleCallback: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/compat/idle-callback')['cancelIdleCallback']>
     readonly clearError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['clearError']>
     readonly clearNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['clearNuxtData']>

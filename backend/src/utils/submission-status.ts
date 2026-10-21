@@ -28,6 +28,9 @@ export const canCameraReady = (s: SubmissionStatus) =>
 export const canReplaceFile = (s: SubmissionStatus) =>
   s === "submitted_round1" || s === "submitted_round2";
 
+export const canUpdateFiles = (s: SubmissionStatus) =>
+  !isUnderReview(s) && s !== "rejected_round1" && s !== "rejected_round2";
+
 export const isUnderReview = (s: SubmissionStatus) =>
   s === "under_review_round1" || s === "under_review_round2";
 

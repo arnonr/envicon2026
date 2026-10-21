@@ -20,6 +20,8 @@ interface Registration {
   receiptTaxId: string | null;
   receiptAddress: string | null;
   createdAt: string;
+  hasSubmission?: boolean;
+  submissionCount?: number;
 }
 
 const registrations = ref<Registration[]>([]);
@@ -175,7 +177,12 @@ onMounted(fetchRegistrations);
             :key="reg.id"
             class="border-b last:border-0 hover:bg-gray-50"
           >
-            <td class="py-3 px-3 font-medium">{{ reg.fullName }}</td>
+            <td class="py-3 px-3">
+              <div class="font-medium">{{ reg.fullName }}</div>
+              <UBadge v-if="reg.hasSubmission" color="blue" variant="soft" size="xs" class="mt-1">
+                เปลี่ยนเป็นผู้นำเสนอแล้ว
+              </UBadge>
+            </td>
             <td class="py-3 px-3 text-gray-500">{{ reg.email }}</td>
             <td class="py-3 px-3 text-gray-500">{{ reg.affiliation || "-" }}</td>
             <td class="py-3 px-3 text-gray-500">{{ reg.phone || "-" }}</td>
