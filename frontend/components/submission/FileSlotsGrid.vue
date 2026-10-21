@@ -6,7 +6,20 @@ export interface SelectedSlotFiles {
   fullPaperWord: File | null;
 }
 
+export type SelectedSubmissionFiles = SelectedSlotFiles;
+
+export interface CurrentSlotUrls {
+  abstractFileUrl?: string | null;
+  abstractWordFileUrl?: string | null;
+  fullPaperFileUrl?: string | null;
+  fullPaperWordFileUrl?: string | null;
+  round1FileUrl?: string | null;
+  round1FileType?: "abstract" | "full_paper" | null;
+}
+
 const props = defineProps<{
+  modelValue?: SelectedSlotFiles;
+  currentUrls?: CurrentSlotUrls | null;
   abstractFileUrl?: string | null;
   abstractWordFileUrl?: string | null;
   fullPaperFileUrl?: string | null;
@@ -17,7 +30,30 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:files': [files: SelectedSlotFiles];
+  'update:modelValue': [files: SelectedSlotFiles];
 }>();
+
+const resolvedAbstractPdfUrl = computed(() =>
+  props.abstractFileUrl
+  ?? props.currentUrls?.abstractFileUrl
+  ?? (props.currentUrls?.round1FileType !== 'full_paper' ? props.currentUrls?.round1FileUrl : null)
+  ?? null
+);
+
+const resolvedAbstractWordUrl = computed(() =>
+  props.abstractWordFileUrl ?? props.currentUrls?.abstractWordFileUrl ?? null
+);
+
+const resolvedFullPaperPdfUrl = computed(() =>
+  props.fullPaperFileUrl
+  ?? props.currentUrls?.fullPaperFileUrl
+  ?? (props.currentUrls?.round1FileType === 'full_paper' ? props.currentUrls?.round1FileUrl : null)
+  ?? null
+);
+
+const resolvedFullPaperWordUrl = computed(() =>
+  props.fullPaperWordFileUrl ?? props.currentUrls?.fullPaperWordFileUrl ?? null
+);
 
 const config = useRuntimeConfig();
 const apiBase = config.public.apiBase as string;
@@ -42,7 +78,9 @@ const selected = reactive<SelectedSlotFiles>({
 
 const setSlot = (key: keyof SelectedSlotFiles, file: File | null) => {
   selected[key] = file;
-  emit('update:files', { ...selected });
+  const next = { ...selected };
+  emit('update:files', next);
+  emit('update:modelValue', next);
 };
 
 const clearAll = () => {
@@ -54,7 +92,9 @@ const clearAll = () => {
   abstractWordRef.value?.clearFile();
   fullPaperPdfRef.value?.clearFile();
   fullPaperWordRef.value?.clearFile();
-  emit('update:files', { ...selected });
+  const next = { ...selected };
+  emit('update:files', next);
+  emit('update:modelValue', next);
 };
 
 defineExpose({ clearAll, selected });
@@ -78,8 +118,8 @@ defineExpose({ clearAll, selected });
               ไฟล์บทคัดย่อ (.pdf)
             </span>
             <a
-              v-if="abstractFileUrl"
-              :href="fileLink(abstractFileUrl)"
+              v-if="resolvedAbstractPdfUrl"
+              :href="fileLink(resolvedAbstractPdfUrl)"
               target="_blank"
               class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline"
             >
@@ -108,8 +148,8 @@ defineExpose({ clearAll, selected });
               ไฟล์บทคัดย่อ (.doc, .docx)
             </span>
             <a
-              v-if="abstractWordFileUrl"
-              :href="fileLink(abstractWordFileUrl)"
+              v-if="resolvedAbstractWordUrl"
+              :href="fileLink(resolvedAbstractWordUrl)"
               target="_blank"
               class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline"
             >
@@ -148,8 +188,8 @@ defineExpose({ clearAll, selected });
               ไฟล์ฉบับสมบูรณ์ (.pdf)
             </span>
             <a
-              v-if="fullPaperFileUrl"
-              :href="fileLink(fullPaperFileUrl)"
+              v-if="resolvedFullPaperPdfUrl"
+              :href="fileLink(resolvedFullPaperPdfUrl)"
               target="_blank"
               class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline"
             >
@@ -178,8 +218,8 @@ defineExpose({ clearAll, selected });
               ไฟล์ฉบับสมบูรณ์ (.doc, .docx)
             </span>
             <a
-              v-if="fullPaperWordFileUrl"
-              :href="fileLink(fullPaperWordFileUrl)"
+              v-if="resolvedFullPaperWordUrl"
+              :href="fileLink(resolvedFullPaperWordUrl)"
               target="_blank"
               class="inline-flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 hover:underline"
             >

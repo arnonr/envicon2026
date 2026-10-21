@@ -214,7 +214,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       const progress = roundId ? progressByRound.get(roundId) : undefined;
       return {
         ...submission,
-        abstractFileUrl: submission.abstractFileUrl ?? (submission.round1FileType === "abstract" ? submission.round1FileUrl : null),
+        abstractFileUrl: submission.abstractFileUrl ?? (submission.round1FileType !== "full_paper" ? submission.round1FileUrl : null),
         fullPaperFileUrl: submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null),
         completedReviewCount: progress?.completed ?? 0,
         assignedReviewerCount: progress?.assigned ?? 0,
@@ -315,7 +315,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
 
     const origin = new URL(request.url).origin;
     rows.forEach((submission, index) => {
-      const resolvedAbstractPdf = submission.abstractFileUrl ?? (submission.round1FileType === "abstract" ? submission.round1FileUrl : null);
+      const resolvedAbstractPdf = submission.abstractFileUrl ?? (submission.round1FileType !== "full_paper" ? submission.round1FileUrl : null);
       const resolvedFullPaperPdf = submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null);
       const abstractFileUrl = absoluteFileUrl(resolvedAbstractPdf, origin);
       const abstractWordFileUrl = absoluteFileUrl(submission.abstractWordFileUrl, origin);

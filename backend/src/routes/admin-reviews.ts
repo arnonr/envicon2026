@@ -118,7 +118,7 @@ async function ensureCurrentSubmissionVersion(submission: typeof submissions.$in
     .limit(1);
   if (latestVersion) return latestVersion;
 
-  const abstractFileUrl = submission.abstractFileUrl ?? (submission.round1FileType === "abstract" ? submission.round1FileUrl : null);
+  const abstractFileUrl = submission.abstractFileUrl ?? (submission.round1FileType !== "full_paper" ? submission.round1FileUrl : null);
   const fullPaperFileUrl = submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null);
 
   const version = {

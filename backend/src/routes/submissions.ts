@@ -29,7 +29,7 @@ interface FileSlotUrls {
 
 function resolveCurrentSlotUrls(sub: typeof submissions.$inferSelect): FileSlotUrls {
   return {
-    abstractFileUrl: sub.abstractFileUrl ?? (sub.round1FileType === "abstract" ? sub.round1FileUrl : null),
+    abstractFileUrl: sub.abstractFileUrl ?? (sub.round1FileType !== "full_paper" ? sub.round1FileUrl : null),
     abstractWordFileUrl: sub.abstractWordFileUrl ?? null,
     fullPaperFileUrl: sub.fullPaperFileUrl ?? (sub.round1FileType === "full_paper" ? sub.round1FileUrl : null),
     fullPaperWordFileUrl: sub.fullPaperWordFileUrl ?? null,
