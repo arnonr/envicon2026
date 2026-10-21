@@ -333,7 +333,17 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
     "/submissions/:id/review-workflow",
     async ({ params, set }) => {
       const [submission] = await db
-        .select({ id: submissions.id, track: submissions.track, status: submissions.status })
+        .select({
+          id: submissions.id,
+          track: submissions.track,
+          status: submissions.status,
+          abstractFileUrl: submissions.abstractFileUrl,
+          abstractWordFileUrl: submissions.abstractWordFileUrl,
+          fullPaperFileUrl: submissions.fullPaperFileUrl,
+          fullPaperWordFileUrl: submissions.fullPaperWordFileUrl,
+          round1FileUrl: submissions.round1FileUrl,
+          round1FileType: submissions.round1FileType,
+        })
         .from(submissions)
         .where(eq(submissions.id, params.id))
         .limit(1);
@@ -341,6 +351,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 404;
         return fail("NOT_FOUND", "ไม่พบผลงาน");
       }
+
+      const fallbackAbstractPdf = submission.abstractFileUrl ?? (submission.round1FileType !== "full_paper" ? submission.round1FileUrl : null);
+      const fallbackFullPaperPdf = submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null);
 
       const roundRows = await db
         .select({
@@ -396,6 +409,35 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           .where(eq(reviews.roundId, round.id))
           .orderBy(reviews.assignedAt);
         const dispatched = assignments.filter((assignment) => assignment.status !== "assigned");
+        const hasNoSlotUrls = !round.versionFileUrl
+          && !round.versionAbstractFileUrl
+          && !round.versionAbstractWordFileUrl
+          && !round.versionFullPaperFileUrl
+          && !round.versionFullPaperWordFileUrl;
+        const resolvedAbstractFileUrl = round.versionAbstractFileUrl ?? (hasNoSlotUrls ? fallbackAbstractPdf : null);
+        const resolvedAbstractWordFileUrl = round.versionAbstractWordFileUrl ?? (hasNoSlotUrls ? submission.abstractWordFileUrl : null);
+        const resolvedFullPaperFileUrl = round.versionFullPaperFileUrl ?? (hasNoSlotUrls ? fallbackFullPaperPdf : null);
+        const resolvedFullPaperWordFileUrl = round.versionFullPaperWordFileUrl ?? (hasNoSlotUrls ? submission.fullPaperWordFileUrl : null);
+        const resolvedFileUrl = round.versionFileUrl
+          ?? resolvedFullPaperFileUrl
+          ?? resolvedFullPaperWordFileUrl
+          ?? resolvedAbstractFileUrl
+          ?? resolvedAbstractWordFileUrl;
+
+        const [
+          fileAvail,
+          absPdfAvail,
+          absWordAvail,
+          fullPdfAvail,
+          fullWordAvail,
+        ] = await Promise.all([
+          storedFileExists(resolvedFileUrl),
+          storedFileExists(resolvedAbstractFileUrl),
+          storedFileExists(resolvedAbstractWordFileUrl),
+          storedFileExists(resolvedFullPaperFileUrl),
+          storedFileExists(resolvedFullPaperWordFileUrl),
+        ]);
+
         return {
           id: round.id,
           submissionId: round.submissionId,
@@ -422,16 +464,16 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
               creators: round.versionCreators,
               track: round.versionTrack,
               submitterType: round.versionSubmitterType,
-              fileUrl: round.versionFileUrl,
-              abstractFileUrl: round.versionAbstractFileUrl,
-              abstractWordFileUrl: round.versionAbstractWordFileUrl,
-              fullPaperFileUrl: round.versionFullPaperFileUrl,
-              fullPaperWordFileUrl: round.versionFullPaperWordFileUrl,
-              fileAvailable: await storedFileExists(round.versionFileUrl),
-              abstractFileAvailable: await storedFileExists(round.versionAbstractFileUrl),
-              abstractWordFileAvailable: await storedFileExists(round.versionAbstractWordFileUrl),
-              fullPaperFileAvailable: await storedFileExists(round.versionFullPaperFileUrl),
-              fullPaperWordFileAvailable: await storedFileExists(round.versionFullPaperWordFileUrl),
+              fileUrl: resolvedFileUrl,
+              abstractFileUrl: resolvedAbstractFileUrl,
+              abstractWordFileUrl: resolvedAbstractWordFileUrl,
+              fullPaperFileUrl: resolvedFullPaperFileUrl,
+              fullPaperWordFileUrl: resolvedFullPaperWordFileUrl,
+              fileAvailable: fileAvail || absPdfAvail || absWordAvail || fullPdfAvail || fullWordAvail,
+              abstractFileAvailable: absPdfAvail,
+              abstractWordFileAvailable: absWordAvail,
+              fullPaperFileAvailable: fullPdfAvail,
+              fullPaperWordFileAvailable: fullWordAvail,
               changelog: round.versionChangelog,
               submittedAt: round.versionSubmittedAt,
             }
@@ -444,14 +486,48 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .from(submissionVersions)
         .where(eq(submissionVersions.submissionId, submission.id))
         .orderBy(submissionVersions.version);
-      const versions = await Promise.all(versionRows.map(async (version) => ({
-        ...version,
-        fileAvailable: await storedFileExists(version.fileUrl),
-        abstractFileAvailable: await storedFileExists(version.abstractFileUrl),
-        abstractWordFileAvailable: await storedFileExists(version.abstractWordFileUrl),
-        fullPaperFileAvailable: await storedFileExists(version.fullPaperFileUrl),
-        fullPaperWordFileAvailable: await storedFileExists(version.fullPaperWordFileUrl),
-      })));
+      const versions = await Promise.all(versionRows.map(async (version) => {
+        const hasNoSlotUrls = !version.fileUrl
+          && !version.abstractFileUrl
+          && !version.abstractWordFileUrl
+          && !version.fullPaperFileUrl
+          && !version.fullPaperWordFileUrl;
+        const resolvedAbstractFileUrl = version.abstractFileUrl ?? (hasNoSlotUrls ? fallbackAbstractPdf : null);
+        const resolvedAbstractWordFileUrl = version.abstractWordFileUrl ?? (hasNoSlotUrls ? submission.abstractWordFileUrl : null);
+        const resolvedFullPaperFileUrl = version.fullPaperFileUrl ?? (hasNoSlotUrls ? fallbackFullPaperPdf : null);
+        const resolvedFullPaperWordFileUrl = version.fullPaperWordFileUrl ?? (hasNoSlotUrls ? submission.fullPaperWordFileUrl : null);
+        const resolvedFileUrl = version.fileUrl
+          ?? resolvedFullPaperFileUrl
+          ?? resolvedFullPaperWordFileUrl
+          ?? resolvedAbstractFileUrl
+          ?? resolvedAbstractWordFileUrl;
+        const [
+          fileAvail,
+          absPdfAvail,
+          absWordAvail,
+          fullPdfAvail,
+          fullWordAvail,
+        ] = await Promise.all([
+          storedFileExists(resolvedFileUrl),
+          storedFileExists(resolvedAbstractFileUrl),
+          storedFileExists(resolvedAbstractWordFileUrl),
+          storedFileExists(resolvedFullPaperFileUrl),
+          storedFileExists(resolvedFullPaperWordFileUrl),
+        ]);
+        return {
+          ...version,
+          fileUrl: resolvedFileUrl,
+          abstractFileUrl: resolvedAbstractFileUrl,
+          abstractWordFileUrl: resolvedAbstractWordFileUrl,
+          fullPaperFileUrl: resolvedFullPaperFileUrl,
+          fullPaperWordFileUrl: resolvedFullPaperWordFileUrl,
+          fileAvailable: fileAvail || absPdfAvail || absWordAvail || fullPdfAvail || fullWordAvail,
+          abstractFileAvailable: absPdfAvail,
+          abstractWordFileAvailable: absWordAvail,
+          fullPaperFileAvailable: fullPdfAvail,
+          fullPaperWordFileAvailable: fullWordAvail,
+        };
+      }));
       return ok({
         submission,
         rounds,

@@ -402,6 +402,7 @@ onBeforeUnmount(() => {
             <th class="py-3 px-3 text-center">ประเภท</th>
             <th class="py-3 px-3 text-center">ระดับการศึกษา</th>
             <th class="py-3 px-3 text-center">รูปแบบการนำเสนอ</th>
+            <th class="py-3 px-3 text-center">ความประสงค์</th>
             <th class="py-3 px-3 text-center">การรีวิวของกรรมการ</th>
             <th class="py-3 px-3 text-center">สถานะ</th>
             <th class="py-3 px-3 text-center">ไฟล์บทคัดย่อ</th>
