@@ -2,29 +2,29 @@
 const dates = [
   {
     title: "เปิดรับบทคัดย่อ (Abstract Submission)",
-    date: "1 เมษายน — 16 ตุลาคม 2569",
-    badge: "ขยายเวลาถึง 16 ต.ค. 69",
+    date: "1 เมษายน — 30 ตุลาคม 2569",
+    badge: "ขยายเวลาถึง 30 ต.ค. 69",
     icon: "i-heroicons-pencil-square",
     color: "primary",
     active: true,
   },
   {
     title: "ประกาศผลการพิจารณาบทคัดย่อ",
-    date: "23 ตุลาคม 2569",
+    date: "4 พฤศจิกายน 2569",
     icon: "i-heroicons-megaphone",
     color: "accent",
     active: false,
   },
   {
     title: "เปิดรับบทความฉบับสมบูรณ์ (Full Paper)",
-    date: "27 ตุลาคม — 1 พฤศจิกายน 2569",
+    date: "4 พฤศจิกายน 2569",
     icon: "i-heroicons-document-text",
     color: "primary",
     active: false,
   },
   {
     title: "ประกาศโปรแกรมการนำเสนอผลงาน",
-    date: "31 ตุลาคม 2569",
+    date: "6 พฤศจิกายน 2569",
     icon: "i-heroicons-calendar-days",
     color: "accent",
     active: false,
@@ -77,11 +77,11 @@ const hotels = [
           </div>
           <div>
             <div class="inline-flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">ประกาศขยายเวลา</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">กำหนดการการรับสมัครรอบสุดท้าย</span>
               <span class="text-xs font-semibold text-rose-700">ขยายเวลาเปิดรับบทคัดย่อ</span>
             </div>
             <p class="font-bold text-stone-900 text-base sm:text-lg">
-              เปิดรับบทคัดย่อ (Abstract) ถึงวันที่ <span class="text-rose-600 underline decoration-rose-300 underline-offset-4">16 ตุลาคม 2569</span>
+              เปิดรับบทคัดย่อ (Abstract) ถึงวันที่ <span class="text-rose-600 underline decoration-rose-300 underline-offset-4">30 ตุลาคม 2569</span>
             </p>
             <p class="text-xs text-stone-600 mt-0.5">ผู้ที่สนใจสามารถส่งบทคัดย่อผ่านระบบออนไลน์ได้จนถึงวันดังกล่าว</p>
           </div>

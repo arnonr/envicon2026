@@ -28,7 +28,7 @@
           <span class="w-2.5 h-2.5 rounded-full bg-meadow-400 animate-pulse shadow-sm shadow-meadow-300" />
           <span class="text-sm font-semibold tracking-wide text-white">TSHE-CON 2026</span>
           <span class="hidden sm:inline-block w-1 h-1 rounded-full bg-white/40" />
-          <span class="hidden sm:inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/90 text-white shadow-sm">ขยายเวลารับบทคัดย่อถึง 16 ต.ค. 69</span>
+          <span class="hidden sm:inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/90 text-white shadow-sm">ขยายเวลารับบทคัดย่อถึง 30 ต.ค. 69</span>
         </div>
 
         <h1
@@ -126,7 +126,7 @@
               <span class="text-xs font-bold tracking-wide uppercase text-white">ขยายเวลาเปิดรับสมัคร</span>
             </div>
             <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
-              ขยายเวลาเปิดรับบทคัดย่อถึง <span class="text-amber-200 drop-shadow-md">16 ตุลาคม 2569</span>
+              ขยายเวลาเปิดรับบทคัดย่อถึง <span class="text-amber-200 drop-shadow-md">30 ตุลาคม 2569</span>
             </h2>
             <p class="text-white/90 mb-7 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
               ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอผลงานในการประชุมวิชาการระดับชาติ TSHE-CON 2026
@@ -161,7 +161,7 @@
           <p class="text-gray-600 mt-3 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
             การประชุมวิชาการระดับชาติ สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย ครั้งที่ 5
             <br class="hidden sm:block" />
-            <span class="text-rose-600 font-semibold">ขยายเวลาเปิดรับบทคัดย่อ (Abstract) ถึงวันที่ 16 ตุลาคม 2569</span>
+            <span class="text-rose-600 font-semibold">ขยายเวลาเปิดรับบทคัดย่อ (Abstract) ถึงวันที่ 30 ตุลาคม 2569</span>
           </p>
           <div class="w-16 h-1.5 bg-gradient-to-r from-meadow-400 via-sky-400 to-amber-400 rounded-full mx-auto mt-4" />
         </div>
@@ -192,7 +192,7 @@
                 <!-- Top Badge -->
                 <div class="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-600/90 text-white text-xs font-bold shadow-md backdrop-blur-sm">
                   <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
-                  ขยายเวลาถึง 16 ต.ค. 69
+                  ขยายเวลาถึง 30 ต.ค. 69
                 </div>
               </div>
             </div>
@@ -233,7 +233,7 @@
                     <span class="text-xs font-semibold text-rose-800">ขยายเวลารับบทคัดย่อ</span>
                   </div>
                   <h3 class="text-lg sm:text-xl font-bold text-stone-900 leading-snug">
-                    ขยายเวลาเปิดรับบทคัดย่อ: วันนี้ — 16 ตุลาคม 2569
+                    ขยายเวลาเปิดรับบทคัดย่อ: วันนี้ — 30 ตุลาคม 2569
                   </h3>
                   <p class="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
                     เปิดโอกาสให้นักวิจัย คณาจารย์ นิสิตและนักศึกษา ส่งผลงานเข้าร่วมพิจารณาในการประชุมวิชาการระดับชาติ ครั้งที่ 5
@@ -252,19 +252,19 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-1">
                 <div class="p-3 rounded-xl bg-rose-50/80 border border-rose-200">
                   <div class="text-[11px] font-bold uppercase tracking-wider text-rose-700">ขยายเวลารับบทคัดย่อ</div>
-                  <div class="font-bold text-stone-900 mt-0.5">1 เม.ย. — 16 ต.ค. 69</div>
+                  <div class="font-bold text-stone-900 mt-0.5">1 เม.ย. — 30 ต.ค. 69</div>
                 </div>
                 <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">ประกาศผลพิจารณาบทคัดย่อ</div>
-                  <div class="font-bold text-stone-900 mt-0.5">23 ต.ค. 69</div>
+                  <div class="font-bold text-stone-900 mt-0.5">4 พ.ย. 69</div>
                 </div>
                 <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">เปิดรับบทความฉบับสมบูรณ์</div>
-                  <div class="font-bold text-stone-900 mt-0.5">27 ต.ค. — 1 พ.ย. 69</div>
+                  <div class="font-bold text-stone-900 mt-0.5">4 พ.ย. 69</div>
                 </div>
                 <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">ประกาศโปรแกรมนำเสนอ</div>
-                  <div class="font-bold text-stone-900 mt-0.5">31 ต.ค. 69</div>
+                  <div class="font-bold text-stone-900 mt-0.5">6 พ.ย. 69</div>
                 </div>
               </div>
 
@@ -610,7 +610,7 @@
           <div>
             <div class="inline-flex items-center gap-1.5 text-xs font-bold text-rose-600">
               <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
-              ขยายเวลาเปิดรับบทคัดย่อถึง 16 ตุลาคม 2569
+              ขยายเวลาเปิดรับบทคัดย่อถึง 30 ตุลาคม 2569
             </div>
             <h3 class="text-base sm:text-lg font-bold text-stone-900 mt-0.5">
               โปสเตอร์ประชาสัมพันธ์ TSHE-CON 2026
@@ -791,26 +791,26 @@ const tracks = [
 const timeline = [
   {
     title: "เปิดรับบทคัดย่อ (Abstract Submission)",
-    date: "1 เมษายน — 16 ตุลาคม 2569",
+    date: "1 เมษายน — 30 ตุลาคม 2569",
     highlight: true,
-    badge: "ขยายเวลาถึง 16 ต.ค. 69",
+    badge: "ขยายเวลาถึง 30 ต.ค. 69",
     icon: "i-heroicons-pencil-square"
   },
   {
     title: "ประกาศผลการพิจารณาบทคัดย่อ",
-    date: "23 ตุลาคม 2569",
+    date: "4 พฤศจิกายน 2569",
     highlight: false,
     icon: "i-heroicons-megaphone"
   },
   {
     title: "เปิดรับบทความฉบับสมบูรณ์",
-    date: "27 ตุลาคม — 1 พฤศจิกายน 2569",
+    date: "4 พฤศจิกายน 2569",
     highlight: false,
     icon: "i-heroicons-document-text"
   },
   {
     title: "ประกาศโปรแกรมการนำเสนอผลงาน",
-    date: "31 ตุลาคม 2569",
+    date: "6 พฤศจิกายน 2569",
     highlight: false,
     icon: "i-heroicons-calendar-days"
   },
