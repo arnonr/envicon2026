@@ -18,6 +18,7 @@
           <ul class="space-y-2 text-sm">
             <li><NuxtLink to="/about" class="hover:text-primary-400 transition-colors">เกี่ยวกับการประชุม</NuxtLink></li>
             <li><NuxtLink to="/important-dates" class="hover:text-primary-400 transition-colors">กำหนดการและสถานที่</NuxtLink></li>
+            <li><NuxtLink to="/presenter-guidelines" class="hover:text-primary-400 transition-colors">คำแนะนำสำหรับผู้นำเสนอ</NuxtLink></li>
             <li><NuxtLink to="/guidelines" class="hover:text-primary-400 transition-colors">ดาวน์โหลด</NuxtLink></li>
             <li><NuxtLink to="/registration" class="hover:text-primary-400 transition-colors">ลงทะเบียน</NuxtLink></li>
           </ul>
