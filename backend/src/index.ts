@@ -8,7 +8,12 @@ import { adminRoutes } from "./routes/admin";
 import { adminReviewRoutes } from "./routes/admin-reviews";
 import { registrationRoutes } from "./routes/registrations";
 import { publicRoutes } from "./routes/public";
+import { ensureReceiptAuditLogsTable } from "./services/receipt-audit";
 import { ok, fail } from "./utils/response";
+
+await ensureReceiptAuditLogsTable().catch((err) => {
+  console.error("[receipt-audit] Startup table check failed:", err);
+});
 
 const app = new Elysia({ prefix: "/envicon2026/api" })
   .use(cors())
