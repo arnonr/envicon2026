@@ -36,6 +36,7 @@ export { useAuth } from '../composables/useAuth';
 export { useComingSoon } from '../composables/useComingSoon';
 export { useFees } from '../composables/useFees';
 export { useModalConfirm } from '../composables/useModalConfirm';
+export { createEmptyAdminSubmissionFilters, buildAdminSubmissionSearchParams, countSecondaryAdminFilters, hasActiveAdminSubmissionFilters, createRequestSequenceGuard, AdminSubmissionFilterState } from '../utils/admin-submission-filters';
 export { STATUS_LABEL, STATUS_COLOR, ROUND_OF, canEdit, canRevise, canCameraReady, canUpdateFiles, TERMINAL_STATUSES, SubmissionStatus } from '../utils/submission-status';
 export { defineShortcuts } from '../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useProvideButtonGroup, useInjectButtonGroup } from '../node_modules/@nuxt/ui/dist/runtime/composables/useButtonGroup';

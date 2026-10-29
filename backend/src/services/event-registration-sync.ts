@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { db } from "../db";
 import { eventRegistrations, submissions, users } from "../db/schema";
+import { recordReceiptAuditLog, type ReceiptSnapshot } from "./receipt-audit";
 
 export async function findEventRegistrationByEmail(rawEmail: string) {
   const email = rawEmail.trim().toLowerCase();
@@ -78,16 +79,32 @@ export async function syncEventRegistrationToUserSubmissions(userId: string, use
   const targetSub = userSubs.find((s) => !s.paymentSlipUrl && s.paymentStatus === "unpaid");
   if (!targetSub) return;
 
+  const nextReceipt: ReceiptSnapshot = {
+    receiptName: targetSub.receiptName || reg.receiptName,
+    receiptTaxId: targetSub.receiptTaxId || reg.receiptTaxId,
+    receiptAddress: targetSub.receiptAddress || reg.receiptAddress,
+  };
+
   await db
     .update(submissions)
     .set({
       paymentSlipUrl: reg.paymentSlipUrl,
       paymentStatus: mappedStatus,
-      receiptName: targetSub.receiptName || reg.receiptName,
-      receiptTaxId: targetSub.receiptTaxId || reg.receiptTaxId,
-      receiptAddress: targetSub.receiptAddress || reg.receiptAddress,
+      ...nextReceipt,
     })
     .where(eq(submissions.id, targetSub.id));
+
+  await recordReceiptAuditLog({
+    submissionId: targetSub.id,
+    changedBy: userId,
+    source: "event_sync",
+    before: {
+      receiptName: targetSub.receiptName,
+      receiptTaxId: targetSub.receiptTaxId,
+      receiptAddress: targetSub.receiptAddress,
+    },
+    after: nextReceipt,
+  });
 }
 
 /**
@@ -125,16 +142,57 @@ export async function syncEventRegistrationPaymentToSubmission(eventRegId: strin
 
   if (!linkedSub) return;
 
+  const nextReceipt: ReceiptSnapshot = {
+    receiptName: linkedSub.receiptName || reg.receiptName,
+    receiptTaxId: linkedSub.receiptTaxId || reg.receiptTaxId,
+    receiptAddress: linkedSub.receiptAddress || reg.receiptAddress,
+  };
+
   await db
     .update(submissions)
     .set({
       paymentSlipUrl: linkedSub.paymentSlipUrl || reg.paymentSlipUrl,
       paymentStatus: mappedStatus,
-      receiptName: linkedSub.receiptName || reg.receiptName,
-      receiptTaxId: linkedSub.receiptTaxId || reg.receiptTaxId,
-      receiptAddress: linkedSub.receiptAddress || reg.receiptAddress,
+      ...nextReceipt,
     })
     .where(eq(submissions.id, linkedSub.id));
+
+  await recordReceiptAuditLog({
+    submissionId: linkedSub.id,
+    changedBy: null,
+    source: "event_sync",
+    before: {
+      receiptName: linkedSub.receiptName,
+      receiptTaxId: linkedSub.receiptTaxId,
+      receiptAddress: linkedSub.receiptAddress,
+    },
+    after: nextReceipt,
+  });
+}
+
+export async function syncSubmissionReceiptToEventRegistration(
+  authorId: string,
+  receipt: ReceiptSnapshot,
+) {
+  const [user] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, authorId))
+    .limit(1);
+
+  if (!user) return;
+
+  const reg = await findEventRegistrationByEmail(user.email);
+  if (!reg) return;
+
+  await db
+    .update(eventRegistrations)
+    .set({
+      receiptName: receipt.receiptName || reg.receiptName,
+      receiptTaxId: receipt.receiptTaxId || reg.receiptTaxId,
+      receiptAddress: receipt.receiptAddress || reg.receiptAddress,
+    })
+    .where(eq(eventRegistrations.id, reg.id));
 }
 
 /**

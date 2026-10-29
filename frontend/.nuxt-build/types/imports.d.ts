@@ -9,6 +9,7 @@ declare global {
   const abortNavigation: typeof import('../../node_modules/nuxt/dist/app/composables/router').abortNavigation
   const acceptHMRUpdate: typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables').acceptHMRUpdate
   const addRouteMiddleware: typeof import('../../node_modules/nuxt/dist/app/composables/router').addRouteMiddleware
+  const buildAdminSubmissionSearchParams: typeof import('../../utils/admin-submission-filters').buildAdminSubmissionSearchParams
   const callOnce: typeof import('../../node_modules/nuxt/dist/app/composables/once').callOnce
   const canCameraReady: typeof import('../../utils/submission-status').canCameraReady
   const canEdit: typeof import('../../utils/submission-status').canEdit
@@ -19,8 +20,11 @@ declare global {
   const clearNuxtData: typeof import('../../node_modules/nuxt/dist/app/composables/asyncData').clearNuxtData
   const clearNuxtState: typeof import('../../node_modules/nuxt/dist/app/composables/state').clearNuxtState
   const computed: typeof import('vue').computed
+  const countSecondaryAdminFilters: typeof import('../../utils/admin-submission-filters').countSecondaryAdminFilters
+  const createEmptyAdminSubmissionFilters: typeof import('../../utils/admin-submission-filters').createEmptyAdminSubmissionFilters
   const createError: typeof import('../../node_modules/nuxt/dist/app/composables/error').createError
   const createPopper: typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/usePopper').createPopper
+  const createRequestSequenceGuard: typeof import('../../utils/admin-submission-filters').createRequestSequenceGuard
   const customRef: typeof import('vue').customRef
   const defineAppConfig: typeof import('../../node_modules/nuxt/dist/app/nuxt').defineAppConfig
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
@@ -43,6 +47,7 @@ declare global {
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getRouteRules: typeof import('../../node_modules/nuxt/dist/app/composables/manifest').getRouteRules
   const h: typeof import('vue').h
+  const hasActiveAdminSubmissionFilters: typeof import('../../utils/admin-submission-filters').hasActiveAdminSubmissionFilters
   const hasInjectionContext: typeof import('vue').hasInjectionContext
   const inject: typeof import('vue').inject
   const injectHead: typeof import('../../node_modules/nuxt/dist/app/composables/head').injectHead
@@ -218,6 +223,9 @@ declare global {
   export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
+  export type { AdminSubmissionFilterState } from '../../utils/admin-submission-filters'
+  import('../../utils/admin-submission-filters')
+  // @ts-ignore
   export type { SubmissionStatus } from '../../utils/submission-status'
   import('../../utils/submission-status')
 }
@@ -233,6 +241,7 @@ declare module 'vue' {
     readonly abortNavigation: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['abortNavigation']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('../../node_modules/@pinia/nuxt/dist/runtime/composables')['acceptHMRUpdate']>
     readonly addRouteMiddleware: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']>
+    readonly buildAdminSubmissionSearchParams: UnwrapRef<typeof import('../../utils/admin-submission-filters')['buildAdminSubmissionSearchParams']>
     readonly callOnce: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']>
     readonly canCameraReady: UnwrapRef<typeof import('../../utils/submission-status')['canCameraReady']>
     readonly canEdit: UnwrapRef<typeof import('../../utils/submission-status')['canEdit']>
@@ -243,8 +252,11 @@ declare module 'vue' {
     readonly clearNuxtData: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/asyncData')['clearNuxtData']>
     readonly clearNuxtState: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/state')['clearNuxtState']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
+    readonly countSecondaryAdminFilters: UnwrapRef<typeof import('../../utils/admin-submission-filters')['countSecondaryAdminFilters']>
+    readonly createEmptyAdminSubmissionFilters: UnwrapRef<typeof import('../../utils/admin-submission-filters')['createEmptyAdminSubmissionFilters']>
     readonly createError: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/error')['createError']>
     readonly createPopper: UnwrapRef<typeof import('../../node_modules/@nuxt/ui/dist/runtime/composables/usePopper')['createPopper']>
+    readonly createRequestSequenceGuard: UnwrapRef<typeof import('../../utils/admin-submission-filters')['createRequestSequenceGuard']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAppConfig: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/nuxt')['defineAppConfig']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
@@ -267,6 +279,7 @@ declare module 'vue' {
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getRouteRules: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/manifest')['getRouteRules']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly hasActiveAdminSubmissionFilters: UnwrapRef<typeof import('../../utils/admin-submission-filters')['hasActiveAdminSubmissionFilters']>
     readonly hasInjectionContext: UnwrapRef<typeof import('vue')['hasInjectionContext']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly injectHead: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/head')['injectHead']>

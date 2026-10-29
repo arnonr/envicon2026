@@ -32,16 +32,6 @@ const selectedSubmissionId = ref<string | null>(null);
 const modalOpen = ref(false);
 
 const openSubmission = (submission: Submission) => {
-  if (submission.status === 'passed_round1_with_revisions' || submission.status === 'passed_round2_with_revisions') {
-    navigateTo(`/submissions/${submission.id}/revise`);
-    return;
-  }
-
-  if (submission.status === 'draft') {
-    navigateTo(`/submit?id=${submission.id}`);
-    return;
-  }
-
   selectedSubmissionId.value = submission.id;
   modalOpen.value = true;
 };
@@ -178,6 +168,16 @@ onMounted(async () => {
               <div class="flex items-center gap-2 flex-shrink-0">
                 <SubmissionRoundIndicator v-if="sub.currentRoundNumber > 0" :round-number="sub.currentRoundNumber" />
                 <SubmissionStatusBadge :status="sub.status" />
+                <UButton
+                  v-if="sub.status === 'draft'"
+                  size="xs"
+                  color="primary"
+                  variant="soft"
+                  :to="`/submit?id=${sub.id}`"
+                  @click.stop
+                >
+                  แก้ไขแบบร่างต่อ
+                </UButton>
                 <UButton
                   v-if="sub.status === 'passed_round1_with_revisions' || sub.status === 'passed_round2_with_revisions'"
                   size="xs"

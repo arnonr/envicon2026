@@ -216,6 +216,20 @@ export const eventRegistrations = mysqlTable("event_registrations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const receiptAuditLogs = mysqlTable("receipt_audit_logs", {
+  id: varchar("id", { length: 36 }).primaryKey().$defaultFn(() => crypto.randomUUID()),
+  submissionId: varchar("submission_id", { length: 36 }).notNull().references(() => submissions.id),
+  changedBy: varchar("changed_by", { length: 36 }).references(() => users.id),
+  source: mysqlEnum("source", ["receipt_edit", "upload_slip", "submission_form", "event_sync"]).notNull(),
+  oldReceiptName: varchar("old_receipt_name", { length: 255 }),
+  oldReceiptTaxId: varchar("old_receipt_tax_id", { length: 20 }),
+  oldReceiptAddress: text("old_receipt_address"),
+  newReceiptName: varchar("new_receipt_name", { length: 255 }),
+  newReceiptTaxId: varchar("new_receipt_tax_id", { length: 20 }),
+  newReceiptAddress: text("new_receipt_address"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ---------- Submission status helpers ----------
 
 export type SubmissionStatus =

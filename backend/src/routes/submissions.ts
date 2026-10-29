@@ -8,7 +8,12 @@ import { saveFile, storedFileExists } from "../services/storage";
 import {
   syncEventRegistrationToUserSubmissions,
   syncSubmissionPaymentToEventRegistration,
+  syncSubmissionReceiptToEventRegistration,
 } from "../services/event-registration-sync";
+import {
+  getSubmissionReceiptAuditLogs,
+  recordReceiptAuditLog,
+} from "../services/receipt-audit";
 import {
   canEdit,
   canRevise,
@@ -171,11 +176,15 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       : [];
 
     const resolvedSlots = resolveCurrentSlotUrls(sub);
+    const receiptLogs = user!.role === "admin"
+      ? await getSubmissionReceiptAuditLogs(params.id)
+      : [];
 
     return ok({
       ...sub,
       ...resolvedSlots,
       revisions: revisionList,
+      receiptAuditLogs: receiptLogs,
       currentRoundNumber,
       rounds: roundSummaries,
       canUpdateFiles: user!.role === "author"
@@ -220,6 +229,11 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       const id = crypto.randomUUID();
       const creators = parseCreators(body.creators);
+      const initialReceipt = {
+        receiptName: body.receiptName?.trim() || null,
+        receiptTaxId: body.receiptTaxId?.trim() || null,
+        receiptAddress: body.receiptAddress?.trim() || null,
+      };
       await db.insert(submissions).values({
         id,
         authorId: user!.id,
@@ -233,9 +247,15 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         educationLevel: body.educationLevel,
         presentationFormat: body.presentationFormat,
         wantsFullPaper: body.wantsFullPaper ? 1 : 0,
-        receiptName: body.receiptName ?? null,
-        receiptTaxId: body.receiptTaxId ?? null,
-        receiptAddress: body.receiptAddress ?? null,
+        ...initialReceipt,
+      });
+
+      await recordReceiptAuditLog({
+        submissionId: id,
+        changedBy: user!.id,
+        source: "submission_form",
+        before: { receiptName: null, receiptTaxId: null, receiptAddress: null },
+        after: initialReceipt,
       });
 
       await syncEventRegistrationToUserSubmissions(user!.id, user!.email);
@@ -369,9 +389,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.presentationFormat && { presentationFormat: body.presentationFormat }),
           ...(body.wantsFullPaper !== undefined && { wantsFullPaper: body.wantsFullPaper ? 1 : 0 }),
           ...(body.round1FileType && { round1FileType: body.round1FileType }),
-          ...(body.receiptName !== undefined && { receiptName: body.receiptName }),
-          ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId }),
-          ...(body.receiptAddress !== undefined && { receiptAddress: body.receiptAddress }),
+          ...(body.receiptName !== undefined && { receiptName: body.receiptName.trim() || null }),
+          ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId.trim() || null }),
+          ...(body.receiptAddress !== undefined && { receiptAddress: body.receiptAddress.trim() || null }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -380,6 +400,24 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         .from(submissions)
         .where(eq(submissions.id, params.id))
         .limit(1);
+
+      if (updated) {
+        await recordReceiptAuditLog({
+          submissionId: params.id,
+          changedBy: user!.id,
+          source: "submission_form",
+          before: {
+            receiptName: sub.receiptName,
+            receiptTaxId: sub.receiptTaxId,
+            receiptAddress: sub.receiptAddress,
+          },
+          after: {
+            receiptName: updated.receiptName,
+            receiptTaxId: updated.receiptTaxId,
+            receiptAddress: updated.receiptAddress,
+          },
+        });
+      }
 
       return ok(updated);
     },
@@ -697,9 +735,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         .set({
           paymentSlipUrl: fileUrl,
           paymentStatus: "pending_verification",
-          ...(body.receiptName !== undefined && { receiptName: body.receiptName }),
-          ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId }),
-          ...(body.receiptAddress !== undefined && { receiptAddress: body.receiptAddress }),
+          ...(body.receiptName !== undefined && { receiptName: body.receiptName.trim() }),
+          ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId.trim() }),
+          ...(body.receiptAddress !== undefined && { receiptAddress: body.receiptAddress.trim() }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -710,6 +748,21 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         .limit(1);
 
       if (updated) {
+        await recordReceiptAuditLog({
+          submissionId: params.id,
+          changedBy: user!.id,
+          source: "upload_slip",
+          before: {
+            receiptName: sub.receiptName,
+            receiptTaxId: sub.receiptTaxId,
+            receiptAddress: sub.receiptAddress,
+          },
+          after: {
+            receiptName: updated.receiptName,
+            receiptTaxId: updated.receiptTaxId,
+            receiptAddress: updated.receiptAddress,
+          },
+        });
         await syncSubmissionPaymentToEventRegistration(updated);
       }
 
@@ -721,6 +774,79 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         receiptName: t.Optional(t.String()),
         receiptTaxId: t.Optional(t.String()),
         receiptAddress: t.Optional(t.String()),
+      }),
+    }
+  )
+
+  // Update receipt info anytime (even after slip upload / payment verification)
+  .patch(
+    "/:id/receipt",
+    async ({ params, body, user, set }) => {
+      const [sub] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      if (!sub) {
+        set.status = 404;
+        return fail("NOT_FOUND", "Submission not found");
+      }
+      if (user!.role !== "admin" && sub.authorId !== user!.id) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Access denied");
+      }
+
+      const receiptName = body.receiptName.trim();
+      const receiptTaxId = body.receiptTaxId.trim();
+      const receiptAddress = body.receiptAddress.trim();
+
+      if (!receiptName) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "กรุณาระบุชื่อสำหรับออกใบเสร็จรับเงิน");
+      }
+      if (!receiptTaxId) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "กรุณาระบุเลขประจำตัวผู้เสียภาษี");
+      }
+      if (!receiptAddress) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "กรุณาระบุที่อยู่สำหรับออกใบเสร็จรับเงิน");
+      }
+
+      const after = { receiptName, receiptTaxId, receiptAddress };
+      await db
+        .update(submissions)
+        .set(after)
+        .where(eq(submissions.id, params.id));
+
+      await recordReceiptAuditLog({
+        submissionId: params.id,
+        changedBy: user!.id,
+        source: "receipt_edit",
+        before: {
+          receiptName: sub.receiptName,
+          receiptTaxId: sub.receiptTaxId,
+          receiptAddress: sub.receiptAddress,
+        },
+        after,
+      });
+
+      await syncSubmissionReceiptToEventRegistration(sub.authorId, after);
+
+      const [updated] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      return ok(updated);
+    },
+    {
+      body: t.Object({
+        receiptName: t.String({ minLength: 1, maxLength: 255 }),
+        receiptTaxId: t.String({ minLength: 1, maxLength: 20 }),
+        receiptAddress: t.String({ minLength: 1 }),
       }),
     }
   )

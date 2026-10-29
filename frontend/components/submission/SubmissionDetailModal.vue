@@ -143,6 +143,80 @@ const receiptForm = ref({
   taxId: '',
   address: '',
 });
+const isEditingReceipt = ref(false);
+const savingReceipt = ref(false);
+
+const syncReceiptFormFromSubmission = () => {
+  receiptForm.value = {
+    name: submission.value?.receiptName || '',
+    taxId: submission.value?.receiptTaxId || '',
+    address: submission.value?.receiptAddress || '',
+  };
+};
+
+const hasSavedReceipt = computed(() =>
+  Boolean(
+    submission.value?.receiptName?.trim() ||
+    submission.value?.receiptTaxId?.trim() ||
+    submission.value?.receiptAddress?.trim()
+  )
+);
+
+const isReceiptDirty = computed(() => {
+  if (!submission.value) return false;
+  return (
+    receiptForm.value.name.trim() !== (submission.value.receiptName ?? '').trim() ||
+    receiptForm.value.taxId.trim() !== (submission.value.receiptTaxId ?? '').trim() ||
+    receiptForm.value.address.trim() !== (submission.value.receiptAddress ?? '').trim()
+  );
+});
+
+const validateReceiptForm = (): boolean => {
+  if (!receiptForm.value.name.trim()) {
+    showError({ status: 400, error: 'กรุณาระบุชื่อสำหรับออกใบเสร็จรับเงิน' });
+    return false;
+  }
+  if (!receiptForm.value.taxId.trim()) {
+    showError({ status: 400, error: 'กรุณาระบุเลขประจำตัวผู้เสียภาษี' });
+    return false;
+  }
+  if (!receiptForm.value.address.trim()) {
+    showError({ status: 400, error: 'กรุณาระบุที่อยู่สำหรับออกใบเสร็จรับเงิน' });
+    return false;
+  }
+  return true;
+};
+
+const openReceiptEditor = () => {
+  syncReceiptFormFromSubmission();
+  isEditingReceipt.value = true;
+};
+
+const cancelReceiptEditor = () => {
+  syncReceiptFormFromSubmission();
+  isEditingReceipt.value = false;
+};
+
+const saveReceiptInfo = async () => {
+  if (!props.submissionId || !validateReceiptForm()) return;
+  savingReceipt.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/submissions/${props.submissionId}/receipt`, {
+      method: 'PATCH',
+      headers: headers.value,
+      body: {
+        receiptName: receiptForm.value.name.trim(),
+        receiptTaxId: receiptForm.value.taxId.trim(),
+        receiptAddress: receiptForm.value.address.trim(),
+      },
+    })
+  );
+  savingReceipt.value = false;
+  if (error) { showError(error); return; }
+  showSuccess('บันทึกข้อมูลใบเสร็จรับเงินเรียบร้อยแล้ว');
+  isEditingReceipt.value = false;
+  await fetchSubmission();
+};
 
 const TRACK_NAMES: Record<number, string> = {
   1: 'วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ',
@@ -186,11 +260,7 @@ const fetchSubmission = async () => {
   ) {
     isEditingFiles.value = true;
   }
-  receiptForm.value = {
-    name: submission.value.receiptName || '',
-    taxId: submission.value.receiptTaxId || '',
-    address: submission.value.receiptAddress || '',
-  };
+  syncReceiptFormFromSubmission();
 };
 
 const selectedSlipFile = ref<File | null>(null);
@@ -201,19 +271,7 @@ const onSlipSelected = (file: File) => {
 
 const uploadSlip = async () => {
   if (!props.submissionId || !selectedSlipFile.value) return;
-
-  if (!receiptForm.value.name.trim()) {
-    showError({ status: 400, error: 'กรุณาระบุชื่อสำหรับออกใบเสร็จรับเงิน' });
-    return;
-  }
-  if (!receiptForm.value.taxId.trim()) {
-    showError({ status: 400, error: 'กรุณาระบุเลขประจำตัวผู้เสียภาษี' });
-    return;
-  }
-  if (!receiptForm.value.address.trim()) {
-    showError({ status: 400, error: 'กรุณาระบุที่อยู่สำหรับออกใบเสร็จรับเงิน' });
-    return;
-  }
+  if (!validateReceiptForm()) return;
 
   uploadingSlip.value = true;
   const formData = new FormData();
@@ -269,6 +327,8 @@ const parsedKeywords = computed(() => {
 watch(() => props.modelValue, (open) => {
   if (open) {
     submission.value = null;
+    isEditingReceipt.value = false;
+    selectedSlipFile.value = null;
     resetFileUpdateForm();
     fetchSubmission();
   }
@@ -426,7 +486,20 @@ watch(() => props.modelValue, (open) => {
               </div>
             </div>
             <div class="bg-white rounded-lg p-3 text-sm space-y-3">
-              <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+                <UButton
+                  size="xs"
+                  color="primary"
+                  variant="soft"
+                  icon="i-heroicons-check"
+                  :loading="savingReceipt"
+                  :disabled="!isReceiptDirty"
+                  @click="saveReceiptInfo"
+                >
+                  บันทึกข้อมูลใบเสร็จ
+                </UButton>
+              </div>
               <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
                 <UInput v-model="receiptForm.name" placeholder="ระบุชื่อสำหรับออกใบเสร็จ" />
               </UFormGroup>
@@ -447,28 +520,67 @@ watch(() => props.modelValue, (open) => {
                   บันทึก
                   <UIcon name="i-heroicons-check" class="w-4 h-4 ml-1" />
                 </UButton>
-                <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึก</p>
+                <p v-else class="text-xs text-gray-400 self-center">เลือกไฟล์ก่อนบันทึกสลิป</p>
               </div>
             </div>
           </template>
 
-          <!-- pending_verification: slip preview only -->
+          <!-- pending_verification: slip preview + editable receipt -->
           <template v-else-if="submission.paymentStatus === 'pending_verification'">
             <p class="text-sm text-gray-600">ได้รับหลักฐานการชำระเงินเรียบร้อย กำลังรอเจ้าหน้าที่ตรวจสอบ</p>
-            <div class="bg-white rounded-lg p-3 text-sm space-y-1.5 border border-blue-100">
-              <p class="font-semibold text-gray-700">ข้อมูลใบเสร็จรับเงิน</p>
-              <div class="flex justify-between">
-                <span class="text-gray-500">ชื่อ</span>
-                <span class="font-medium text-gray-900">{{ submission.receiptName || '-' }}</span>
+            <div class="bg-white rounded-lg p-3 text-sm space-y-2 border border-blue-100">
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+                <UButton
+                  v-if="!isEditingReceipt"
+                  size="xs"
+                  color="primary"
+                  variant="soft"
+                  icon="i-heroicons-pencil-square"
+                  @click="openReceiptEditor"
+                >
+                  {{ hasSavedReceipt ? 'แก้ไขข้อมูลใบเสร็จ' : 'กรอกข้อมูลใบเสร็จ' }}
+                </UButton>
               </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี</span>
-                <span class="font-mono text-gray-900">{{ submission.receiptTaxId || '-' }}</span>
-              </div>
-              <div>
-                <span class="text-gray-500">ที่อยู่</span>
-                <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
-              </div>
+
+              <template v-if="isEditingReceipt">
+                <div class="space-y-3 pt-1">
+                  <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
+                    <UInput v-model="receiptForm.name" placeholder="ระบุชื่อสำหรับออกใบเสร็จ" />
+                  </UFormGroup>
+                  <UFormGroup label="เลขประจำตัวผู้เสียภาษี (Tax ID / เลขบัตรประชาชน)" required help="เลขประจำตัวผู้เสียภาษี 13 หลัก">
+                    <UInput v-model="receiptForm.taxId" placeholder="XXXXXXXXXXXXX" maxlength="20" />
+                  </UFormGroup>
+                  <UFormGroup label="ที่อยู่สำหรับออกใบเสร็จ (Receipt Address)" required help="ที่อยู่สำหรับระบุในใบเสร็จรับเงิน">
+                    <UTextarea v-model="receiptForm.address" placeholder="ระบุที่อยู่สำหรับออกใบเสร็จ" :rows="2" />
+                  </UFormGroup>
+                  <div class="flex justify-end gap-2">
+                    <UButton color="gray" variant="ghost" size="xs" :disabled="savingReceipt" @click="cancelReceiptEditor">
+                      ยกเลิก
+                    </UButton>
+                    <UButton color="primary" size="xs" :loading="savingReceipt" @click="saveReceiptInfo">
+                      บันทึกข้อมูลใบเสร็จ
+                    </UButton>
+                  </div>
+                </div>
+              </template>
+              <template v-else-if="hasSavedReceipt">
+                <div class="flex justify-between gap-4">
+                  <span class="text-gray-500">ชื่อ</span>
+                  <span class="font-medium text-gray-900 text-right">{{ submission.receiptName || '-' }}</span>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี</span>
+                  <span class="font-mono text-gray-900 text-right">{{ submission.receiptTaxId || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500">ที่อยู่</span>
+                  <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
+                </div>
+              </template>
+              <p v-else class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                ยังไม่ได้ระบุข้อมูลสำหรับออกใบเสร็จรับเงิน กรุณากดปุ่ม "กรอกข้อมูลใบเสร็จ"
+              </p>
             </div>
             <div v-if="submission.paymentSlipUrl">
               <p class="text-xs text-gray-500 mb-1.5">หลักฐานการชำระเงิน</p>
@@ -487,7 +599,20 @@ watch(() => props.modelValue, (open) => {
               <p class="text-red-600 whitespace-pre-line">{{ submission.paymentNote || '-' }}</p>
             </div>
             <div class="bg-white rounded-lg p-3 text-sm space-y-3">
-              <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+                <UButton
+                  size="xs"
+                  color="primary"
+                  variant="soft"
+                  icon="i-heroicons-check"
+                  :loading="savingReceipt"
+                  :disabled="!isReceiptDirty"
+                  @click="saveReceiptInfo"
+                >
+                  บันทึกข้อมูลใบเสร็จ
+                </UButton>
+              </div>
               <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
                 <UInput v-model="receiptForm.name" placeholder="ระบุชื่อสำหรับออกใบเสร็จ" />
               </UFormGroup>
@@ -509,27 +634,66 @@ watch(() => props.modelValue, (open) => {
           </template>
         </div>
 
-        <!-- Verified: replace section with a small success line -->
+        <!-- Verified: success status + editable receipt -->
         <div v-else class="border border-green-200 rounded-lg p-4 bg-green-50/50 space-y-3">
           <div class="flex items-center gap-1.5 text-sm text-green-700">
             <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
             <span class="font-semibold">ชำระเงินเรียบร้อยแล้ว</span>
             <SubmissionPaymentStatusBadge :status="submission.paymentStatus" class="ml-auto" />
           </div>
-          <div v-if="submission.receiptName || submission.receiptTaxId || submission.receiptAddress" class="bg-white rounded-lg p-3 text-sm space-y-1.5 border border-green-100">
-            <p class="font-semibold text-gray-700">ข้อมูลใบเสร็จรับเงิน</p>
-            <div class="flex justify-between">
-              <span class="text-gray-500">ชื่อ</span>
-              <span class="font-medium text-gray-900">{{ submission.receiptName || '-' }}</span>
+          <div class="bg-white rounded-lg p-3 text-sm space-y-2 border border-green-100">
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+              <UButton
+                v-if="!isEditingReceipt"
+                size="xs"
+                color="primary"
+                variant="soft"
+                icon="i-heroicons-pencil-square"
+                @click="openReceiptEditor"
+              >
+                {{ hasSavedReceipt ? 'แก้ไขข้อมูลใบเสร็จ' : 'กรอกข้อมูลใบเสร็จ' }}
+              </UButton>
             </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี</span>
-              <span class="font-mono text-gray-900">{{ submission.receiptTaxId || '-' }}</span>
-            </div>
-            <div>
-              <span class="text-gray-500">ที่อยู่</span>
-              <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
-            </div>
+
+            <template v-if="isEditingReceipt">
+              <div class="space-y-3 pt-1">
+                <UFormGroup label="ชื่อสำหรับออกใบเสร็จ (Receipt Name)" required help="ชื่อ-นามสกุล หรือชื่อหน่วยงาน/บริษัท">
+                  <UInput v-model="receiptForm.name" placeholder="ระบุชื่อสำหรับออกใบเสร็จ" />
+                </UFormGroup>
+                <UFormGroup label="เลขประจำตัวผู้เสียภาษี (Tax ID / เลขบัตรประชาชน)" required help="เลขประจำตัวผู้เสียภาษี 13 หลัก">
+                  <UInput v-model="receiptForm.taxId" placeholder="XXXXXXXXXXXXX" maxlength="20" />
+                </UFormGroup>
+                <UFormGroup label="ที่อยู่สำหรับออกใบเสร็จ (Receipt Address)" required help="ที่อยู่สำหรับระบุในใบเสร็จรับเงิน">
+                  <UTextarea v-model="receiptForm.address" placeholder="ระบุที่อยู่สำหรับออกใบเสร็จ" :rows="2" />
+                </UFormGroup>
+                <div class="flex justify-end gap-2">
+                  <UButton color="gray" variant="ghost" size="xs" :disabled="savingReceipt" @click="cancelReceiptEditor">
+                    ยกเลิก
+                  </UButton>
+                  <UButton color="primary" size="xs" :loading="savingReceipt" @click="saveReceiptInfo">
+                    บันทึกข้อมูลใบเสร็จ
+                  </UButton>
+                </div>
+              </div>
+            </template>
+            <template v-else-if="hasSavedReceipt">
+              <div class="flex justify-between gap-4">
+                <span class="text-gray-500">ชื่อ</span>
+                <span class="font-medium text-gray-900 text-right">{{ submission.receiptName || '-' }}</span>
+              </div>
+              <div class="flex justify-between gap-4">
+                <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี</span>
+                <span class="font-mono text-gray-900 text-right">{{ submission.receiptTaxId || '-' }}</span>
+              </div>
+              <div>
+                <span class="text-gray-500">ที่อยู่</span>
+                <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
+              </div>
+            </template>
+            <p v-else class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+              ยังไม่ได้ระบุข้อมูลสำหรับออกใบเสร็จรับเงิน กรุณากดปุ่ม "กรอกข้อมูลใบเสร็จ"
+            </p>
           </div>
         </div>
 
@@ -547,6 +711,20 @@ watch(() => props.modelValue, (open) => {
             </div>
           </UCard>
         </UModal>
+
+        <!-- Draft: continue editing -->
+        <div v-if="submission.status === 'draft'" class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-semibold text-gray-800">ผลงานยังอยู่ในสถานะแบบร่าง</h3>
+              <p class="text-xs text-gray-500 mt-0.5">กรุณาตรวจสอบรายละเอียดและกดส่งผลงานเมื่อพร้อม</p>
+            </div>
+            <UButton color="primary" variant="soft" size="xs" @click="navigateTo(`/submit?id=${submission.id}`)">
+              แก้ไขแบบร่างต่อ
+              <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
+            </UButton>
+          </div>
+        </div>
 
         <!-- Upload full paper (passed round 1) -->
         <div v-if="submission.status === 'passed_round1'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">

@@ -18,6 +18,21 @@ interface Revision {
   fullPaperWordFileAvailable?: boolean;
 }
 
+interface ReceiptAuditLog {
+  id: string;
+  source: 'receipt_edit' | 'upload_slip' | 'submission_form' | 'event_sync';
+  changedBy: string | null;
+  changedByName: string | null;
+  changedByRole: 'author' | 'reviewer' | 'admin' | null;
+  oldReceiptName: string | null;
+  oldReceiptTaxId: string | null;
+  oldReceiptAddress: string | null;
+  newReceiptName: string | null;
+  newReceiptTaxId: string | null;
+  newReceiptAddress: string | null;
+  createdAt: string;
+}
+
 interface Submission {
   id: string;
   title: string;
@@ -47,6 +62,7 @@ interface Submission {
   submittedAt: string | null;
   updatedAt: string;
   revisions: Revision[];
+  receiptAuditLogs?: ReceiptAuditLog[];
 }
 
 interface WorkflowAssignment {
@@ -207,6 +223,36 @@ const headers = computed(() => ({
 const formatDate = (iso: string | null) => {
   if (!iso) return '-';
   return new Date(iso).toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
+};
+
+const formatDateTime = (iso: string | null) => {
+  if (!iso) return '-';
+  return new Date(iso).toLocaleString('th-TH', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const receiptLogsOpen = ref(false);
+
+const receiptSourceLabel = (source: ReceiptAuditLog['source']) =>
+  ({
+    receipt_edit: 'แก้ไขข้อมูลใบเสร็จ',
+    upload_slip: 'อัปโหลดสลิป',
+    submission_form: 'ฟอร์มส่งผลงาน',
+    event_sync: 'ซิงก์จากลงทะเบียนเข้าร่วมงาน',
+  }[source] ?? source);
+
+const receiptLogDiffs = (log: ReceiptAuditLog) => {
+  const fields = [
+    { label: 'ชื่อ', before: log.oldReceiptName, after: log.newReceiptName },
+    { label: 'เลขผู้เสียภาษี', before: log.oldReceiptTaxId, after: log.newReceiptTaxId },
+    { label: 'ที่อยู่', before: log.oldReceiptAddress, after: log.newReceiptAddress },
+  ];
+  return fields.filter((f) => (f.before ?? '').trim() !== (f.after ?? '').trim());
 };
 
 const submitterLabel = (type: string) =>
@@ -528,6 +574,7 @@ const saveAdminFiles = async () => {
 watch(() => props.modelValue, (open) => {
   if (open) {
     cancelFileEdit();
+    receiptLogsOpen.value = false;
     submission.value = null;
     workflow.value = null;
     fetchSubmission().then(fetchWorkflow);
@@ -570,19 +617,57 @@ watch(() => props.modelValue, (open) => {
             <a :href="submission.paymentSlipUrl" target="_blank" class="text-primary-600 hover:underline">เปิดดูสลิป</a>
           </div>
 
-          <div v-if="submission.receiptName || submission.receiptTaxId || submission.receiptAddress" class="bg-gray-50 rounded-lg p-3 text-sm space-y-1.5 border border-gray-100">
-            <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
-            <div class="flex justify-between">
-              <span class="text-gray-500">ชื่อ:</span>
-              <span class="font-medium text-gray-900">{{ submission.receiptName || '-' }}</span>
+          <div
+            v-if="submission.receiptName || submission.receiptTaxId || submission.receiptAddress || submission.receiptAuditLogs?.length"
+            class="bg-gray-50 rounded-lg p-3 text-sm space-y-1.5 border border-gray-100"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <p class="font-semibold text-gray-700">ข้อมูลสำหรับออกใบเสร็จรับเงิน</p>
+              <UButton
+                v-if="submission.receiptAuditLogs?.length"
+                size="2xs"
+                color="gray"
+                variant="soft"
+                icon="i-heroicons-clock"
+                @click="receiptLogsOpen = !receiptLogsOpen"
+              >
+                ประวัติการแก้ไขใบเสร็จ ({{ submission.receiptAuditLogs.length }} ครั้ง)
+              </UButton>
             </div>
-            <div class="flex justify-between">
+            <div class="flex justify-between gap-4">
+              <span class="text-gray-500">ชื่อ:</span>
+              <span class="font-medium text-gray-900 text-right">{{ submission.receiptName || '-' }}</span>
+            </div>
+            <div class="flex justify-between gap-4">
               <span class="text-gray-500">เลขประจำตัวผู้เสียภาษี:</span>
-              <span class="font-mono text-gray-900">{{ submission.receiptTaxId || '-' }}</span>
+              <span class="font-mono text-gray-900 text-right">{{ submission.receiptTaxId || '-' }}</span>
             </div>
             <div>
               <span class="text-gray-500">ที่อยู่:</span>
               <p class="text-gray-900 mt-0.5 whitespace-pre-line">{{ submission.receiptAddress || '-' }}</p>
+            </div>
+
+            <div v-if="receiptLogsOpen && submission.receiptAuditLogs?.length" class="pt-2 mt-2 border-t border-gray-200 space-y-2">
+              <p class="text-xs font-semibold text-gray-600">ประวัติการแก้ไขข้อมูลใบเสร็จ</p>
+              <div
+                v-for="log in submission.receiptAuditLogs"
+                :key="log.id"
+                class="bg-white border border-gray-200 rounded p-2.5 text-xs space-y-1"
+              >
+                <div class="flex flex-wrap items-center justify-between gap-1 text-gray-500">
+                  <div class="flex items-center gap-1.5">
+                    <UBadge color="blue" variant="soft" size="xs">{{ receiptSourceLabel(log.source) }}</UBadge>
+                    <span>โดย {{ log.changedByName || 'ระบบอัตโนมัติ' }}</span>
+                  </div>
+                  <span>{{ formatDateTime(log.createdAt) }}</span>
+                </div>
+                <div v-for="diff in receiptLogDiffs(log)" :key="diff.label" class="text-gray-700">
+                  <span class="font-medium text-gray-600">{{ diff.label }}:</span>
+                  <span class="line-through text-gray-400 mx-1">{{ diff.before || '(ว่าง)' }}</span>
+                  <span class="text-gray-400">→</span>
+                  <span class="font-medium text-gray-900 ml-1">{{ diff.after || '(ว่าง)' }}</span>
+                </div>
+              </div>
             </div>
           </div>
 
