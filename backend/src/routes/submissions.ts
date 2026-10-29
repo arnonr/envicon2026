@@ -9,7 +9,15 @@ import {
   syncEventRegistrationToUserSubmissions,
   syncSubmissionPaymentToEventRegistration,
 } from "../services/event-registration-sync";
-import { canEdit, canRevise, canCameraReady, canReplaceFile, canUpdateFiles, statusAfterReviseUpload } from "../utils/submission-status";
+import {
+  canEdit,
+  canRevise,
+  canCameraReady,
+  canReplaceFile,
+  canUpdateFiles,
+  statusAfterFileUpload,
+  statusAfterReviseUpload,
+} from "../utils/submission-status";
 
 const MAX_CREATORS = 20;
 
@@ -179,8 +187,9 @@ async function recordRevisionAndSnapshot(
   }
 
   const snapshotVersion = Math.max((latestSnapshot?.version ?? 1) + 1, nextRevisionVersion + 1);
+  const newVersionId = crypto.randomUUID();
   await db.insert(submissionVersions).values({
-    id: crypto.randomUUID(),
+    id: newVersionId,
     submissionId: sub.id,
     version: snapshotVersion,
     kind: "revision",
@@ -201,6 +210,11 @@ async function recordRevisionAndSnapshot(
     changelog,
     submittedAt: new Date(),
   });
+
+  await db
+    .update(reviewRounds)
+    .set({ submissionVersionId: newVersionId })
+    .where(and(eq(reviewRounds.submissionId, sub.id), ne(reviewRounds.status, "released")));
 
   return nextRevisionVersion;
 }
@@ -633,6 +647,8 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         : (merged.abstractFileUrl ?? merged.abstractWordFileUrl);
 
       const isInitialSubmit = sub.status === "draft";
+      const hasUploadedFullPaper = Boolean(files.fullPaperPdf || files.fullPaperWord);
+      const nextStatus = statusAfterFileUpload(sub.status, hasUploadedFullPaper);
       await db
         .update(submissions)
         .set({
@@ -642,10 +658,8 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
           round1FileUrl,
           round1FileType,
-          ...(isInitialSubmit && {
-            status: "submitted_round1",
-            submittedAt: new Date(),
-          }),
+          ...(nextStatus && { status: nextStatus }),
+          ...(isInitialSubmit && { submittedAt: new Date() }),
         })
         .where(eq(submissions.id, params.id));
 
@@ -819,9 +833,13 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       };
       const merged: FileSlotUrls = { ...currentSlots, fullPaperFileUrl: fileUrl };
 
+      const nextStatus = statusAfterFileUpload(sub.status, true);
       await db
         .update(submissions)
-        .set({ fullPaperFileUrl: fileUrl })
+        .set({
+          fullPaperFileUrl: fileUrl,
+          ...(nextStatus && { status: nextStatus }),
+        })
         .where(eq(submissions.id, params.id));
 
       await recordRevisionAndSnapshot(sub, uploaded, merged, "อัปโหลดบทความฉบับสมบูรณ์ (Full Paper)");

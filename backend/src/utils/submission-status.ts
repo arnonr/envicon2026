@@ -29,7 +29,7 @@ export const canReplaceFile = (s: SubmissionStatus) =>
   s === "submitted_round1" || s === "submitted_round2";
 
 export const canUpdateFiles = (s: SubmissionStatus) =>
-  !isUnderReview(s) && s !== "rejected_round1" && s !== "rejected_round2";
+  s !== "rejected_round1" && s !== "rejected_round2";
 
 export const isUnderReview = (s: SubmissionStatus) =>
   s === "under_review_round1" || s === "under_review_round2";
@@ -71,16 +71,30 @@ export const statusAfterDecision = (
   roundNumber: number,
   decision: "accept" | "reject" | "revise",
 ): SubmissionStatus => {
-  if (decision === "accept") return `passed_round${roundNumber}` as SubmissionStatus;
-  if (decision === "reject") return `rejected_round${roundNumber}` as SubmissionStatus;
-  return `passed_round${roundNumber}_with_revisions` as SubmissionStatus;
+  const effectiveRound = Math.min(Math.max(roundNumber, 1), 2);
+  if (decision === "accept") return `passed_round${effectiveRound}` as SubmissionStatus;
+  if (decision === "reject") return `rejected_round${effectiveRound}` as SubmissionStatus;
+  return `passed_round${effectiveRound}_with_revisions` as SubmissionStatus;
 };
 
-export const statusAfterSendReview = (roundNumber: number): SubmissionStatus =>
-  `under_review_round${roundNumber}` as SubmissionStatus;
+export const statusAfterSendReview = (roundNumber: number): SubmissionStatus => {
+  const effectiveRound = Math.min(Math.max(roundNumber, 1), 2);
+  return `under_review_round${effectiveRound}` as SubmissionStatus;
+};
 
 export const statusAfterReviseUpload = (currentStatus: SubmissionStatus): SubmissionStatus | null => {
   if (currentStatus === "passed_round1_with_revisions") return "submitted_round2";
   if (currentStatus === "passed_round2_with_revisions") return "submitted_round2";
+  return null;
+};
+
+export const statusAfterFileUpload = (
+  currentStatus: SubmissionStatus,
+  hasUploadedFullPaper: boolean,
+): SubmissionStatus | null => {
+  if (currentStatus === "draft") return "submitted_round1";
+  const reviseStatus = statusAfterReviseUpload(currentStatus);
+  if (reviseStatus) return reviseStatus;
+  if (currentStatus === "passed_round1" && hasUploadedFullPaper) return "submitted_round2";
   return null;
 };

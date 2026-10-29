@@ -119,6 +119,18 @@ const fetchSubmission = async () => {
   loading.value = false;
   if (error) { showError(error); return; }
   submission.value = data!.data;
+  if (
+    submission.value.canUpdateFiles
+    && [
+      'passed_round1',
+      'passed_round1_with_revisions',
+      'passed_round2_with_revisions',
+      'submitted_round2',
+      'under_review_round2',
+    ].includes(submission.value.status)
+  ) {
+    isEditingFiles.value = true;
+  }
 };
 
 const saveUpdatedFiles = async () => {

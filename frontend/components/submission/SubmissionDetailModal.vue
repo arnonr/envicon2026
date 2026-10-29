@@ -78,6 +78,7 @@ const uploadingSlip = ref(false);
 const slipPreviewOpen = ref(false);
 
 const isEditingFiles = ref(false);
+const filesSectionRef = ref<HTMLElement | null>(null);
 const savingFiles = ref(false);
 const fileUpdateChangelog = ref('');
 const fileSlots = ref<SelectedSubmissionFiles>({
@@ -86,6 +87,12 @@ const fileSlots = ref<SelectedSubmissionFiles>({
   fullPaperPdf: null,
   fullPaperWord: null,
 });
+
+const openFileEditor = async () => {
+  isEditingFiles.value = true;
+  await nextTick();
+  filesSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
 
 const hasAnyFileToUpload = computed(() =>
   Boolean(
@@ -167,6 +174,18 @@ const fetchSubmission = async () => {
   loading.value = false;
   if (error) { showError(error); return; }
   submission.value = data!.data;
+  if (
+    submission.value.canUpdateFiles
+    && [
+      'passed_round1',
+      'passed_round1_with_revisions',
+      'passed_round2_with_revisions',
+      'submitted_round2',
+      'under_review_round2',
+    ].includes(submission.value.status)
+  ) {
+    isEditingFiles.value = true;
+  }
   receiptForm.value = {
     name: submission.value.receiptName || '',
     taxId: submission.value.receiptTaxId || '',
@@ -330,7 +349,7 @@ watch(() => props.modelValue, (open) => {
         <UDivider />
 
         <!-- Files -->
-        <div>
+        <div ref="filesSectionRef">
           <div class="flex items-center justify-between gap-2 mb-2">
             <h3 class="text-xs font-semibold text-gray-600">ไฟล์ที่แนบ</h3>
             <UButton
@@ -339,7 +358,7 @@ watch(() => props.modelValue, (open) => {
               variant="soft"
               size="xs"
               icon="i-heroicons-arrow-up-tray"
-              @click="isEditingFiles = true"
+              @click="openFileEditor"
             >
               อัปโหลดเพิ่ม / อัปเดตไฟล์
             </UButton>
@@ -529,14 +548,14 @@ watch(() => props.modelValue, (open) => {
           </UCard>
         </UModal>
 
-        <!-- Upload full paper (passed round 1, no file yet) -->
-        <div v-if="submission.status === 'passed_round1' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
+        <!-- Upload full paper (passed round 1) -->
+        <div v-if="submission.status === 'passed_round1'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
               <h3 class="text-sm font-semibold text-green-700">บทคัดย่อได้รับการอนุมัติ — กรุณาส่งบทความฉบับสมบูรณ์</h3>
             </div>
-            <UButton color="green" variant="soft" size="xs" @click="isEditingFiles = true">
+            <UButton color="green" variant="soft" size="xs" @click="openFileEditor">
               อัปโหลดไฟล์
             </UButton>
           </div>

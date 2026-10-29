@@ -4,6 +4,13 @@ import type { SelectedSlotFiles } from '~/components/submission/FileSlotsGrid.vu
 
 definePageMeta({ middleware: ['auth', 'role'] });
 
+interface ReleasedResult {
+  decision: "accept" | "reject" | "revise";
+  adminNote: string | null;
+  releasedAt: string;
+  commentsToAuthor: string[];
+}
+
 interface Submission {
   title: string;
   titleEn: string | null;
@@ -21,6 +28,7 @@ interface Submission {
   fullPaperFileUrl: string | null;
   fullPaperWordFileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
+  releasedResult?: ReleasedResult | null;
 }
 
 const route = useRoute();
@@ -33,6 +41,7 @@ const loading = ref(true);
 const loadFailed = ref(false);
 const saving = ref(false);
 const initialCreators = ref<Creator[]>([]);
+const releasedResult = ref<ReleasedResult | null>(null);
 const submissionFormRef = ref<{ creators: Creator[] } | null>(null);
 const currentFiles = reactive({
   abstractFileUrl: null as string | null,
@@ -77,11 +86,15 @@ const parseCreators = (raw: string | null): Creator[] => {
 
 const isFormValid = computed(() => {
   const values = form.value;
-  if (!values.title.trim() || !values.title_en.trim() || !values.abstract.trim() || !values.track || !values.submitterType || !values.educationLevel || !values.presentationFormat) {
-    return false;
-  }
-  return (submissionFormRef.value?.creators ?? initialCreators.value)
-    .some(creator => creator.firstName.trim() && creator.lastName.trim() && creator.affiliation.trim());
+  return Boolean(
+    values.title.trim()
+    && values.title_en.trim()
+    && values.abstract.trim()
+    && values.track
+    && values.submitterType
+    && values.educationLevel
+    && values.presentationFormat
+  );
 });
 
 const hasAnyFile = computed(() =>
@@ -131,6 +144,7 @@ onMounted(async () => {
   currentFiles.abstractWordFileUrl = submission.abstractWordFileUrl;
   currentFiles.fullPaperFileUrl = submission.fullPaperFileUrl;
   currentFiles.fullPaperWordFileUrl = submission.fullPaperWordFileUrl;
+  releasedResult.value = submission.releasedResult ?? null;
   initialCreators.value = parseCreators(submission.creators);
   loading.value = false;
 });
@@ -239,9 +253,28 @@ const submitRevision = async () => {
       </template>
 
       <div class="space-y-6">
-        <SubmissionForm ref="submissionFormRef" v-model="form" :initial-creators="initialCreators" />
-
-        <UDivider />
+        <div
+          v-if="releasedResult && (releasedResult.adminNote || releasedResult.commentsToAuthor.length)"
+          class="border border-orange-200 rounded-lg p-4 bg-orange-50/50 space-y-2 text-sm"
+        >
+          <p class="font-semibold text-orange-800 flex items-center gap-1.5">
+            <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-orange-600" />
+            ข้อเสนอแนะเพื่อการแก้ไขจากคณะกรรมการ
+          </p>
+          <p v-if="releasedResult.adminNote" class="text-gray-700 whitespace-pre-line">
+            <span class="font-medium text-gray-600">หมายเหตุจากคณะกรรมการ:</span> {{ releasedResult.adminNote }}
+          </p>
+          <div v-if="releasedResult.commentsToAuthor.length" class="space-y-1.5 pt-1">
+            <p class="font-medium text-gray-600">ความเห็นจากผู้ทรงคุณวุฒิ:</p>
+            <p
+              v-for="(comment, index) in releasedResult.commentsToAuthor"
+              :key="index"
+              class="text-gray-700 bg-white border border-orange-100 rounded p-2.5 whitespace-pre-line"
+            >
+              {{ comment }}
+            </p>
+          </div>
+        </div>
 
         <div class="space-y-3">
           <div>
@@ -268,21 +301,29 @@ const submitRevision = async () => {
             :rows="4"
           />
         </UFormGroup>
+
+        <UDivider />
+
+        <SubmissionForm ref="submissionFormRef" v-model="form" :initial-creators="initialCreators" />
       </div>
 
       <template #footer>
-        <div class="flex justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <UButton color="gray" variant="ghost" :to="`/submissions/${route.params.id}`">
             ยกเลิก
           </UButton>
-          <UButton
-            color="primary"
-            :loading="uploading"
-            :disabled="!hasAnyFile || !isFormValid || saving"
-            @click="submitRevision"
-          >
-            บันทึกและส่งผลงานที่แก้ไข
-          </UButton>
+          <div class="flex items-center gap-3">
+            <span v-if="!isFormValid" class="text-xs text-red-500">กรุณากรอกข้อมูลผลงานที่มีเครื่องหมาย * ให้ครบถ้วน</span>
+            <span v-else-if="!hasAnyFile" class="text-xs text-red-500">กรุณาแนบไฟล์อย่างน้อย 1 ไฟล์</span>
+            <UButton
+              color="primary"
+              :loading="uploading"
+              :disabled="!hasAnyFile || !isFormValid || saving"
+              @click="submitRevision"
+            >
+              บันทึกและส่งผลงานที่แก้ไข
+            </UButton>
+          </div>
         </div>
       </template>
     </UCard>
