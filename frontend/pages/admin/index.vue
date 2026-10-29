@@ -3,6 +3,7 @@ import {
   type AdminSubmissionFilterState,
   buildAdminSubmissionSearchParams,
   countSecondaryAdminFilters,
+  createRequestSequenceGuard,
   hasActiveAdminSubmissionFilters,
 } from "~/utils/admin-submission-filters";
 
@@ -87,6 +88,8 @@ const filterFileStatus = ref("");
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let suppressFilterWatch = false;
+let activeFetchAbort: AbortController | null = null;
+const fetchGuard = createRequestSequenceGuard();
 
 const currentFilterState = computed<AdminSubmissionFilterState>(() => ({
   search: debouncedSearch.value,
@@ -249,6 +252,13 @@ function reviewProgressLabel(submission: Submission) {
 }
 
 async function fetchSubmissions() {
+  const reqId = fetchGuard.next();
+  if (activeFetchAbort) {
+    activeFetchAbort.abort();
+  }
+  const abortController = new AbortController();
+  activeFetchAbort = abortController;
+
   loading.value = true;
   const params = buildAdminSubmissionSearchParams(currentFilterState.value);
   params.set("page", String(currentPage.value));
@@ -257,11 +267,17 @@ async function fetchSubmissions() {
   const { data, error } = await handleApiCall(() =>
     $fetch<{ success: true; data: Submission[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(
       `${apiBase}/admin/submissions${qs ? `?${qs}` : ""}`,
-      { headers: { Authorization: `Bearer ${authStore.token}` } },
+      {
+        headers: { Authorization: `Bearer ${authStore.token}` },
+        signal: abortController.signal,
+      },
     ),
   );
+  if (!fetchGuard.isLatest(reqId)) return;
+  activeFetchAbort = null;
   loading.value = false;
   if (error) {
+    if (abortController.signal.aborted) return;
     showError(error);
     return;
   }
@@ -382,7 +398,18 @@ function goToPage(page: number) {
   fetchSubmissions();
 }
 
+async function syncPendingSearchBeforeAction() {
+  if (!searchTimer) return;
+  clearTimeout(searchTimer);
+  searchTimer = null;
+  suppressFilterWatch = true;
+  debouncedSearch.value = searchInput.value.trim();
+  await nextTick();
+  suppressFilterWatch = false;
+}
+
 async function refreshOnFocus() {
+  await syncPendingSearchBeforeAction();
   await Promise.all([fetchSubmissions(), fetchStats(), fetchReviewers()]);
 }
 
@@ -397,9 +424,14 @@ watch(searchInput, (val) => {
   }, 300);
 });
 
+watch(debouncedSearch, () => {
+  if (suppressFilterWatch) return;
+  currentPage.value = 1;
+  fetchSubmissions();
+});
+
 watch(
   [
-    debouncedSearch,
     filterStatus,
     paymentStatusFilter,
     filterTrack,
@@ -410,8 +442,9 @@ watch(
     filterWantsFullPaper,
     filterFileStatus,
   ],
-  () => {
+  async () => {
     if (suppressFilterWatch) return;
+    await syncPendingSearchBeforeAction();
     currentPage.value = 1;
     fetchSubmissions();
   },
@@ -425,6 +458,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   if (searchTimer) clearTimeout(searchTimer);
+  if (activeFetchAbort) activeFetchAbort.abort();
   window.removeEventListener("focus", refreshOnFocus);
 });
 </script>

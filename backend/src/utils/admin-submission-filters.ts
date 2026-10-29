@@ -37,7 +37,7 @@ function buildHasAbstractSql(): SQL {
 }
 
 function buildHasFullPaperSql(): SQL {
-  return sql`(${submissions.fullPaperFileUrl} IS NOT NULL OR ${submissions.fullPaperWordFileUrl} IS NOT NULL OR (${submissions.round1FileUrl} IS NOT NULL AND ${submissions.round1FileType} = 'full_paper'))`;
+  return sql`(${submissions.fullPaperFileUrl} IS NOT NULL OR ${submissions.fullPaperWordFileUrl} IS NOT NULL OR (${submissions.round1FileUrl} IS NOT NULL AND ${submissions.round1FileType} IS NOT NULL AND ${submissions.round1FileType} = 'full_paper'))`;
 }
 
 export function buildAdminSubmissionWhere(
@@ -52,6 +52,7 @@ export function buildAdminSubmissionWhere(
       sql`LOWER(${submissions.title}) LIKE ${pattern} ESCAPE '\\\\'`,
       sql`LOWER(${submissions.titleEn}) LIKE ${pattern} ESCAPE '\\\\'`,
       sql`LOWER(${submissions.creators}) LIKE ${pattern} ESCAPE '\\\\'`,
+      sql`LOWER(REPLACE(${submissions.creators}, '","lastName":"', ' ')) LIKE ${pattern} ESCAPE '\\\\'`,
       sql`LOWER(${users.name}) LIKE ${pattern} ESCAPE '\\\\'`,
       sql`LOWER(${users.email}) LIKE ${pattern} ESCAPE '\\\\'`,
       sql`LOWER(${users.affiliation}) LIKE ${pattern} ESCAPE '\\\\'`,

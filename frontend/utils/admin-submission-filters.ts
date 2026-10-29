@@ -66,3 +66,17 @@ export function hasActiveAdminSubmissionFilters(
     || countSecondaryAdminFilters(state) > 0,
   );
 }
+
+export function createRequestSequenceGuard() {
+  let latestId = 0;
+  return {
+    next(): number {
+      latestId += 1;
+      return latestId;
+    },
+    isLatest(id: number): boolean {
+      return id === latestId;
+    },
+  };
+}
+
