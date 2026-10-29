@@ -23,6 +23,23 @@ import {
   saveSlotFiles,
   validateSlotFiles,
 } from "../utils/submission-files";
+import {
+  buildAdminSubmissionWhere,
+  loadLatestRoundReviewSummaries,
+} from "../utils/admin-submission-filters";
+
+const adminSubmissionFilterQueryFields = {
+  search: t.Optional(t.String()),
+  status: t.Optional(t.String()),
+  paymentStatus: t.Optional(t.String()),
+  track: t.Optional(t.String()),
+  presentationFormat: t.Optional(t.String()),
+  reviewerId: t.Optional(t.String()),
+  submitterType: t.Optional(t.String()),
+  educationLevel: t.Optional(t.String()),
+  wantsFullPaper: t.Optional(t.String()),
+  fileStatus: t.Optional(t.String()),
+};
 
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
@@ -134,18 +151,12 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     });
   })
   .get("/submissions", async ({ query, set }) => {
-    const conditions = [];
-    if (query.status) {
-      if (!(query.status in STATUS_NAMES)) {
-        set.status = 400;
-        return fail("VALIDATION_ERROR", `Invalid status: ${query.status}`);
-      }
-      conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    const filterResult = buildAdminSubmissionWhere(query);
+    if (!filterResult.ok) {
+      set.status = 400;
+      return fail("VALIDATION_ERROR", filterResult.error);
     }
-    if (query.paymentStatus) conditions.push(eq(submissions.paymentStatus, query.paymentStatus as typeof submissions.paymentStatus.enumValues[number]));
-    if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
-
-    const where = conditions.length ? and(...conditions) : undefined;
+    const { where } = filterResult;
 
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 50));
@@ -186,76 +197,40 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       db
         .select({ count: sql<number>`count(*)` })
         .from(submissions)
+        .leftJoin(users, eq(submissions.authorId, users.id))
         .where(where),
     ]);
 
-    const submissionIds = rows.map((submission) => submission.id);
-    const roundRows = submissionIds.length
-      ? await db
-        .select({
-          id: reviewRounds.id,
-          submissionId: reviewRounds.submissionId,
-        })
-        .from(reviewRounds)
-        .where(inArray(reviewRounds.submissionId, submissionIds))
-        .orderBy(desc(reviewRounds.roundNumber))
-      : [];
-    const latestRoundBySubmission = new Map<string, string>();
-    for (const round of roundRows) {
-      if (!latestRoundBySubmission.has(round.submissionId)) {
-        latestRoundBySubmission.set(round.submissionId, round.id);
-      }
-    }
-
-    const latestRoundIds = [...latestRoundBySubmission.values()];
-    const reviewRows = latestRoundIds.length
-      ? await db
-        .select({ roundId: reviews.roundId, status: reviews.status })
-        .from(reviews)
-        .where(inArray(reviews.roundId, latestRoundIds))
-      : [];
-    const progressByRound = new Map<string, { assigned: number; completed: number }>();
-    for (const review of reviewRows) {
-      const progress = progressByRound.get(review.roundId) ?? { assigned: 0, completed: 0 };
-      progress.assigned += 1;
-      if (review.status === "completed") progress.completed += 1;
-      progressByRound.set(review.roundId, progress);
-    }
+    const summaries = await loadLatestRoundReviewSummaries(rows.map((submission) => submission.id));
 
     const rowsWithReviewProgress = rows.map((submission) => {
-      const roundId = latestRoundBySubmission.get(submission.id);
-      const progress = roundId ? progressByRound.get(roundId) : undefined;
+      const progress = summaries.get(submission.id);
       return {
         ...submission,
         abstractFileUrl: submission.abstractFileUrl ?? (submission.round1FileType !== "full_paper" ? submission.round1FileUrl : null),
         fullPaperFileUrl: submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null),
         completedReviewCount: progress?.completed ?? 0,
         assignedReviewerCount: progress?.assigned ?? 0,
+        reviewerNames: progress?.reviewerNames ?? [],
       };
     });
 
     return paginated(rowsWithReviewProgress, page, limit, Number(countResult[0]?.count ?? 0));
   }, {
     query: t.Object({
-      status: t.Optional(t.String()),
-      paymentStatus: t.Optional(t.String()),
-      track: t.Optional(t.String()),
+      ...adminSubmissionFilterQueryFields,
       page: t.Optional(t.String()),
       limit: t.Optional(t.String()),
     }),
   })
   .get("/submissions/export", async ({ query, request, set }) => {
-    const conditions = [];
-    if (query.status) {
-      if (!(query.status in STATUS_NAMES)) {
-        set.status = 400;
-        return fail("VALIDATION_ERROR", `Invalid status: ${query.status}`);
-      }
-      conditions.push(eq(submissions.status, query.status as typeof submissions.status.enumValues[number]));
+    const filterResult = buildAdminSubmissionWhere(query);
+    if (!filterResult.ok) {
+      set.status = 400;
+      return fail("VALIDATION_ERROR", filterResult.error);
     }
-    if (query.track) conditions.push(eq(submissions.track, Number(query.track)));
+    const { where } = filterResult;
 
-    const where = conditions.length ? and(...conditions) : undefined;
     const rows = await db
       .select({
         id: submissions.id,
@@ -291,6 +266,8 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       .where(where)
       .orderBy(desc(submissions.updatedAt));
 
+    const summaries = await loadLatestRoundReviewSummaries(rows.map((submission) => submission.id));
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "TSHE-CON 2026";
     workbook.created = new Date();
@@ -311,6 +288,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       { header: "รูปแบบการนำเสนอ", key: "presentationFormat", width: 18 },
       { header: "หัวข้อ", key: "track", width: 52 },
       { header: "สถานะ", key: "status", width: 28 },
+      { header: "ผู้รีวิว (รอบล่าสุด)", key: "reviewerNames", width: 32 },
       { header: "คำสำคัญ", key: "keywords", width: 35 },
       { header: "บทคัดย่อ", key: "abstract", width: 70 },
       { header: "วันที่ส่ง", key: "submittedAt", width: 22 },
@@ -349,6 +327,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         presentationFormat: PRESENTATION_FORMAT_NAMES[submission.presentationFormat] ?? submission.presentationFormat,
         track: TRACK_NAMES[submission.track] ?? String(submission.track),
         status: STATUS_NAMES[submission.status] ?? submission.status,
+        reviewerNames: (summaries.get(submission.id)?.reviewerNames ?? []).join(", "),
         keywords: submission.keywords ?? "",
         abstract: submission.abstract ?? "",
         submittedAt: formatExportDate(submission.submittedAt),
@@ -378,14 +357,17 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       }
     });
 
-    worksheet.autoFilter = "A1:Z1";
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: worksheet.columns.length },
+    };
     worksheet.getRow(1).height = 28;
     worksheet.getRow(1).eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF047857" } };
       cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     });
-    for (const key of ["title", "titleEn", "creators", "keywords", "abstract", "receiptAddress"] as const) {
+    for (const key of ["title", "titleEn", "creators", "reviewerNames", "keywords", "abstract", "receiptAddress"] as const) {
       worksheet.getColumn(key).alignment = { vertical: "top", wrapText: true };
     }
     worksheet.eachRow((row, rowNumber) => {
@@ -402,10 +384,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       },
     });
   }, {
-    query: t.Object({
-      status: t.Optional(t.String()),
-      track: t.Optional(t.String()),
-    }),
+    query: t.Object(adminSubmissionFilterQueryFields),
   })
   .get("/registrations", async () => {
     const [rows, authorEmailsWithSubs] = await Promise.all([
