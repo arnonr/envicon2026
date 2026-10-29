@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import ExcelJS from "exceljs";
 import { db } from "../db";
-import { registrations, users, submissions, reviews, reviewRounds, eventRegistrations } from "../db/schema";
+import { registrations, users, submissions, reviews, reviewRounds, revisions, submissionVersions, eventRegistrations } from "../db/schema";
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { requireAdmin } from "../middleware/roles";
 import { getUserFromHeaders } from "../middleware/auth";
@@ -10,6 +10,19 @@ import { calculateFee } from "../utils/fees";
 import { STATUS_LABEL, type SubmissionStatus } from "../db/schema";
 import { ALL_NON_DRAFT, RE_REVIEW_STATUSES } from "../utils/submission-status";
 import { syncEventRegistrationPaymentToSubmission } from "../services/event-registration-sync";
+import {
+  type FileSlotInputs,
+  type FileSlotUrls,
+  areSlotUrlsEqual,
+  deriveLegacyRound1Fields,
+  describeAdminFileChanges,
+  parseAndValidateManagedSlotUrls,
+  recordInitialSnapshot,
+  recordRevisionAndSnapshot,
+  resolveCurrentSlotUrls,
+  saveSlotFiles,
+  validateSlotFiles,
+} from "../utils/submission-files";
 
 const TRACK_NAMES: Record<number, string> = {
   1: "วิทยาศาสตร์สิ่งแวดล้อมและการควบคุมมลพิษ",
@@ -652,6 +665,141 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           t.Literal("submitted_round1"),
           t.Literal("submitted_round2"),
         ]),
+      }),
+    },
+  )
+  .post(
+    "/submissions/:id/files",
+    async ({ params, body, set }) => {
+      const [sub] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      if (!sub) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบข้อมูลการส่งบทความ");
+      }
+
+      const currentSlots = resolveCurrentSlotUrls(sub);
+      const [revUrls, verUrls] = await Promise.all([
+        db
+          .select({
+            fileUrl: revisions.fileUrl,
+            abstractFileUrl: revisions.abstractFileUrl,
+            abstractWordFileUrl: revisions.abstractWordFileUrl,
+            fullPaperFileUrl: revisions.fullPaperFileUrl,
+            fullPaperWordFileUrl: revisions.fullPaperWordFileUrl,
+          })
+          .from(revisions)
+          .where(eq(revisions.submissionId, params.id)),
+        db
+          .select({
+            fileUrl: submissionVersions.fileUrl,
+            abstractFileUrl: submissionVersions.abstractFileUrl,
+            abstractWordFileUrl: submissionVersions.abstractWordFileUrl,
+            fullPaperFileUrl: submissionVersions.fullPaperFileUrl,
+            fullPaperWordFileUrl: submissionVersions.fullPaperWordFileUrl,
+          })
+          .from(submissionVersions)
+          .where(eq(submissionVersions.submissionId, params.id)),
+      ]);
+
+      const allowedUrls = new Set<string>(
+        [
+          currentSlots.abstractFileUrl,
+          currentSlots.abstractWordFileUrl,
+          currentSlots.fullPaperFileUrl,
+          currentSlots.fullPaperWordFileUrl,
+          sub.round1FileUrl,
+          ...revUrls.flatMap((r) => [r.fileUrl, r.abstractFileUrl, r.abstractWordFileUrl, r.fullPaperFileUrl, r.fullPaperWordFileUrl]),
+          ...verUrls.flatMap((v) => [v.fileUrl, v.abstractFileUrl, v.abstractWordFileUrl, v.fullPaperFileUrl, v.fullPaperWordFileUrl]),
+        ].filter((u): u is string => Boolean(u)),
+      );
+
+      const parsedSlots = parseAndValidateManagedSlotUrls(body.slotUrls, currentSlots, allowedUrls);
+      if (!parsedSlots.ok) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", parsedSlots.error);
+      }
+
+      const files: FileSlotInputs = {
+        abstractPdf: body.abstractPdf,
+        abstractWord: body.abstractWord,
+        fullPaperPdf: body.fullPaperPdf,
+        fullPaperWord: body.fullPaperWord,
+      };
+
+      const extError = validateSlotFiles(files);
+      if (extError) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", extError);
+      }
+
+      const hasUpload = Boolean(files.abstractPdf || files.abstractWord || files.fullPaperPdf || files.fullPaperWord);
+      const hasSlotMutation = !areSlotUrlsEqual(currentSlots, parsedSlots.urls);
+      if (!hasUpload && !hasSlotMutation) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ไม่มีการเปลี่ยนแปลงไฟล์");
+      }
+
+      const uploaded = await saveSlotFiles(params.id, "adm", files);
+      const finalSlots: FileSlotUrls = {
+        abstractFileUrl: uploaded.abstractFileUrl ?? parsedSlots.urls.abstractFileUrl,
+        abstractWordFileUrl: uploaded.abstractWordFileUrl ?? parsedSlots.urls.abstractWordFileUrl,
+        fullPaperFileUrl: uploaded.fullPaperFileUrl ?? parsedSlots.urls.fullPaperFileUrl,
+        fullPaperWordFileUrl: uploaded.fullPaperWordFileUrl ?? parsedSlots.urls.fullPaperWordFileUrl,
+      };
+
+      const { round1FileUrl, round1FileType } = deriveLegacyRound1Fields(finalSlots);
+
+      await db
+        .update(submissions)
+        .set({
+          abstractFileUrl: finalSlots.abstractFileUrl,
+          abstractWordFileUrl: finalSlots.abstractWordFileUrl,
+          fullPaperFileUrl: finalSlots.fullPaperFileUrl,
+          fullPaperWordFileUrl: finalSlots.fullPaperWordFileUrl,
+          round1FileUrl,
+          round1FileType,
+        })
+        .where(eq(submissions.id, params.id));
+
+      if (sub.status === "draft") {
+        if (verUrls.length > 0) {
+          await recordInitialSnapshot(sub, finalSlots);
+        }
+      } else {
+        const changedSlots: FileSlotUrls = {
+          abstractFileUrl: uploaded.abstractFileUrl ?? (finalSlots.abstractFileUrl !== currentSlots.abstractFileUrl ? finalSlots.abstractFileUrl : null),
+          abstractWordFileUrl: uploaded.abstractWordFileUrl ?? (finalSlots.abstractWordFileUrl !== currentSlots.abstractWordFileUrl ? finalSlots.abstractWordFileUrl : null),
+          fullPaperFileUrl: uploaded.fullPaperFileUrl ?? (finalSlots.fullPaperFileUrl !== currentSlots.fullPaperFileUrl ? finalSlots.fullPaperFileUrl : null),
+          fullPaperWordFileUrl: uploaded.fullPaperWordFileUrl ?? (finalSlots.fullPaperWordFileUrl !== currentSlots.fullPaperWordFileUrl ? finalSlots.fullPaperWordFileUrl : null),
+        };
+        const changelog = body.changelog?.trim() || describeAdminFileChanges(currentSlots, finalSlots, uploaded);
+        await recordRevisionAndSnapshot(sub, changedSlots, finalSlots, changelog);
+      }
+
+      const [updated] = await db
+        .select()
+        .from(submissions)
+        .where(eq(submissions.id, params.id))
+        .limit(1);
+
+      return ok({ ...updated!, ...resolveCurrentSlotUrls(updated!) });
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      body: t.Object({
+        slotUrls: t.Optional(t.String()),
+        abstractPdf: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+        abstractWord: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+        fullPaperPdf: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+        fullPaperWord: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+        changelog: t.Optional(t.String()),
       }),
     },
   );

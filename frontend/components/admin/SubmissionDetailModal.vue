@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { ManagedSlotUrls, SelectedSubmissionFiles } from '~/components/submission/FileSlotsGrid.vue';
+
 interface Revision {
   id: string;
   version: number;
@@ -163,6 +165,22 @@ const rejectModalOpen = ref(false);
 const rejectNote = ref('');
 const rejectSubmitting = ref(false);
 const reReviewConfirmOpen = ref(false);
+const isEditingFiles = ref(false);
+const savingFiles = ref(false);
+const fileChangelog = ref('');
+const fileSlotsGridRef = ref<{ clearAll: () => void; resetAll: () => void } | null>(null);
+const selectedSlotFiles = ref<SelectedSubmissionFiles>({
+  abstractPdf: null,
+  abstractWord: null,
+  fullPaperPdf: null,
+  fullPaperWord: null,
+});
+const managedSlotUrls = ref<ManagedSlotUrls>({
+  abstractFileUrl: null,
+  abstractWordFileUrl: null,
+  fullPaperFileUrl: null,
+  fullPaperWordFileUrl: null,
+});
 
 function requestCreateRound() {
   if (submission.value && TERMINAL_STATUSES.includes(submission.value.status)) {
@@ -440,8 +458,76 @@ const availableReviewers = computed(() => (workflow.value?.reviewers ?? []).filt
   (reviewer) => reviewer.active && !workflow.value?.currentRound?.assignments.some((assignment) => assignment.reviewerId === reviewer.id),
 ));
 
+const initialSlotUrls = computed<ManagedSlotUrls>(() => ({
+  abstractFileUrl:
+    submission.value?.abstractFileUrl
+    ?? (submission.value?.round1FileType !== 'full_paper' ? submission.value?.round1FileUrl ?? null : null),
+  abstractWordFileUrl: submission.value?.abstractWordFileUrl ?? null,
+  fullPaperFileUrl:
+    submission.value?.fullPaperFileUrl
+    ?? (submission.value?.round1FileType === 'full_paper' ? submission.value?.round1FileUrl ?? null : null),
+  fullPaperWordFileUrl: submission.value?.fullPaperWordFileUrl ?? null,
+}));
+
+watch(initialSlotUrls, (urls) => {
+  managedSlotUrls.value = { ...urls };
+}, { immediate: true });
+
+const hasFileChanges = computed(() => Boolean(
+  selectedSlotFiles.value.abstractPdf
+  || selectedSlotFiles.value.abstractWord
+  || selectedSlotFiles.value.fullPaperPdf
+  || selectedSlotFiles.value.fullPaperWord
+  || managedSlotUrls.value.abstractFileUrl !== initialSlotUrls.value.abstractFileUrl
+  || managedSlotUrls.value.abstractWordFileUrl !== initialSlotUrls.value.abstractWordFileUrl
+  || managedSlotUrls.value.fullPaperFileUrl !== initialSlotUrls.value.fullPaperFileUrl
+  || managedSlotUrls.value.fullPaperWordFileUrl !== initialSlotUrls.value.fullPaperWordFileUrl,
+));
+
+const cancelFileEdit = () => {
+  fileSlotsGridRef.value?.resetAll();
+  selectedSlotFiles.value = {
+    abstractPdf: null,
+    abstractWord: null,
+    fullPaperPdf: null,
+    fullPaperWord: null,
+  };
+  managedSlotUrls.value = { ...initialSlotUrls.value };
+  fileChangelog.value = '';
+  isEditingFiles.value = false;
+};
+
+const saveAdminFiles = async () => {
+  if (!props.submissionId || !hasFileChanges.value) return;
+  const formData = new FormData();
+  formData.append('slotUrls', JSON.stringify(managedSlotUrls.value));
+  if (selectedSlotFiles.value.abstractPdf) formData.append('abstractPdf', selectedSlotFiles.value.abstractPdf);
+  if (selectedSlotFiles.value.abstractWord) formData.append('abstractWord', selectedSlotFiles.value.abstractWord);
+  if (selectedSlotFiles.value.fullPaperPdf) formData.append('fullPaperPdf', selectedSlotFiles.value.fullPaperPdf);
+  if (selectedSlotFiles.value.fullPaperWord) formData.append('fullPaperWord', selectedSlotFiles.value.fullPaperWord);
+  if (fileChangelog.value.trim()) formData.append('changelog', fileChangelog.value.trim());
+
+  savingFiles.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/files`, {
+      method: 'POST',
+      headers: headers.value,
+      body: formData,
+    }),
+  );
+  savingFiles.value = false;
+  if (error) { showError(error); return; }
+
+  showSuccess('บันทึกการจัดการไฟล์เรียบร้อยแล้ว');
+  cancelFileEdit();
+  emit('status-changed');
+  await fetchSubmission();
+  await fetchWorkflow();
+};
+
 watch(() => props.modelValue, (open) => {
   if (open) {
+    cancelFileEdit();
     submission.value = null;
     workflow.value = null;
     fetchSubmission().then(fetchWorkflow);
@@ -567,12 +653,60 @@ watch(() => props.modelValue, (open) => {
         <UDivider />
 
         <!-- Files -->
-        <div>
-          <h3 class="text-xs font-semibold text-gray-600 mb-2">ไฟล์ที่แนบ</h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-xs font-semibold text-gray-600">ไฟล์ที่แนบ</h3>
+            <UButton
+              v-if="!isEditingFiles"
+              size="xs"
+              color="primary"
+              variant="soft"
+              icon="i-heroicons-pencil-square"
+              @click="isEditingFiles = true"
+            >
+              จัดการไฟล์
+            </UButton>
+          </div>
           <SubmissionFileSlotsGrid
+            ref="fileSlotsGridRef"
             :current-urls="submission"
-            :editable="false"
+            :editable="isEditingFiles"
+            :manage-existing="isEditingFiles"
+            :loading="savingFiles"
+            @update:files="selectedSlotFiles = $event"
+            @update:slot-urls="managedSlotUrls = $event"
           />
+          <div v-if="isEditingFiles" class="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-3">
+            <UFormGroup label="หมายเหตุการจัดการไฟล์ (ถ้ามี)" hint="ระบบจะสร้างบันทึกอัตโนมัติหากเว้นว่าง">
+              <UInput
+                v-model="fileChangelog"
+                size="sm"
+                placeholder="เช่น ย้ายไฟล์บทคัดย่อจากช่องฉบับสมบูรณ์ หรืออัปเดตไฟล์แทนผู้ส่ง"
+                :disabled="savingFiles"
+              />
+            </UFormGroup>
+            <div class="flex justify-end gap-2">
+              <UButton
+                size="xs"
+                color="gray"
+                variant="ghost"
+                :disabled="savingFiles"
+                @click="cancelFileEdit"
+              >
+                ยกเลิก
+              </UButton>
+              <UButton
+                size="xs"
+                color="primary"
+                icon="i-heroicons-check"
+                :disabled="!hasFileChanges"
+                :loading="savingFiles"
+                @click="saveAdminFiles"
+              >
+                บันทึกการเปลี่ยนแปลง
+              </UButton>
+            </div>
+          </div>
         </div>
 
         <!-- Payment slip -->
@@ -733,7 +867,8 @@ watch(() => props.modelValue, (open) => {
                     ดาวน์โหลดไฟล์
                   </a>
                 </template>
-                <span v-else class="text-red-600">ไม่พบไฟล์</span>
+                <span v-else-if="round.submissionVersion.fileUrl" class="text-red-600">ไม่พบไฟล์</span>
+                <span v-else class="text-gray-400">ไม่มีไฟล์แนบ</span>
               </div>
               <p v-if="round.releasedAt" class="text-xs text-gray-500">แจ้งผลเมื่อ {{ formatDate(round.releasedAt) }}</p>
               <p v-if="round.adminNote" class="text-sm whitespace-pre-line">
@@ -787,6 +922,7 @@ watch(() => props.modelValue, (open) => {
                 </a>
               </div>
               <span v-else-if="version.fileUrl" class="text-xs text-red-600">ไม่พบไฟล์</span>
+              <span v-else class="text-xs text-gray-400">ไม่มีไฟล์แนบ</span>
             </div>
             <p v-if="version.changelog" class="text-xs text-gray-600 whitespace-pre-line">{{ version.changelog }}</p>
             <div v-if="comparisonRows(version, index).length" class="border-t pt-2 space-y-2">

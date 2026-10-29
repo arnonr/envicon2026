@@ -18,206 +18,18 @@ import {
   statusAfterFileUpload,
   statusAfterReviseUpload,
 } from "../utils/submission-status";
+import {
+  type FileSlotInputs,
+  type FileSlotUrls,
+  deriveLegacyRound1Fields,
+  recordInitialSnapshot,
+  recordRevisionAndSnapshot,
+  resolveCurrentSlotUrls,
+  saveSlotFiles,
+  validateSlotFiles,
+} from "../utils/submission-files";
 
 const MAX_CREATORS = 20;
-
-interface FileSlotInputs {
-  abstractPdf?: File;
-  abstractWord?: File;
-  fullPaperPdf?: File;
-  fullPaperWord?: File;
-}
-
-interface FileSlotUrls {
-  abstractFileUrl: string | null;
-  abstractWordFileUrl: string | null;
-  fullPaperFileUrl: string | null;
-  fullPaperWordFileUrl: string | null;
-}
-
-function resolveCurrentSlotUrls(sub: typeof submissions.$inferSelect): FileSlotUrls {
-  return {
-    abstractFileUrl: sub.abstractFileUrl ?? (sub.round1FileType !== "full_paper" ? sub.round1FileUrl : null),
-    abstractWordFileUrl: sub.abstractWordFileUrl ?? null,
-    fullPaperFileUrl: sub.fullPaperFileUrl ?? (sub.round1FileType === "full_paper" ? sub.round1FileUrl : null),
-    fullPaperWordFileUrl: sub.fullPaperWordFileUrl ?? null,
-  };
-}
-
-function getFileExtension(file: File): string {
-  return (file.name?.split(".").pop() ?? "").toLowerCase();
-}
-
-function validateSlotFiles(files: FileSlotInputs): string | null {
-  if (files.abstractPdf && getFileExtension(files.abstractPdf) !== "pdf") {
-    return "ไฟล์บทคัดย่อ (PDF) ต้องเป็นนามสกุล .pdf เท่านั้น";
-  }
-  if (files.fullPaperPdf && getFileExtension(files.fullPaperPdf) !== "pdf") {
-    return "ไฟล์บทความฉบับสมบูรณ์ (PDF) ต้องเป็นนามสกุล .pdf เท่านั้น";
-  }
-  if (files.abstractWord && !["doc", "docx"].includes(getFileExtension(files.abstractWord))) {
-    return "ไฟล์บทคัดย่อ (Word) ต้องเป็นนามสกุล .doc หรือ .docx เท่านั้น";
-  }
-  if (files.fullPaperWord && !["doc", "docx"].includes(getFileExtension(files.fullPaperWord))) {
-    return "ไฟล์บทความฉบับสมบูรณ์ (Word) ต้องเป็นนามสกุล .doc หรือ .docx เท่านั้น";
-  }
-  return null;
-}
-
-async function saveSlotFiles(submissionId: string, tag: string, files: FileSlotInputs): Promise<FileSlotUrls> {
-  const [abstractFileUrl, abstractWordFileUrl, fullPaperFileUrl, fullPaperWordFileUrl] = await Promise.all([
-    files.abstractPdf ? saveFile(files.abstractPdf, `abstract-pdf-${submissionId}-${tag}`) : Promise.resolve(null),
-    files.abstractWord ? saveFile(files.abstractWord, `abstract-word-${submissionId}-${tag}`) : Promise.resolve(null),
-    files.fullPaperPdf ? saveFile(files.fullPaperPdf, `fullpaper-pdf-${submissionId}-${tag}`) : Promise.resolve(null),
-    files.fullPaperWord ? saveFile(files.fullPaperWord, `fullpaper-word-${submissionId}-${tag}`) : Promise.resolve(null),
-  ]);
-  return { abstractFileUrl, abstractWordFileUrl, fullPaperFileUrl, fullPaperWordFileUrl };
-}
-
-function primaryFileUrl(urls: FileSlotUrls): string | null {
-  return urls.fullPaperFileUrl ?? urls.fullPaperWordFileUrl ?? urls.abstractFileUrl ?? urls.abstractWordFileUrl ?? null;
-}
-
-async function recordInitialSnapshot(sub: typeof submissions.$inferSelect, merged: FileSlotUrls) {
-  const [existing] = await db
-    .select({ id: submissionVersions.id })
-    .from(submissionVersions)
-    .where(and(eq(submissionVersions.submissionId, sub.id), eq(submissionVersions.version, 1)))
-    .limit(1);
-
-  const primary = primaryFileUrl(merged);
-  if (existing) {
-    await db
-      .update(submissionVersions)
-      .set({
-        fileUrl: primary,
-        abstractFileUrl: merged.abstractFileUrl,
-        abstractWordFileUrl: merged.abstractWordFileUrl,
-        fullPaperFileUrl: merged.fullPaperFileUrl,
-        fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
-        submittedAt: new Date(),
-      })
-      .where(eq(submissionVersions.id, existing.id));
-    return;
-  }
-
-  await db.insert(submissionVersions).values({
-    id: crypto.randomUUID(),
-    submissionId: sub.id,
-    version: 1,
-    kind: "initial",
-    title: sub.title,
-    titleEn: sub.titleEn,
-    abstract: sub.abstract,
-    keywords: sub.keywords,
-    creators: sub.creators,
-    track: sub.track,
-    submitterType: sub.submitterType,
-    educationLevel: sub.educationLevel,
-    presentationFormat: sub.presentationFormat,
-    fileUrl: primary,
-    abstractFileUrl: merged.abstractFileUrl,
-    abstractWordFileUrl: merged.abstractWordFileUrl,
-    fullPaperFileUrl: merged.fullPaperFileUrl,
-    fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
-    changelog: null,
-    submittedAt: new Date(),
-  });
-}
-
-async function recordRevisionAndSnapshot(
-  sub: typeof submissions.$inferSelect,
-  uploaded: FileSlotUrls,
-  merged: FileSlotUrls,
-  changelog: string | null,
-) {
-  const [latestRev] = await db
-    .select({ version: revisions.version })
-    .from(revisions)
-    .where(eq(revisions.submissionId, sub.id))
-    .orderBy(desc(revisions.version))
-    .limit(1);
-
-  const nextRevisionVersion = (latestRev?.version ?? 0) + 1;
-  const revPrimary = primaryFileUrl(uploaded) ?? primaryFileUrl(merged) ?? "";
-
-  await db.insert(revisions).values({
-    id: crypto.randomUUID(),
-    submissionId: sub.id,
-    version: nextRevisionVersion,
-    fileUrl: revPrimary,
-    abstractFileUrl: uploaded.abstractFileUrl,
-    abstractWordFileUrl: uploaded.abstractWordFileUrl,
-    fullPaperFileUrl: uploaded.fullPaperFileUrl,
-    fullPaperWordFileUrl: uploaded.fullPaperWordFileUrl,
-    changelog,
-  });
-
-  const [latestSnapshot] = await db
-    .select({ version: submissionVersions.version })
-    .from(submissionVersions)
-    .where(eq(submissionVersions.submissionId, sub.id))
-    .orderBy(desc(submissionVersions.version))
-    .limit(1);
-
-  if (!latestSnapshot) {
-    const initialUrls = resolveCurrentSlotUrls(sub);
-    await db.insert(submissionVersions).values({
-      id: crypto.randomUUID(),
-      submissionId: sub.id,
-      version: 1,
-      kind: "initial",
-      title: sub.title,
-      titleEn: sub.titleEn,
-      abstract: sub.abstract,
-      keywords: sub.keywords,
-      creators: sub.creators,
-      track: sub.track,
-      submitterType: sub.submitterType,
-      educationLevel: sub.educationLevel,
-      presentationFormat: sub.presentationFormat,
-      fileUrl: primaryFileUrl(initialUrls),
-      abstractFileUrl: initialUrls.abstractFileUrl,
-      abstractWordFileUrl: initialUrls.abstractWordFileUrl,
-      fullPaperFileUrl: initialUrls.fullPaperFileUrl,
-      fullPaperWordFileUrl: initialUrls.fullPaperWordFileUrl,
-      changelog: null,
-      submittedAt: sub.submittedAt ?? new Date(),
-    });
-  }
-
-  const snapshotVersion = Math.max((latestSnapshot?.version ?? 1) + 1, nextRevisionVersion + 1);
-  const newVersionId = crypto.randomUUID();
-  await db.insert(submissionVersions).values({
-    id: newVersionId,
-    submissionId: sub.id,
-    version: snapshotVersion,
-    kind: "revision",
-    title: sub.title,
-    titleEn: sub.titleEn,
-    abstract: sub.abstract,
-    keywords: sub.keywords,
-    creators: sub.creators,
-    track: sub.track,
-    submitterType: sub.submitterType,
-    educationLevel: sub.educationLevel,
-    presentationFormat: sub.presentationFormat,
-    fileUrl: primaryFileUrl(merged),
-    abstractFileUrl: merged.abstractFileUrl,
-    abstractWordFileUrl: merged.abstractWordFileUrl,
-    fullPaperFileUrl: merged.fullPaperFileUrl,
-    fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
-    changelog,
-    submittedAt: new Date(),
-  });
-
-  await db
-    .update(reviewRounds)
-    .set({ submissionVersionId: newVersionId })
-    .where(and(eq(reviewRounds.submissionId, sub.id), ne(reviewRounds.status, "released")));
-
-  return nextRevisionVersion;
-}
 
 function parseCreators(raw: string | undefined): string | null {
   if (!raw) return null;
@@ -640,11 +452,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         fullPaperWordFileUrl: uploaded.fullPaperWordFileUrl ?? currentSlots.fullPaperWordFileUrl,
       };
 
-      const hasFullPaper = Boolean(merged.fullPaperFileUrl || merged.fullPaperWordFileUrl);
-      const round1FileType = hasFullPaper ? "full_paper" as const : "abstract" as const;
-      const round1FileUrl = hasFullPaper
-        ? (merged.fullPaperFileUrl ?? merged.fullPaperWordFileUrl)
-        : (merged.abstractFileUrl ?? merged.abstractWordFileUrl);
+      const { round1FileUrl, round1FileType } = deriveLegacyRound1Fields(merged);
 
       const isInitialSubmit = sub.status === "draft";
       const hasUploadedFullPaper = Boolean(files.fullPaperPdf || files.fullPaperWord);

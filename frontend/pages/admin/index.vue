@@ -136,7 +136,7 @@ function fileHref(url: string | null): string | null {
 
 function abstractFileHref(sub: Submission): string | null {
   if (sub.abstractFileUrl) return fileHref(sub.abstractFileUrl);
-  if (sub.round1FileUrl && sub.round1FileType === "abstract") return fileHref(sub.round1FileUrl);
+  if (sub.round1FileUrl && sub.round1FileType !== "full_paper") return fileHref(sub.round1FileUrl);
   return null;
 }
 
