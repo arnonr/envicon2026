@@ -1,7 +1,24 @@
 import { and, desc, eq, ne } from "drizzle-orm";
+import { t } from "elysia";
 import { db } from "../db";
 import { reviewRounds, revisions, submissions, submissionVersions } from "../db/schema";
 import { saveFile } from "../services/storage";
+
+export const managedSlotUrlsSchema = t.Object({
+  abstractFileUrl: t.Optional(t.Nullable(t.String())),
+  abstractWordFileUrl: t.Optional(t.Nullable(t.String())),
+  fullPaperFileUrl: t.Optional(t.Nullable(t.String())),
+  fullPaperWordFileUrl: t.Optional(t.Nullable(t.String())),
+});
+
+export const adminFilesBodySchema = t.Object({
+  slotUrls: t.Optional(t.Union([t.String(), managedSlotUrlsSchema])),
+  abstractPdf: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+  abstractWord: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+  fullPaperPdf: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+  fullPaperWord: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
+  changelog: t.Optional(t.String()),
+});
 
 export interface FileSlotInputs {
   abstractPdf?: File;
@@ -107,7 +124,7 @@ export function areSlotUrlsEqual(a: FileSlotUrls, b: FileSlotUrls): boolean {
 }
 
 export function parseAndValidateManagedSlotUrls(
-  raw: string | undefined,
+  raw: unknown,
   currentSlots: FileSlotUrls,
   allowedUrls: Set<string>,
 ): { ok: true; urls: FileSlotUrls } | { ok: false; error: string } {
@@ -115,11 +132,13 @@ export function parseAndValidateManagedSlotUrls(
     return { ok: true, urls: { ...currentSlots } };
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return { ok: false, error: "ข้อมูลช่องไฟล์ (slotUrls) ไม่ถูกต้อง" };
+  let parsed: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return { ok: false, error: "ข้อมูลช่องไฟล์ (slotUrls) ไม่ถูกต้อง" };
+    }
   }
 
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {

@@ -13,6 +13,7 @@ import { syncEventRegistrationPaymentToSubmission } from "../services/event-regi
 import {
   type FileSlotInputs,
   type FileSlotUrls,
+  adminFilesBodySchema,
   areSlotUrlsEqual,
   deriveLegacyRound1Fields,
   describeAdminFileChanges,
@@ -772,13 +773,6 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       params: t.Object({
         id: t.String(),
       }),
-      body: t.Object({
-        slotUrls: t.Optional(t.String()),
-        abstractPdf: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
-        abstractWord: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
-        fullPaperPdf: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
-        fullPaperWord: t.Optional(t.File({ maxSize: 50 * 1024 * 1024 })),
-        changelog: t.Optional(t.String()),
-      }),
+      body: adminFilesBodySchema,
     },
   );
