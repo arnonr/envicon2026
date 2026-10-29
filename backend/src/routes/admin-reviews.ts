@@ -619,11 +619,26 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 404;
         return fail("NOT_FOUND", "ไม่พบการมอบหมาย");
       }
-      if (review.status !== "assigned") {
+      const [round] = await db.select().from(reviewRounds).where(eq(reviewRounds.id, review.roundId)).limit(1);
+      if (round?.status === "released") {
         set.status = 400;
-        return fail("VALIDATION_ERROR", "ไม่สามารถถอดผู้รีวิวหลังส่งงานแล้ว");
+        return fail("VALIDATION_ERROR", "ไม่สามารถถอดผู้รีวิวจากรอบพิจารณาที่แจ้งผลแล้ว");
+      }
+      if (review.status === "completed") {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ไม่สามารถถอดผู้รีวิวที่ส่งผลประเมินแล้ว");
       }
       await db.delete(reviews).where(eq(reviews.id, review.id));
+
+      if (round) {
+        const remaining = await db.select({ status: reviews.status }).from(reviews).where(eq(reviews.roundId, round.id));
+        const dispatched = remaining.filter((assignment) => assignment.status !== "assigned");
+        if (dispatched.length && dispatched.every((assignment) => assignment.status === "completed")) {
+          await db.update(reviewRounds).set({ status: "ready_for_decision" }).where(eq(reviewRounds.id, round.id));
+        } else if (dispatched.length === 0 && round.status !== "assigning") {
+          await db.update(reviewRounds).set({ status: "assigning" }).where(eq(reviewRounds.id, round.id));
+        }
+      }
       return ok({ removed: true });
     },
     { params: t.Object({ id: t.String() }) },

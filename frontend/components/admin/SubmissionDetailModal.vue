@@ -332,11 +332,19 @@ const assignReviewers = async () => {
   await fetchWorkflow();
 };
 
-const removeAssignment = async (id: string) => {
+const removeAssignment = async (assignment: WorkflowAssignment) => {
+  if (assignment.status !== "assigned") {
+    if (!confirm(`ยืนยันการถอดผู้รีวิว "${assignment.reviewerName}" ออกจากรอบพิจารณานี้?`)) {
+      return;
+    }
+  }
+  updating.value = true;
   const { error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/admin/reviews/${id}`, { method: "DELETE", headers: headers.value })
+    $fetch(`${apiBase}/admin/reviews/${assignment.id}`, { method: "DELETE", headers: headers.value })
   );
+  updating.value = false;
   if (error) { showError(error); return; }
+  showSuccess("ถอดผู้รีวิวเรียบร้อย");
   emit("status-changed");
   await fetchWorkflow();
 };
@@ -871,7 +879,13 @@ watch(() => props.modelValue, (open) => {
               <div v-if="assignment.status === 'assigned'" class="flex flex-wrap items-center gap-2">
                 <UInput v-model="dueDates[assignment.id]" type="date" size="sm" />
                 <UButton color="primary" size="xs" :loading="updating" @click="sendAssignment(assignment.id)">ส่งพิจารณา</UButton>
-                <UButton color="gray" variant="ghost" size="xs" @click="removeAssignment(assignment.id)">ถอดออก</UButton>
+                <UButton color="gray" variant="ghost" size="xs" :loading="updating" @click="removeAssignment(assignment)">ถอดออก</UButton>
+              </div>
+              <div v-else-if="assignment.status !== 'completed'" class="flex flex-wrap items-center justify-between gap-2">
+                <p class="text-xs text-gray-500">กำหนดส่ง {{ formatDate(assignment.dueAt) }}</p>
+                <UButton color="red" variant="soft" size="xs" icon="i-heroicons-user-minus" :loading="updating" @click="removeAssignment(assignment)">
+                  ถอดผู้รีวิว
+                </UButton>
               </div>
               <p v-else-if="assignment.dueAt" class="text-xs text-gray-500">กำหนดส่ง {{ formatDate(assignment.dueAt) }}</p>
               <div v-if="assignment.status === 'completed'" class="bg-gray-50 rounded p-3 text-sm space-y-1">
