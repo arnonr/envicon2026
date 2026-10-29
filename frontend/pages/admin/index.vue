@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import {
+  type AdminSubmissionFilterState,
+  buildAdminSubmissionSearchParams,
+  countSecondaryAdminFilters,
+  hasActiveAdminSubmissionFilters,
+} from "~/utils/admin-submission-filters";
+
 definePageMeta({ middleware: ["auth", "role"] });
 
 interface Submission {
@@ -29,6 +36,14 @@ interface Submission {
   authorAffiliation: string | null;
   completedReviewCount: number;
   assignedReviewerCount: number;
+  reviewerNames: string[];
+}
+
+interface ReviewerDirectoryItem {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
 }
 
 const config = useRuntimeConfig();
@@ -53,11 +68,52 @@ const totalItems = ref(0);
 const PER_PAGE = 50;
 
 const submissions = ref<Submission[]>([]);
+const reviewers = ref<ReviewerDirectoryItem[]>([]);
 const loading = ref(true);
 const exporting = ref(false);
+const showAdvancedFilters = ref(false);
+
+const searchInput = ref("");
+const debouncedSearch = ref("");
 const filterStatus = ref("");
 const filterTrack = ref("");
-const paymentStatusFilter = ref<string>('');
+const paymentStatusFilter = ref<string>("");
+const filterPresentationFormat = ref("");
+const filterReviewerId = ref("");
+const filterSubmitterType = ref("");
+const filterEducationLevel = ref("");
+const filterWantsFullPaper = ref("");
+const filterFileStatus = ref("");
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+let suppressFilterWatch = false;
+
+const currentFilterState = computed<AdminSubmissionFilterState>(() => ({
+  search: debouncedSearch.value,
+  status: filterStatus.value,
+  paymentStatus: paymentStatusFilter.value,
+  track: filterTrack.value,
+  presentationFormat: filterPresentationFormat.value,
+  reviewerId: filterReviewerId.value,
+  submitterType: filterSubmitterType.value,
+  educationLevel: filterEducationLevel.value,
+  wantsFullPaper: filterWantsFullPaper.value,
+  fileStatus: filterFileStatus.value,
+}));
+
+const secondaryActiveCount = computed(() => countSecondaryAdminFilters(currentFilterState.value));
+const hasAnyActiveFilter = computed(() =>
+  hasActiveAdminSubmissionFilters(currentFilterState.value, searchInput.value),
+);
+
+const reviewerOptions = computed(() => [
+  { value: "", label: "ผู้รีวิวทั้งหมด (All Reviewers)" },
+  { value: "unassigned", label: "ยังไม่ได้กำหนดผู้รีวิว (Unassigned)" },
+  ...reviewers.value.map((r) => ({
+    value: r.id,
+    label: r.active ? r.name : `${r.name} (ปิดใช้งาน)`,
+  })),
+]);
 
 const detailModalOpen = ref(false);
 const detailSubmissionId = ref<string | null>(null);
@@ -83,7 +139,7 @@ const TRACK_NAMES: Record<number, string> = {
 };
 
 const STATUS_OPTIONS = [
-  { value: "", label: "ทั้งหมด (All)" },
+  { value: "", label: "ทั้งหมด (สถานะ) (All Status)" },
   { value: "draft", label: "ร่าง (Draft)" },
   { value: "submitted_round1", label: "ส่งรอบที่ 1 แล้ว (Round 1 Submitted)" },
   { value: "under_review_round1", label: "อยู่ระหว่างรีวิวรอบที่ 1 (Round 1 Under Review)" },
@@ -95,6 +151,47 @@ const STATUS_OPTIONS = [
   { value: "passed_round2", label: "ผ่านรอบที่ 2 (Round 2 Passed)" },
   { value: "passed_round2_with_revisions", label: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข (Round 2 Passed with Revisions)" },
   { value: "rejected_round2", label: "ไม่ผ่านรอบที่ 2 (Round 2 Rejected)" },
+];
+
+const PAYMENT_OPTIONS = [
+  { value: "", label: "ทั้งหมด (การชำระเงิน)" },
+  { value: "unpaid", label: "ยังไม่ชำระ (Unpaid)" },
+  { value: "pending_verification", label: "รอตรวจสอบ (Pending Verification)" },
+  { value: "verified", label: "ชำระแล้ว (Verified)" },
+  { value: "rejected", label: "ปฏิเสธ (Rejected)" },
+];
+
+const PRESENTATION_FORMAT_OPTIONS = [
+  { value: "", label: "ทั้งหมด (รูปแบบนำเสนอ)" },
+  { value: "oral", label: "แบบบรรยาย (Oral)" },
+  { value: "poster", label: "โปสเตอร์ (Poster)" },
+];
+
+const SUBMITTER_TYPE_OPTIONS = [
+  { value: "", label: "ทั้งหมด (ประเภทผู้ส่ง)" },
+  { value: "student", label: "นิสิต/นักศึกษา" },
+  { value: "general", label: "อาจารย์/นักวิจัย/บุคคลทั่วไป" },
+];
+
+const EDUCATION_LEVEL_OPTIONS = [
+  { value: "", label: "ทั้งหมด (ระดับการศึกษา)" },
+  { value: "bachelor", label: "ปริญญาตรี" },
+  { value: "master", label: "ปริญญาโท" },
+  { value: "doctorate", label: "ปริญญาเอก" },
+];
+
+const WANTS_FULL_PAPER_OPTIONS = [
+  { value: "", label: "ทั้งหมด (ความประสงค์)" },
+  { value: "1", label: "ต้องการส่ง Full Paper" },
+  { value: "0", label: "ส่งเฉพาะบทคัดย่อ" },
+];
+
+const FILE_STATUS_OPTIONS = [
+  { value: "", label: "ทั้งหมด (สถานะไฟล์แนบ)" },
+  { value: "has_abstract", label: "มีไฟล์บทคัดย่อ" },
+  { value: "has_full_paper", label: "มีไฟล์ฉบับสมบูรณ์" },
+  { value: "missing_full_paper", label: "ประสงค์ Full Paper แต่ยังไม่มีไฟล์" },
+  { value: "no_files", label: "ยังไม่มีไฟล์แนบเลย" },
 ];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -153,10 +250,7 @@ function reviewProgressLabel(submission: Submission) {
 
 async function fetchSubmissions() {
   loading.value = true;
-  const params = new URLSearchParams();
-  if (filterStatus.value) params.set("status", filterStatus.value);
-  if (filterTrack.value) params.set("track", filterTrack.value);
-  if (paymentStatusFilter.value) params.set("paymentStatus", paymentStatusFilter.value);
+  const params = buildAdminSubmissionSearchParams(currentFilterState.value);
   params.set("page", String(currentPage.value));
   params.set("limit", String(PER_PAGE));
   const qs = params.toString();
@@ -188,12 +282,75 @@ async function fetchStats() {
   }
 }
 
+async function fetchReviewers() {
+  const { data, error } = await handleApiCall(() =>
+    $fetch<{ success: true; data: ReviewerDirectoryItem[] }>(
+      `${apiBase}/admin/reviewers`,
+      { headers: { Authorization: `Bearer ${authStore.token}` } },
+    ),
+  );
+  if (!error && data) {
+    reviewers.value = data.data;
+  }
+}
+
+function flushSearchNow() {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+    searchTimer = null;
+  }
+  debouncedSearch.value = searchInput.value.trim();
+}
+
+async function clearSearchInput() {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+    searchTimer = null;
+  }
+  suppressFilterWatch = true;
+  searchInput.value = "";
+  await nextTick();
+  suppressFilterWatch = false;
+  if (debouncedSearch.value !== "") {
+    debouncedSearch.value = "";
+  }
+}
+
+async function clearAllFilters() {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+    searchTimer = null;
+  }
+  const hadAppliedFilter = hasActiveAdminSubmissionFilters(currentFilterState.value, "");
+  suppressFilterWatch = true;
+  searchInput.value = "";
+  debouncedSearch.value = "";
+  filterStatus.value = "";
+  paymentStatusFilter.value = "";
+  filterTrack.value = "";
+  filterPresentationFormat.value = "";
+  filterReviewerId.value = "";
+  filterSubmitterType.value = "";
+  filterEducationLevel.value = "";
+  filterWantsFullPaper.value = "";
+  filterFileStatus.value = "";
+  await nextTick();
+  suppressFilterWatch = false;
+  if (hadAppliedFilter || currentPage.value !== 1) {
+    currentPage.value = 1;
+    await fetchSubmissions();
+  }
+}
+
 async function exportSubmissions() {
+  if (searchTimer) {
+    flushSearchNow();
+  }
   exporting.value = true;
-  const params = new URLSearchParams();
-  if (filterStatus.value) params.set("status", filterStatus.value);
-  if (filterTrack.value) params.set("track", filterTrack.value);
-  if (paymentStatusFilter.value) params.set("paymentStatus", paymentStatusFilter.value);
+  const params = buildAdminSubmissionSearchParams({
+    ...currentFilterState.value,
+    search: searchInput.value.trim(),
+  });
   const qs = params.toString();
   const { data, error } = await handleApiCall(() =>
     $fetch<Blob>(`${apiBase}/admin/submissions/export${qs ? `?${qs}` : ""}`, {
@@ -226,19 +383,48 @@ function goToPage(page: number) {
 }
 
 async function refreshOnFocus() {
-  await Promise.all([fetchSubmissions(), fetchStats()]);
+  await Promise.all([fetchSubmissions(), fetchStats(), fetchReviewers()]);
 }
 
-watch([filterStatus, filterTrack, paymentStatusFilter], () => {
-  currentPage.value = 1;
-  fetchSubmissions();
+watch(searchInput, (val) => {
+  if (suppressFilterWatch) return;
+  if (searchTimer) clearTimeout(searchTimer);
+  const trimmed = val.trim();
+  if (!trimmed && !debouncedSearch.value) return;
+  searchTimer = setTimeout(() => {
+    searchTimer = null;
+    debouncedSearch.value = trimmed;
+  }, 300);
 });
+
+watch(
+  [
+    debouncedSearch,
+    filterStatus,
+    paymentStatusFilter,
+    filterTrack,
+    filterPresentationFormat,
+    filterReviewerId,
+    filterSubmitterType,
+    filterEducationLevel,
+    filterWantsFullPaper,
+    filterFileStatus,
+  ],
+  () => {
+    if (suppressFilterWatch) return;
+    currentPage.value = 1;
+    fetchSubmissions();
+  },
+);
+
 onMounted(() => {
   fetchStats();
+  fetchReviewers();
   fetchSubmissions();
   window.addEventListener("focus", refreshOnFocus);
 });
 onBeforeUnmount(() => {
+  if (searchTimer) clearTimeout(searchTimer);
   window.removeEventListener("focus", refreshOnFocus);
 });
 </script>
@@ -313,8 +499,29 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Filters -->
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
-      <div class="flex flex-wrap gap-3">
+    <div class="bg-white border border-gray-200 rounded-xl p-4 mb-6 space-y-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <UInput
+          v-model="searchInput"
+          icon="i-heroicons-magnifying-glass"
+          placeholder="ค้นหาชื่อผลงาน, ผู้ส่ง, อีเมล, ผู้แต่งร่วม..."
+          size="sm"
+          class="w-full sm:w-72 lg:w-80"
+          :ui="{ icon: { trailing: { pointer: '' } } }"
+          @keydown.enter.prevent="flushSearchNow"
+        >
+          <template #trailing>
+            <UButton
+              v-show="searchInput !== ''"
+              color="gray"
+              variant="link"
+              icon="i-heroicons-x-mark-20-solid"
+              :padded="false"
+              @click="clearSearchInput"
+            />
+          </template>
+        </UInput>
+
         <USelectMenu
           v-model="filterStatus"
           :options="STATUS_OPTIONS"
@@ -322,23 +529,19 @@ onBeforeUnmount(() => {
           option-attribute="label"
           placeholder="สถานะ (Status)"
           size="sm"
-          class="w-48"
+          class="w-full sm:w-48"
         />
+
         <USelectMenu
           v-model="paymentStatusFilter"
-          :options="[
-            { value: '', label: 'ทั้งหมด (การชำระเงิน) (All Payments)' },
-            { value: 'unpaid', label: 'ยังไม่ชำระ (Unpaid)' },
-            { value: 'pending_verification', label: 'รอตรวจสอบ (Pending Verification)' },
-            { value: 'verified', label: 'ชำระแล้ว (Verified)' },
-            { value: 'rejected', label: 'ปฏิเสธ (Rejected)' },
-          ]"
+          :options="PAYMENT_OPTIONS"
           value-attribute="value"
           option-attribute="label"
-          placeholder="การชำระเงิน (Payment Status)"
+          placeholder="การชำระเงิน (Payment)"
           size="sm"
-          class="w-48"
+          class="w-full sm:w-44"
         />
+
         <USelectMenu
           v-model="filterTrack"
           :options="[
@@ -349,34 +552,132 @@ onBeforeUnmount(() => {
           option-attribute="label"
           placeholder="หัวข้อ (Track)"
           size="sm"
-          class="w-56"
+          class="w-full sm:w-52"
+        />
+
+        <USelectMenu
+          v-model="filterPresentationFormat"
+          :options="PRESENTATION_FORMAT_OPTIONS"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="รูปแบบการนำเสนอ"
+          size="sm"
+          class="w-full sm:w-44"
+        />
+
+        <USelectMenu
+          v-model="filterReviewerId"
+          :options="reviewerOptions"
+          value-attribute="value"
+          option-attribute="label"
+          searchable
+          searchable-placeholder="ค้นหาชื่อผู้รีวิว..."
+          placeholder="ผู้รีวิว (Reviewer)"
+          size="sm"
+          class="w-full sm:w-56"
         />
       </div>
-      <div class="flex items-center gap-3">
-        <p v-if="!loading" class="text-sm text-gray-500">
-          พบผลงาน <span class="font-semibold text-gray-700">{{ totalItems.toLocaleString() }}</span> รายการ
-        </p>
-        <UButton
-          color="gray"
-          variant="soft"
+
+      <div
+        v-if="showAdvancedFilters"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-gray-100"
+      >
+        <USelectMenu
+          v-model="filterSubmitterType"
+          :options="SUBMITTER_TYPE_OPTIONS"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="ประเภทผู้ส่ง"
           size="sm"
-          icon="i-heroicons-arrow-path"
-          :loading="loading"
-          @click="refreshOnFocus"
-        >
-          รีเฟรช
-        </UButton>
-        <UButton
-          color="green"
-          variant="soft"
+        />
+
+        <USelectMenu
+          v-model="filterEducationLevel"
+          :options="EDUCATION_LEVEL_OPTIONS"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="ระดับการศึกษา"
           size="sm"
-          icon="i-heroicons-arrow-down-tray"
-          :loading="exporting"
-          :disabled="loading || exporting || totalItems === 0"
-          @click="exportSubmissions"
-        >
-          Export Excel
-        </UButton>
+        />
+
+        <USelectMenu
+          v-model="filterWantsFullPaper"
+          :options="WANTS_FULL_PAPER_OPTIONS"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="ความประสงค์ Full Paper"
+          size="sm"
+        />
+
+        <USelectMenu
+          v-model="filterFileStatus"
+          :options="FILE_STATUS_OPTIONS"
+          value-attribute="value"
+          option-attribute="label"
+          placeholder="สถานะไฟล์แนบ"
+          size="sm"
+        />
+      </div>
+
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-gray-100">
+        <div class="flex items-center gap-2">
+          <UButton
+            size="xs"
+            :color="showAdvancedFilters || secondaryActiveCount > 0 ? 'primary' : 'gray'"
+            :variant="showAdvancedFilters || secondaryActiveCount > 0 ? 'soft' : 'ghost'"
+            icon="i-heroicons-adjustments-horizontal"
+            @click="showAdvancedFilters = !showAdvancedFilters"
+          >
+            <span>ตัวกรองเพิ่มเติม</span>
+            <UBadge
+              v-if="secondaryActiveCount > 0"
+              color="primary"
+              variant="solid"
+              size="xs"
+              class="ml-1"
+            >
+              {{ secondaryActiveCount }}
+            </UBadge>
+          </UButton>
+
+          <UButton
+            v-if="hasAnyActiveFilter"
+            size="xs"
+            color="red"
+            variant="ghost"
+            icon="i-heroicons-x-mark"
+            @click="clearAllFilters"
+          >
+            ล้างตัวกรอง
+          </UButton>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <p v-if="!loading" class="text-sm text-gray-500">
+            พบผลงาน <span class="font-semibold text-gray-700">{{ totalItems.toLocaleString() }}</span> รายการ
+          </p>
+          <UButton
+            color="gray"
+            variant="soft"
+            size="sm"
+            icon="i-heroicons-arrow-path"
+            :loading="loading"
+            @click="refreshOnFocus"
+          >
+            รีเฟรช
+          </UButton>
+          <UButton
+            color="green"
+            variant="soft"
+            size="sm"
+            icon="i-heroicons-arrow-down-tray"
+            :loading="exporting"
+            :disabled="loading || exporting || totalItems === 0"
+            @click="exportSubmissions"
+          >
+            Export Excel
+          </UButton>
+        </div>
       </div>
     </div>
 
@@ -386,8 +687,17 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Empty -->
-    <div v-else-if="submissions.length === 0" class="text-center py-12 text-gray-400">
-      <p>ไม่มีผลงาน</p>
+    <div v-else-if="submissions.length === 0" class="text-center py-12 text-gray-400 space-y-2">
+      <p>{{ hasAnyActiveFilter ? "ไม่พบผลงานที่ตรงกับเงื่อนไขการค้นหา" : "ไม่มีผลงาน" }}</p>
+      <UButton
+        v-if="hasAnyActiveFilter"
+        size="xs"
+        color="gray"
+        variant="soft"
+        @click="clearAllFilters"
+      >
+        ล้างตัวกรองทั้งหมด
+      </UButton>
     </div>
 
     <!-- Table -->
@@ -446,8 +756,15 @@ onBeforeUnmount(() => {
                 {{ sub.wantsFullPaper ? 'ต้องการ Full Paper' : 'เฉพาะบทคัดย่อ' }}
               </UBadge>
             </td>
-            <td class="py-3 px-3 text-center text-gray-700 font-medium">
-              {{ reviewProgressLabel(sub) }}
+            <td class="py-3 px-3 text-center">
+              <p class="text-gray-700 font-medium">{{ reviewProgressLabel(sub) }}</p>
+              <p
+                v-if="sub.reviewerNames?.length"
+                class="text-xs text-gray-500 line-clamp-2 max-w-[11rem] mx-auto mt-0.5"
+                :title="sub.reviewerNames.join(', ')"
+              >
+                {{ sub.reviewerNames.join(", ") }}
+              </p>
             </td>
             <td class="py-3 px-3 text-center">
               <UBadge :color="(STATUS_COLORS[sub.status] || 'gray') as any" variant="soft" size="xs">
