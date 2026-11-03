@@ -393,13 +393,6 @@ const AUTHOR_UPDATE_SLOT_ORDER: AuthorUpdateSlot[] = [
   "metadata",
 ];
 
-const AUTHOR_UPDATE_FILE_LABELS: Record<Exclude<AuthorUpdateSlot, "metadata">, string> = {
-  abstractPdf: "บทคัดย่อ (PDF)",
-  abstractWord: "บทคัดย่อ (Word)",
-  fullPaperPdf: "ฉบับสมบูรณ์ (PDF)",
-  fullPaperWord: "ฉบับสมบูรณ์ (Word)",
-};
-
 export function parseAuthorUpdatedSlots(raw: string | null | undefined): AuthorUpdateSlot[] {
   if (!raw || typeof raw !== "string") return [];
   try {
@@ -426,17 +419,36 @@ export function hasUnreadAuthorUpdate(sub: {
 }
 
 export function formatAuthorUpdateSummary(slots: AuthorUpdateSlot[]): string {
-  const canonical = AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => slots.includes(slot));
-  const fileLabels = canonical
-    .filter((slot): slot is Exclude<AuthorUpdateSlot, "metadata"> => slot !== "metadata")
-    .map((slot) => AUTHOR_UPDATE_FILE_LABELS[slot]);
-  const hasMetadata = canonical.includes("metadata");
+  const canonical = new Set(AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => slots.includes(slot)));
+  const fileGroups: string[] = [];
 
-  if (fileLabels.length > 0 && hasMetadata) {
-    return `อัปเดตไฟล์${fileLabels.join(", ")} และแก้ไขข้อมูลบทคัดย่อ`;
+  const hasAbstractPdf = canonical.has("abstractPdf");
+  const hasAbstractWord = canonical.has("abstractWord");
+  if (hasAbstractPdf && hasAbstractWord) {
+    fileGroups.push("บทคัดย่อ (PDF, Word)");
+  } else if (hasAbstractPdf) {
+    fileGroups.push("บทคัดย่อ (PDF)");
+  } else if (hasAbstractWord) {
+    fileGroups.push("บทคัดย่อ (Word)");
   }
-  if (fileLabels.length > 0) {
-    return `อัปเดตไฟล์${fileLabels.join(", ")}`;
+
+  const hasFullPaperPdf = canonical.has("fullPaperPdf");
+  const hasFullPaperWord = canonical.has("fullPaperWord");
+  if (hasFullPaperPdf && hasFullPaperWord) {
+    fileGroups.push("ฉบับสมบูรณ์ (PDF, Word)");
+  } else if (hasFullPaperPdf) {
+    fileGroups.push("ฉบับสมบูรณ์ (PDF)");
+  } else if (hasFullPaperWord) {
+    fileGroups.push("ฉบับสมบูรณ์ (Word)");
+  }
+
+  const hasMetadata = canonical.has("metadata");
+
+  if (fileGroups.length > 0 && hasMetadata) {
+    return `อัปเดตไฟล์${fileGroups.join(", ")} และแก้ไขข้อมูลบทคัดย่อ`;
+  }
+  if (fileGroups.length > 0) {
+    return `อัปเดตไฟล์${fileGroups.join(", ")}`;
   }
   if (hasMetadata) {
     return "แก้ไขข้อมูล/บทคัดย่อ";
@@ -692,9 +704,27 @@ async function backfillHistoricalAuthorUpdates(): Promise<void> {
       status: submissions.status,
       updatedAt: submissions.updatedAt,
       authorUpdatedAt: submissions.authorUpdatedAt,
+      authorUpdateSummary: submissions.authorUpdateSummary,
+      authorUpdatedSlots: submissions.authorUpdatedSlots,
       adminSeenAt: submissions.adminSeenAt,
     })
     .from(submissions);
+
+  for (const sub of subs) {
+    if (!sub.authorUpdatedSlots) continue;
+    const parsedSlots = parseAuthorUpdatedSlots(sub.authorUpdatedSlots);
+    if (parsedSlots.length === 0) continue;
+    const refreshedSummary = formatAuthorUpdateSummary(parsedSlots);
+    if (refreshedSummary && refreshedSummary !== sub.authorUpdateSummary) {
+      await db
+        .update(submissions)
+        .set({
+          authorUpdateSummary: refreshedSummary,
+          updatedAt: sub.updatedAt,
+        })
+        .where(eq(submissions.id, sub.id));
+    }
+  }
 
   const subById = new Map(subs.map((s) => [s.id, s]));
 

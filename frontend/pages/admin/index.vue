@@ -783,7 +783,7 @@ onBeforeUnmount(() => {
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b text-left">
-            <th class="py-3 px-3">ผลงาน</th>
+            <th class="py-3 px-3 min-w-[16rem]">ผลงาน</th>
             <th class="py-3 px-3">ผู้ส่ง</th>
             <th class="py-3 px-3 text-center">วันที่ส่ง</th>
             <th class="py-3 px-3 text-center">หัวข้อ</th>
@@ -805,18 +805,20 @@ onBeforeUnmount(() => {
             class="border-b last:border-0"
             :class="sub.hasUnreadUpdate ? 'bg-amber-50/40 border-l-4 border-l-amber-400 hover:bg-amber-50/70' : 'hover:bg-gray-50'"
           >
-            <td class="py-3 px-3">
-              <button class="text-left" @click="openDetail(sub.id)">
+            <td class="py-3 px-3 min-w-[16rem] max-w-[22rem]">
+              <button class="text-left block w-full" @click="openDetail(sub.id)">
                 <p class="font-medium line-clamp-1 text-primary-600 hover:text-primary-700 hover:underline">{{ sub.title }}</p>
                 <p v-if="sub.titleEn" class="text-xs text-gray-400 line-clamp-1">{{ sub.titleEn }}</p>
               </button>
               <div
                 v-if="sub.hasUnreadUpdate"
-                class="mt-1 inline-flex flex-wrap items-center gap-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs"
+                class="mt-1.5 inline-flex items-start gap-1.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 px-2 py-1 text-[11px] leading-snug"
               >
-                <UIcon name="i-heroicons-bell-alert" class="w-3.5 h-3.5 shrink-0" />
-                <span class="font-medium">{{ sub.authorUpdateSummary || "มีการอัปเดตข้อมูล/ไฟล์" }}</span>
-                <span v-if="sub.authorUpdatedAt" class="text-amber-700">({{ formatRelativeDateTime(sub.authorUpdatedAt) }})</span>
+                <UIcon name="i-heroicons-bell-alert" class="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+                <div class="min-w-0">
+                  <span class="font-medium">{{ sub.authorUpdateSummary || "มีการอัปเดตข้อมูล/ไฟล์" }}</span>
+                  <span v-if="sub.authorUpdatedAt" class="ml-1 text-amber-600 whitespace-nowrap">· {{ formatRelativeDateTime(sub.authorUpdatedAt) }}</span>
+                </div>
               </div>
             </td>
             <td class="py-3 px-3">
@@ -864,10 +866,10 @@ onBeforeUnmount(() => {
                   v-if="abstractFileHref(sub)"
                   :href="abstractFileHref(sub) ?? '#'"
                   target="_blank"
-                  class="inline-flex items-center gap-0.5 text-primary-600 hover:text-primary-700 hover:underline text-xs"
+                  class="inline-flex items-center gap-0.5 whitespace-nowrap text-primary-600 hover:text-primary-700 hover:underline text-xs"
                   title="ดาวน์โหลดบทคัดย่อ (PDF)"
                 >
-                  <UIcon name="i-heroicons-document-text" class="w-3.5 h-3.5" />
+                  <UIcon name="i-heroicons-document-text" class="w-3.5 h-3.5 shrink-0" />
                   <span>PDF</span>
                   <span
                     v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('abstractPdf')"
@@ -880,10 +882,10 @@ onBeforeUnmount(() => {
                   v-if="sub.abstractWordFileUrl"
                   :href="fileHref(sub.abstractWordFileUrl) ?? '#'"
                   target="_blank"
-                  class="inline-flex items-center gap-0.5 text-blue-600 hover:text-blue-700 hover:underline text-xs"
+                  class="inline-flex items-center gap-0.5 whitespace-nowrap text-blue-600 hover:text-blue-700 hover:underline text-xs"
                   title="ดาวน์โหลดบทคัดย่อ (Word)"
                 >
-                  <UIcon name="i-heroicons-document" class="w-3.5 h-3.5" />
+                  <UIcon name="i-heroicons-document" class="w-3.5 h-3.5 shrink-0" />
                   <span>Word</span>
                   <span
                     v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('abstractWord')"
@@ -901,10 +903,10 @@ onBeforeUnmount(() => {
                   v-if="fullPaperFileHref(sub)"
                   :href="fullPaperFileHref(sub) ?? '#'"
                   target="_blank"
-                  class="inline-flex items-center gap-0.5 text-primary-600 hover:text-primary-700 hover:underline text-xs"
+                  class="inline-flex items-center gap-0.5 whitespace-nowrap text-primary-600 hover:text-primary-700 hover:underline text-xs"
                   title="ดาวน์โหลดบทความฉบับสมบูรณ์ (PDF)"
                 >
-                  <UIcon name="i-heroicons-document-arrow-down" class="w-3.5 h-3.5" />
+                  <UIcon name="i-heroicons-document-arrow-down" class="w-3.5 h-3.5 shrink-0" />
                   <span>PDF</span>
                   <span
                     v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('fullPaperPdf')"
@@ -917,10 +919,10 @@ onBeforeUnmount(() => {
                   v-if="sub.fullPaperWordFileUrl"
                   :href="fileHref(sub.fullPaperWordFileUrl) ?? '#'"
                   target="_blank"
-                  class="inline-flex items-center gap-0.5 text-blue-600 hover:text-blue-700 hover:underline text-xs"
+                  class="inline-flex items-center gap-0.5 whitespace-nowrap text-blue-600 hover:text-blue-700 hover:underline text-xs"
                   title="ดาวน์โหลดบทความฉบับสมบูรณ์ (Word)"
                 >
-                  <UIcon name="i-heroicons-document" class="w-3.5 h-3.5" />
+                  <UIcon name="i-heroicons-document" class="w-3.5 h-3.5 shrink-0" />
                   <span>Word</span>
                   <span
                     v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('fullPaperWord')"
