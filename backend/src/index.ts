@@ -9,10 +9,15 @@ import { adminReviewRoutes } from "./routes/admin-reviews";
 import { registrationRoutes } from "./routes/registrations";
 import { publicRoutes } from "./routes/public";
 import { ensureReceiptAuditLogsTable } from "./services/receipt-audit";
+import { ensureSubmissionUpdateColumns } from "./utils/submission-files";
 import { ok, fail } from "./utils/response";
 
 await ensureReceiptAuditLogsTable().catch((err) => {
   console.error("[receipt-audit] Startup table check failed:", err);
+});
+
+await ensureSubmissionUpdateColumns().catch((err) => {
+  console.error("[submission-files] Startup column check failed:", err);
 });
 
 const app = new Elysia({ prefix: "/envicon2026/api" })

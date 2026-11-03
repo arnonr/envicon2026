@@ -1,4 +1,4 @@
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { t } from "elysia";
 import { db } from "../db";
 import { reviewRounds, revisions, submissions, submissionVersions } from "../db/schema";
@@ -339,4 +339,247 @@ export async function recordRevisionAndSnapshot(
     .where(and(eq(reviewRounds.submissionId, sub.id), ne(reviewRounds.status, "released")));
 
   return nextRevisionVersion;
+}
+
+export type AuthorUpdateSlot = "abstractPdf" | "abstractWord" | "fullPaperPdf" | "fullPaperWord" | "metadata";
+
+export interface AuthorUpdateTrackingFields {
+  authorUpdatedAt: Date;
+  authorUpdateSummary: string;
+  authorUpdatedSlots: string;
+}
+
+const AUTHOR_UPDATE_SLOT_ORDER: AuthorUpdateSlot[] = [
+  "abstractPdf",
+  "abstractWord",
+  "fullPaperPdf",
+  "fullPaperWord",
+  "metadata",
+];
+
+const AUTHOR_UPDATE_FILE_LABELS: Record<Exclude<AuthorUpdateSlot, "metadata">, string> = {
+  abstractPdf: "บทคัดย่อ (PDF)",
+  abstractWord: "บทคัดย่อ (Word)",
+  fullPaperPdf: "ฉบับสมบูรณ์ (PDF)",
+  fullPaperWord: "ฉบับสมบูรณ์ (Word)",
+};
+
+export function parseAuthorUpdatedSlots(raw: string | null | undefined): AuthorUpdateSlot[] {
+  if (!raw || typeof raw !== "string") return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const set = new Set<string>(parsed.filter((item): item is string => typeof item === "string"));
+    return AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => set.has(slot));
+  } catch {
+    return [];
+  }
+}
+
+export function hasUnreadAuthorUpdate(sub: {
+  authorUpdatedAt: Date | string | null;
+  adminSeenAt: Date | string | null;
+}): boolean {
+  if (!sub.authorUpdatedAt) return false;
+  const updatedTime = new Date(sub.authorUpdatedAt).getTime();
+  if (Number.isNaN(updatedTime)) return false;
+  if (!sub.adminSeenAt) return true;
+  const seenTime = new Date(sub.adminSeenAt).getTime();
+  if (Number.isNaN(seenTime)) return true;
+  return updatedTime > seenTime;
+}
+
+export function formatAuthorUpdateSummary(slots: AuthorUpdateSlot[]): string {
+  const canonical = AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => slots.includes(slot));
+  const fileLabels = canonical
+    .filter((slot): slot is Exclude<AuthorUpdateSlot, "metadata"> => slot !== "metadata")
+    .map((slot) => AUTHOR_UPDATE_FILE_LABELS[slot]);
+  const hasMetadata = canonical.includes("metadata");
+
+  if (fileLabels.length > 0 && hasMetadata) {
+    return `อัปเดตไฟล์${fileLabels.join(", ")} และแก้ไขข้อมูลบทคัดย่อ`;
+  }
+  if (fileLabels.length > 0) {
+    return `อัปเดตไฟล์${fileLabels.join(", ")}`;
+  }
+  if (hasMetadata) {
+    return "แก้ไขข้อมูล/บทคัดย่อ";
+  }
+  return "";
+}
+
+export function detectUploadedAuthorSlots(files: FileSlotInputs): AuthorUpdateSlot[] {
+  const slots: AuthorUpdateSlot[] = [];
+  if (files.abstractPdf) slots.push("abstractPdf");
+  if (files.abstractWord) slots.push("abstractWord");
+  if (files.fullPaperPdf) slots.push("fullPaperPdf");
+  if (files.fullPaperWord) slots.push("fullPaperWord");
+  return slots;
+}
+
+export function buildAuthorUpdateTracking(
+  sub: {
+    authorUpdatedAt: Date | string | null;
+    adminSeenAt: Date | string | null;
+    authorUpdatedSlots: string | null;
+  },
+  newSlots: AuthorUpdateSlot[],
+  now: Date = new Date(),
+): AuthorUpdateTrackingFields | null {
+  const validNew = AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => newSlots.includes(slot));
+  if (validNew.length === 0) return null;
+
+  const previousSlots = hasUnreadAuthorUpdate(sub)
+    ? parseAuthorUpdatedSlots(sub.authorUpdatedSlots)
+    : [];
+  const mergedSet = new Set<AuthorUpdateSlot>([...previousSlots, ...validNew]);
+  const mergedSlots = AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => mergedSet.has(slot));
+
+  return {
+    authorUpdatedAt: now,
+    authorUpdateSummary: formatAuthorUpdateSummary(mergedSlots),
+    authorUpdatedSlots: JSON.stringify(mergedSlots),
+  };
+}
+
+export type SubmissionMetadataSnapshot = Pick<
+  typeof submissions.$inferSelect,
+  | "title"
+  | "titleEn"
+  | "abstract"
+  | "keywords"
+  | "creators"
+  | "track"
+  | "submitterType"
+  | "educationLevel"
+  | "presentationFormat"
+  | "wantsFullPaper"
+  | "round1FileType"
+>;
+
+export function hasSubmissionMetadataChanged(
+  before: SubmissionMetadataSnapshot,
+  after: SubmissionMetadataSnapshot,
+): boolean {
+  const norm = (val: string | null | undefined) => (val ?? "").trim();
+  if (norm(before.title) !== norm(after.title)) return true;
+  if (norm(before.titleEn) !== norm(after.titleEn)) return true;
+  if (norm(before.abstract) !== norm(after.abstract)) return true;
+  if (norm(before.keywords) !== norm(after.keywords)) return true;
+  if (norm(before.creators) !== norm(after.creators)) return true;
+  if (before.track !== after.track) return true;
+  if (before.submitterType !== after.submitterType) return true;
+  if (before.educationLevel !== after.educationLevel) return true;
+  if (before.presentationFormat !== after.presentationFormat) return true;
+  if (before.wantsFullPaper !== after.wantsFullPaper) return true;
+  if ((before.round1FileType ?? null) !== (after.round1FileType ?? null)) return true;
+  return false;
+}
+
+export async function recordMetadataRevisionSnapshot(
+  sub: typeof submissions.$inferSelect,
+  changelog: string = "แก้ไขข้อมูล/บทคัดย่อ",
+): Promise<void> {
+  const currentUrls = resolveCurrentSlotUrls(sub);
+  const [latestSnapshot] = await db
+    .select({ version: submissionVersions.version })
+    .from(submissionVersions)
+    .where(eq(submissionVersions.submissionId, sub.id))
+    .orderBy(desc(submissionVersions.version))
+    .limit(1);
+
+  if (!latestSnapshot) {
+    await db.insert(submissionVersions).values({
+      id: crypto.randomUUID(),
+      submissionId: sub.id,
+      version: 1,
+      kind: "initial",
+      title: sub.title,
+      titleEn: sub.titleEn,
+      abstract: sub.abstract,
+      keywords: sub.keywords,
+      creators: sub.creators,
+      track: sub.track,
+      submitterType: sub.submitterType,
+      educationLevel: sub.educationLevel,
+      presentationFormat: sub.presentationFormat,
+      fileUrl: primaryFileUrl(currentUrls),
+      abstractFileUrl: currentUrls.abstractFileUrl,
+      abstractWordFileUrl: currentUrls.abstractWordFileUrl,
+      fullPaperFileUrl: currentUrls.fullPaperFileUrl,
+      fullPaperWordFileUrl: currentUrls.fullPaperWordFileUrl,
+      changelog: null,
+      submittedAt: sub.submittedAt ?? new Date(),
+    });
+  }
+
+  const snapshotVersion = (latestSnapshot?.version ?? 1) + 1;
+  const newVersionId = crypto.randomUUID();
+  await db.insert(submissionVersions).values({
+    id: newVersionId,
+    submissionId: sub.id,
+    version: snapshotVersion,
+    kind: "revision",
+    title: sub.title,
+    titleEn: sub.titleEn,
+    abstract: sub.abstract,
+    keywords: sub.keywords,
+    creators: sub.creators,
+    track: sub.track,
+    submitterType: sub.submitterType,
+    educationLevel: sub.educationLevel,
+    presentationFormat: sub.presentationFormat,
+    fileUrl: primaryFileUrl(currentUrls),
+    abstractFileUrl: currentUrls.abstractFileUrl,
+    abstractWordFileUrl: currentUrls.abstractWordFileUrl,
+    fullPaperFileUrl: currentUrls.fullPaperFileUrl,
+    fullPaperWordFileUrl: currentUrls.fullPaperWordFileUrl,
+    changelog,
+    submittedAt: new Date(),
+  });
+
+  await db
+    .update(reviewRounds)
+    .set({ submissionVersionId: newVersionId })
+    .where(and(eq(reviewRounds.submissionId, sub.id), ne(reviewRounds.status, "released")));
+}
+
+let ensureSubmissionUpdateColumnsPromise: Promise<void> | null = null;
+
+export function ensureSubmissionUpdateColumns(): Promise<void> {
+  if (!ensureSubmissionUpdateColumnsPromise) {
+    ensureSubmissionUpdateColumnsPromise = (async () => {
+      const result = await db.execute(sql`
+        SELECT COLUMN_NAME AS columnName
+        FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'submissions'
+      `);
+      const rows = (Array.isArray(result) && Array.isArray(result[0]) ? result[0] : result) as Array<{
+        columnName?: string;
+        COLUMN_NAME?: string;
+      }>;
+      const existing = new Set(
+        (Array.isArray(rows) ? rows : [])
+          .map((row) => (row.columnName ?? row.COLUMN_NAME ?? "").toLowerCase())
+          .filter(Boolean),
+      );
+
+      if (!existing.has("author_updated_at")) {
+        await db.execute(sql`ALTER TABLE \`submissions\` ADD COLUMN \`author_updated_at\` timestamp NULL DEFAULT NULL`);
+      }
+      if (!existing.has("author_update_summary")) {
+        await db.execute(sql`ALTER TABLE \`submissions\` ADD COLUMN \`author_update_summary\` varchar(500) DEFAULT NULL`);
+      }
+      if (!existing.has("author_updated_slots")) {
+        await db.execute(sql`ALTER TABLE \`submissions\` ADD COLUMN \`author_updated_slots\` varchar(255) DEFAULT NULL`);
+      }
+      if (!existing.has("admin_seen_at")) {
+        await db.execute(sql`ALTER TABLE \`submissions\` ADD COLUMN \`admin_seen_at\` timestamp NULL DEFAULT NULL`);
+      }
+    })().catch((err) => {
+      ensureSubmissionUpdateColumnsPromise = null;
+      throw err;
+    });
+  }
+  return ensureSubmissionUpdateColumnsPromise;
 }

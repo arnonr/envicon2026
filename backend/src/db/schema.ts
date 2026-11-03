@@ -67,6 +67,10 @@ export const submissions = mysqlTable("submissions", {
   receiptName: varchar("receipt_name", { length: 255 }),
   receiptTaxId: varchar("receipt_tax_id", { length: 20 }),
   receiptAddress: text("receipt_address"),
+  authorUpdatedAt: timestamp("author_updated_at"),
+  authorUpdateSummary: varchar("author_update_summary", { length: 500 }),
+  authorUpdatedSlots: varchar("author_updated_slots", { length: 255 }),
+  adminSeenAt: timestamp("admin_seen_at"),
   submittedAt: timestamp("submitted_at"),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
