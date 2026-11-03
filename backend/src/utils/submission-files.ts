@@ -658,10 +658,104 @@ export function ensureSubmissionUpdateColumns(): Promise<void> {
       if (!existing.has("admin_seen_at")) {
         await db.execute(sql`ALTER TABLE \`submissions\` ADD COLUMN \`admin_seen_at\` timestamp NULL DEFAULT NULL`);
       }
+
+      await backfillHistoricalAuthorUpdates();
     })().catch((err) => {
       ensureSubmissionUpdateColumnsPromise = null;
       throw err;
     });
   }
   return ensureSubmissionUpdateColumnsPromise;
+}
+
+async function backfillHistoricalAuthorUpdates(): Promise<void> {
+  const allRevs = await db
+    .select({
+      submissionId: revisions.submissionId,
+      fileUrl: revisions.fileUrl,
+      abstractFileUrl: revisions.abstractFileUrl,
+      abstractWordFileUrl: revisions.abstractWordFileUrl,
+      fullPaperFileUrl: revisions.fullPaperFileUrl,
+      fullPaperWordFileUrl: revisions.fullPaperWordFileUrl,
+      changelog: revisions.changelog,
+      submittedAt: revisions.submittedAt,
+    })
+    .from(revisions)
+    .orderBy(revisions.version);
+
+  if (allRevs.length === 0) return;
+
+  const candidateSubIds = [...new Set(allRevs.map((r) => r.submissionId))];
+  const subs = await db
+    .select({
+      id: submissions.id,
+      status: submissions.status,
+      updatedAt: submissions.updatedAt,
+      authorUpdatedAt: submissions.authorUpdatedAt,
+      adminSeenAt: submissions.adminSeenAt,
+    })
+    .from(submissions);
+
+  const subById = new Map(subs.map((s) => [s.id, s]));
+
+  const revsBySub = new Map<string, typeof allRevs>();
+  for (const rev of allRevs) {
+    if (rev.changelog?.startsWith("ผู้ดูแลระบบจัดการไฟล์")) continue;
+    const list = revsBySub.get(rev.submissionId) ?? [];
+    list.push(rev);
+    revsBySub.set(rev.submissionId, list);
+  }
+
+  for (const subId of candidateSubIds) {
+    const sub = subById.get(subId);
+    if (!sub || sub.status === "draft" || sub.authorUpdatedAt || sub.adminSeenAt) continue;
+    const subRevs = revsBySub.get(subId);
+    if (!subRevs || subRevs.length === 0) continue;
+
+    const slotSet = new Set<AuthorUpdateSlot>();
+    let latestAt: Date | null = null;
+
+    for (const rev of subRevs) {
+      let matchedSpecific = false;
+      if (rev.abstractFileUrl) {
+        slotSet.add("abstractPdf");
+        matchedSpecific = true;
+      }
+      if (rev.abstractWordFileUrl) {
+        slotSet.add("abstractWord");
+        matchedSpecific = true;
+      }
+      if (rev.fullPaperFileUrl) {
+        slotSet.add("fullPaperPdf");
+        matchedSpecific = true;
+      }
+      if (rev.fullPaperWordFileUrl) {
+        slotSet.add("fullPaperWord");
+        matchedSpecific = true;
+      }
+      if (!matchedSpecific && rev.fileUrl) {
+        const lower = rev.fileUrl.toLowerCase();
+        if (lower.includes("abstract-word")) slotSet.add("abstractWord");
+        else if (lower.includes("fullpaper-word")) slotSet.add("fullPaperWord");
+        else if (lower.includes("abstract")) slotSet.add("abstractPdf");
+        else slotSet.add("fullPaperPdf");
+      }
+      if (rev.submittedAt && (!latestAt || rev.submittedAt.getTime() > latestAt.getTime())) {
+        latestAt = rev.submittedAt;
+      }
+    }
+
+    const orderedSlots = AUTHOR_UPDATE_SLOT_ORDER.filter((slot) => slotSet.has(slot));
+    if (orderedSlots.length === 0 || !latestAt) continue;
+
+    await db
+      .update(submissions)
+      .set({
+        authorUpdatedAt: latestAt,
+        authorUpdateSummary: formatAuthorUpdateSummary(orderedSlots),
+        authorUpdatedSlots: JSON.stringify(orderedSlots),
+        updatedAt: sub.updatedAt,
+      })
+      .where(eq(submissions.id, subId));
+  }
 }
