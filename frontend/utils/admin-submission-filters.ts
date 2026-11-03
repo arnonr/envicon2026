@@ -9,6 +9,7 @@ export interface AdminSubmissionFilterState {
   educationLevel: string;
   wantsFullPaper: string;
   fileStatus: string;
+  hasUnreadUpdate?: boolean;
 }
 
 export function createEmptyAdminSubmissionFilters(): AdminSubmissionFilterState {
@@ -23,6 +24,7 @@ export function createEmptyAdminSubmissionFilters(): AdminSubmissionFilterState 
     educationLevel: "",
     wantsFullPaper: "",
     fileStatus: "",
+    hasUnreadUpdate: false,
   };
 }
 
@@ -39,6 +41,7 @@ export function buildAdminSubmissionSearchParams(state: AdminSubmissionFilterSta
   if (state.educationLevel) params.set("educationLevel", state.educationLevel);
   if (state.wantsFullPaper !== "") params.set("wantsFullPaper", state.wantsFullPaper);
   if (state.fileStatus) params.set("fileStatus", state.fileStatus);
+  if (state.hasUnreadUpdate) params.set("hasUnreadUpdate", "1");
   return params;
 }
 
@@ -63,6 +66,7 @@ export function hasActiveAdminSubmissionFilters(
     || state.track
     || state.presentationFormat
     || state.reviewerId
+    || Boolean(state.hasUnreadUpdate)
     || countSecondaryAdminFilters(state) > 0,
   );
 }

@@ -38,6 +38,10 @@ interface Submission {
   completedReviewCount: number;
   assignedReviewerCount: number;
   reviewerNames: string[];
+  hasUnreadUpdate: boolean;
+  authorUpdatedAt: string | null;
+  authorUpdateSummary: string | null;
+  authorUpdatedSlots: ("abstractPdf" | "abstractWord" | "fullPaperPdf" | "fullPaperWord" | "metadata")[];
 }
 
 interface ReviewerDirectoryItem {
@@ -85,6 +89,8 @@ const filterSubmitterType = ref("");
 const filterEducationLevel = ref("");
 const filterWantsFullPaper = ref("");
 const filterFileStatus = ref("");
+const unreadUpdateCount = ref(0);
+const filterHasUnreadUpdate = ref(false);
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let suppressFilterWatch = false;
@@ -102,6 +108,7 @@ const currentFilterState = computed<AdminSubmissionFilterState>(() => ({
   educationLevel: filterEducationLevel.value,
   wantsFullPaper: filterWantsFullPaper.value,
   fileStatus: filterFileStatus.value,
+  hasUnreadUpdate: filterHasUnreadUpdate.value,
 }));
 
 const secondaryActiveCount = computed(() => countSecondaryAdminFilters(currentFilterState.value));
@@ -122,6 +129,11 @@ const detailModalOpen = ref(false);
 const detailSubmissionId = ref<string | null>(null);
 
 function openDetail(id: string) {
+  const row = submissions.value.find((s) => s.id === id);
+  if (row && row.hasUnreadUpdate) {
+    row.hasUnreadUpdate = false;
+    unreadUpdateCount.value = Math.max(0, unreadUpdateCount.value - 1);
+  }
   detailSubmissionId.value = id;
   detailModalOpen.value = true;
 }
@@ -220,6 +232,16 @@ function formatDate(iso: string | null) {
   });
 }
 
+function formatRelativeDateTime(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("th-TH", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function educationLabel(v: string): string {
   return ({ bachelor: 'ปริญญาตรี', master: 'ปริญญาโท', doctorate: 'ปริญญาเอก' } as Record<string, string>)[v] ?? v;
 }
@@ -265,7 +287,7 @@ async function fetchSubmissions() {
   params.set("limit", String(PER_PAGE));
   const qs = params.toString();
   const { data, error } = await handleApiCall(() =>
-    $fetch<{ success: true; data: Submission[]; meta: { page: number; limit: number; total: number; totalPages: number } }>(
+    $fetch<{ success: true; data: Submission[]; meta: { page: number; limit: number; total: number; totalPages: number; unreadUpdateCount?: number } }>(
       `${apiBase}/admin/submissions${qs ? `?${qs}` : ""}`,
       {
         headers: { Authorization: `Bearer ${authStore.token}` },
@@ -284,6 +306,7 @@ async function fetchSubmissions() {
   submissions.value = data?.data ?? [];
   totalPages.value = data?.meta?.totalPages ?? 1;
   totalItems.value = data?.meta?.total ?? 0;
+  unreadUpdateCount.value = data?.meta?.unreadUpdateCount ?? 0;
 }
 
 async function fetchStats() {
@@ -350,6 +373,7 @@ async function clearAllFilters() {
   filterEducationLevel.value = "";
   filterWantsFullPaper.value = "";
   filterFileStatus.value = "";
+  filterHasUnreadUpdate.value = false;
   await nextTick();
   suppressFilterWatch = false;
   if (hadAppliedFilter || currentPage.value !== 1) {
@@ -441,6 +465,7 @@ watch(
     filterEducationLevel,
     filterWantsFullPaper,
     filterFileStatus,
+    filterHasUnreadUpdate,
   ],
   async () => {
     if (suppressFilterWatch) return;
@@ -675,6 +700,25 @@ onBeforeUnmount(() => {
           </UButton>
 
           <UButton
+            size="xs"
+            :color="filterHasUnreadUpdate || unreadUpdateCount > 0 ? 'amber' : 'gray'"
+            :variant="filterHasUnreadUpdate || unreadUpdateCount > 0 ? 'soft' : 'ghost'"
+            icon="i-heroicons-bell-alert"
+            :class="filterHasUnreadUpdate ? 'ring-1 ring-amber-400 font-semibold' : ''"
+            @click="filterHasUnreadUpdate = !filterHasUnreadUpdate"
+          >
+            <span>มีอัปเดตใหม่</span>
+            <UBadge
+              :color="filterHasUnreadUpdate || unreadUpdateCount > 0 ? 'amber' : 'gray'"
+              variant="solid"
+              size="xs"
+              class="ml-1"
+            >
+              {{ unreadUpdateCount }}
+            </UBadge>
+          </UButton>
+
+          <UButton
             v-if="hasAnyActiveFilter"
             size="xs"
             color="red"
@@ -758,13 +802,22 @@ onBeforeUnmount(() => {
           <tr
             v-for="sub in submissions"
             :key="sub.id"
-            class="border-b last:border-0 hover:bg-gray-50"
+            class="border-b last:border-0"
+            :class="sub.hasUnreadUpdate ? 'bg-amber-50/40 border-l-4 border-l-amber-400 hover:bg-amber-50/70' : 'hover:bg-gray-50'"
           >
             <td class="py-3 px-3">
               <button class="text-left" @click="openDetail(sub.id)">
                 <p class="font-medium line-clamp-1 text-primary-600 hover:text-primary-700 hover:underline">{{ sub.title }}</p>
                 <p v-if="sub.titleEn" class="text-xs text-gray-400 line-clamp-1">{{ sub.titleEn }}</p>
               </button>
+              <div
+                v-if="sub.hasUnreadUpdate"
+                class="mt-1 inline-flex flex-wrap items-center gap-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 text-xs"
+              >
+                <UIcon name="i-heroicons-bell-alert" class="w-3.5 h-3.5 shrink-0" />
+                <span class="font-medium">{{ sub.authorUpdateSummary || "มีการอัปเดตข้อมูล/ไฟล์" }}</span>
+                <span v-if="sub.authorUpdatedAt" class="text-amber-700">({{ formatRelativeDateTime(sub.authorUpdatedAt) }})</span>
+              </div>
             </td>
             <td class="py-3 px-3">
               <p class="text-gray-700">{{ sub.authorName || "-" }}</p>
@@ -816,6 +869,12 @@ onBeforeUnmount(() => {
                 >
                   <UIcon name="i-heroicons-document-text" class="w-3.5 h-3.5" />
                   <span>PDF</span>
+                  <span
+                    v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('abstractPdf')"
+                    class="ml-0.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold leading-none text-amber-800 border border-amber-200"
+                  >
+                    ใหม่
+                  </span>
                 </a>
                 <a
                   v-if="sub.abstractWordFileUrl"
@@ -826,6 +885,12 @@ onBeforeUnmount(() => {
                 >
                   <UIcon name="i-heroicons-document" class="w-3.5 h-3.5" />
                   <span>Word</span>
+                  <span
+                    v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('abstractWord')"
+                    class="ml-0.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold leading-none text-amber-800 border border-amber-200"
+                  >
+                    ใหม่
+                  </span>
                 </a>
               </div>
               <span v-else class="text-xs text-gray-300">—</span>
@@ -841,6 +906,12 @@ onBeforeUnmount(() => {
                 >
                   <UIcon name="i-heroicons-document-arrow-down" class="w-3.5 h-3.5" />
                   <span>PDF</span>
+                  <span
+                    v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('fullPaperPdf')"
+                    class="ml-0.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold leading-none text-amber-800 border border-amber-200"
+                  >
+                    ใหม่
+                  </span>
                 </a>
                 <a
                   v-if="sub.fullPaperWordFileUrl"
@@ -851,6 +922,12 @@ onBeforeUnmount(() => {
                 >
                   <UIcon name="i-heroicons-document" class="w-3.5 h-3.5" />
                   <span>Word</span>
+                  <span
+                    v-if="sub.hasUnreadUpdate && sub.authorUpdatedSlots?.includes('fullPaperWord')"
+                    class="ml-0.5 rounded bg-amber-100 px-1 py-0.5 text-[10px] font-semibold leading-none text-amber-800 border border-amber-200"
+                  >
+                    ใหม่
+                  </span>
                 </a>
               </div>
               <span v-else class="text-xs text-gray-300">—</span>

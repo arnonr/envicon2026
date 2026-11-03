@@ -61,6 +61,10 @@ interface Submission {
   receiptAddress: string | null;
   submittedAt: string | null;
   updatedAt: string;
+  hasUnreadUpdate?: boolean;
+  authorUpdatedAt?: string | null;
+  authorUpdateSummary?: string | null;
+  authorUpdatedSlots?: string[];
   revisions: Revision[];
   receiptAuditLogs?: ReceiptAuditLog[];
 }
@@ -605,6 +609,22 @@ watch(() => props.modelValue, (open) => {
       </div>
 
       <div v-else-if="submission" class="space-y-4 max-h-[70vh] overflow-y-auto -mx-6 px-6">
+        <!-- Recent author update banner -->
+        <div
+          v-if="submission.hasUnreadUpdate"
+          class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-900 flex items-start justify-between gap-3"
+        >
+          <div class="flex items-start gap-2">
+            <UIcon name="i-heroicons-bell-alert" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p class="font-semibold">{{ submission.authorUpdateSummary || "ผู้ส่งมีการอัปเดตข้อมูล/ไฟล์ผลงาน" }}</p>
+              <p class="text-xs text-amber-700 mt-0.5">
+                อัปเดตเมื่อ {{ formatDateTime(submission.authorUpdatedAt ?? null) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Payment section -->
         <div class="border border-gray-200 rounded-lg p-4 space-y-3">
           <div class="flex items-center justify-between">
