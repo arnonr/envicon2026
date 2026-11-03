@@ -17,7 +17,9 @@ import {
   areSlotUrlsEqual,
   deriveLegacyRound1Fields,
   describeAdminFileChanges,
+  hasUnreadAuthorUpdate,
   parseAndValidateManagedSlotUrls,
+  parseAuthorUpdatedSlots,
   recordInitialSnapshot,
   recordRevisionAndSnapshot,
   resolveCurrentSlotUrls,
@@ -26,6 +28,7 @@ import {
 } from "../utils/submission-files";
 import {
   buildAdminSubmissionWhere,
+  buildUnreadAuthorUpdateSql,
   loadLatestRoundReviewSummaries,
 } from "../utils/admin-submission-filters";
 
@@ -40,6 +43,7 @@ const adminSubmissionFilterQueryFields = {
   educationLevel: t.Optional(t.String()),
   wantsFullPaper: t.Optional(t.String()),
   fileStatus: t.Optional(t.String()),
+  hasUnreadUpdate: t.Optional(t.String()),
 };
 
 const TRACK_NAMES: Record<number, string> = {
@@ -163,7 +167,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 50));
     const offset = (page - 1) * limit;
 
-    const [rows, countResult] = await Promise.all([
+    const [rows, countResult, unreadCountResult] = await Promise.all([
       db
         .select({
           id: submissions.id,
@@ -183,6 +187,10 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           round1FileType: submissions.round1FileType,
           paymentSlipUrl: submissions.paymentSlipUrl,
           paymentStatus: submissions.paymentStatus,
+          authorUpdatedAt: submissions.authorUpdatedAt,
+          authorUpdateSummary: submissions.authorUpdateSummary,
+          authorUpdatedSlots: submissions.authorUpdatedSlots,
+          adminSeenAt: submissions.adminSeenAt,
           submittedAt: submissions.submittedAt,
           updatedAt: submissions.updatedAt,
           authorName: users.name,
@@ -200,23 +208,37 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         .from(submissions)
         .leftJoin(users, eq(submissions.authorId, users.id))
         .where(where),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(submissions)
+        .where(buildUnreadAuthorUpdateSql()),
     ]);
 
     const summaries = await loadLatestRoundReviewSummaries(rows.map((submission) => submission.id));
 
     const rowsWithReviewProgress = rows.map((submission) => {
       const progress = summaries.get(submission.id);
+      const hasUnreadUpdate = hasUnreadAuthorUpdate(submission);
       return {
         ...submission,
         abstractFileUrl: submission.abstractFileUrl ?? (submission.round1FileType !== "full_paper" ? submission.round1FileUrl : null),
         fullPaperFileUrl: submission.fullPaperFileUrl ?? (submission.round1FileType === "full_paper" ? submission.round1FileUrl : null),
+        hasUnreadUpdate,
+        authorUpdatedSlots: hasUnreadUpdate ? parseAuthorUpdatedSlots(submission.authorUpdatedSlots) : [],
         completedReviewCount: progress?.completed ?? 0,
         assignedReviewerCount: progress?.assigned ?? 0,
         reviewerNames: progress?.reviewerNames ?? [],
       };
     });
 
-    return paginated(rowsWithReviewProgress, page, limit, Number(countResult[0]?.count ?? 0));
+    const base = paginated(rowsWithReviewProgress, page, limit, Number(countResult[0]?.count ?? 0));
+    return {
+      ...base,
+      meta: {
+        ...base.meta,
+        unreadUpdateCount: Number(unreadCountResult[0]?.count ?? 0),
+      },
+    };
   }, {
     query: t.Object({
       ...adminSubmissionFilterQueryFields,

@@ -13,6 +13,7 @@ export interface AdminSubmissionFilterQuery {
   educationLevel?: string;
   wantsFullPaper?: string;
   fileStatus?: string;
+  hasUnreadUpdate?: string;
 }
 
 export interface LatestRoundReviewSummary {
@@ -38,6 +39,10 @@ function buildHasAbstractSql(): SQL {
 
 function buildHasFullPaperSql(): SQL {
   return sql`(${submissions.fullPaperFileUrl} IS NOT NULL OR ${submissions.fullPaperWordFileUrl} IS NOT NULL OR (${submissions.round1FileUrl} IS NOT NULL AND ${submissions.round1FileType} IS NOT NULL AND ${submissions.round1FileType} = 'full_paper'))`;
+}
+
+export function buildUnreadAuthorUpdateSql(): SQL {
+  return sql`(${submissions.authorUpdatedAt} IS NOT NULL AND (${submissions.adminSeenAt} IS NULL OR ${submissions.authorUpdatedAt} > ${submissions.adminSeenAt}))`;
 }
 
 export function buildAdminSubmissionWhere(
@@ -164,6 +169,13 @@ export function buildAdminSubmissionWhere(
     } else if (query.fileStatus === "no_files") {
       conditions.push(sql`(NOT ${hasAbstract} AND NOT ${hasFullPaper})`);
     }
+  }
+
+  if (query.hasUnreadUpdate !== undefined && query.hasUnreadUpdate !== "") {
+    if (query.hasUnreadUpdate !== "1") {
+      return { ok: false, error: `Invalid hasUnreadUpdate: ${query.hasUnreadUpdate}` };
+    }
+    conditions.push(buildUnreadAuthorUpdateSql());
   }
 
   return {

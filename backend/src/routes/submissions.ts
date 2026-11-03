@@ -26,8 +26,14 @@ import {
 import {
   type FileSlotInputs,
   type FileSlotUrls,
+  buildAuthorUpdateTracking,
+  detectUploadedAuthorSlots,
   deriveLegacyRound1Fields,
+  hasSubmissionMetadataChanged,
+  hasUnreadAuthorUpdate,
+  parseAuthorUpdatedSlots,
   recordInitialSnapshot,
+  recordMetadataRevisionSnapshot,
   recordRevisionAndSnapshot,
   resolveCurrentSlotUrls,
   saveSlotFiles,
@@ -176,6 +182,16 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       : [];
 
     const resolvedSlots = resolveCurrentSlotUrls(sub);
+    const hasUnreadUpdate = hasUnreadAuthorUpdate(sub);
+    const authorUpdatedSlots = hasUnreadUpdate ? parseAuthorUpdatedSlots(sub.authorUpdatedSlots) : [];
+    if (user!.role === "admin") {
+      const seenAt = new Date();
+      await db
+        .update(submissions)
+        .set({ adminSeenAt: seenAt })
+        .where(eq(submissions.id, params.id));
+      sub.adminSeenAt = seenAt;
+    }
     const receiptLogs = user!.role === "admin"
       ? await getSubmissionReceiptAuditLogs(params.id)
       : [];
@@ -183,6 +199,8 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     return ok({
       ...sub,
       ...resolvedSlots,
+      hasUnreadUpdate,
+      authorUpdatedSlots,
       revisions: revisionList,
       receiptAuditLogs: receiptLogs,
       currentRoundNumber,
@@ -332,8 +350,15 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       }
 
       const fileUrl = await saveFile(body.file, `revision-${params.id}-v${latestRevision.version}`);
+      const tracking = buildAuthorUpdateTracking(sub, ["fullPaperPdf"]);
       await db.update(revisions).set({ fileUrl }).where(eq(revisions.id, latestRevision.id));
-      await db.update(submissions).set({ fullPaperFileUrl: fileUrl }).where(eq(submissions.id, params.id));
+      await db
+        .update(submissions)
+        .set({
+          fullPaperFileUrl: fileUrl,
+          ...(tracking ?? {}),
+        })
+        .where(eq(submissions.id, params.id));
       const [latestVersion] = await db
         .select({ id: submissionVersions.id })
         .from(submissionVersions)
@@ -395,11 +420,23 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         })
         .where(eq(submissions.id, params.id));
 
-      const [updated] = await db
+      let [updated] = await db
         .select()
         .from(submissions)
         .where(eq(submissions.id, params.id))
         .limit(1);
+
+      if (sub.status !== "draft" && updated && hasSubmissionMetadataChanged(sub, updated)) {
+        const tracking = buildAuthorUpdateTracking(sub, ["metadata"]);
+        if (tracking) {
+          await db
+            .update(submissions)
+            .set(tracking)
+            .where(eq(submissions.id, params.id));
+          await recordMetadataRevisionSnapshot(updated);
+          updated = { ...updated, ...tracking };
+        }
+      }
 
       if (updated) {
         await recordReceiptAuditLog({
@@ -495,6 +532,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       const isInitialSubmit = sub.status === "draft";
       const hasUploadedFullPaper = Boolean(files.fullPaperPdf || files.fullPaperWord);
       const nextStatus = statusAfterFileUpload(sub.status, hasUploadedFullPaper);
+      const tracking = !isInitialSubmit
+        ? buildAuthorUpdateTracking(sub, detectUploadedAuthorSlots(files))
+        : null;
       await db
         .update(submissions)
         .set({
@@ -506,6 +546,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           round1FileType,
           ...(nextStatus && { status: nextStatus }),
           ...(isInitialSubmit && { submittedAt: new Date() }),
+          ...(tracking ?? {}),
         })
         .where(eq(submissions.id, params.id));
 
@@ -680,11 +721,13 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       const merged: FileSlotUrls = { ...currentSlots, fullPaperFileUrl: fileUrl };
 
       const nextStatus = statusAfterFileUpload(sub.status, true);
+      const tracking = buildAuthorUpdateTracking(sub, ["fullPaperPdf"]);
       await db
         .update(submissions)
         .set({
           fullPaperFileUrl: fileUrl,
           ...(nextStatus && { status: nextStatus }),
+          ...(tracking ?? {}),
         })
         .where(eq(submissions.id, params.id));
 
@@ -913,6 +956,8 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       );
 
       const nextStatus = statusAfterReviseUpload(sub.status) ?? "submitted_round2";
+      const changedSlots = detectUploadedAuthorSlots(files);
+      const tracking = buildAuthorUpdateTracking(sub, changedSlots.length ? changedSlots : ["metadata"]);
 
       await db
         .update(submissions)
@@ -922,6 +967,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           abstractWordFileUrl: merged.abstractWordFileUrl,
           fullPaperFileUrl: merged.fullPaperFileUrl,
           fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
+          ...(tracking ?? {}),
         })
         .where(eq(submissions.id, params.id));
 
