@@ -184,11 +184,11 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     const resolvedSlots = resolveCurrentSlotUrls(sub);
     const hasUnreadUpdate = hasUnreadAuthorUpdate(sub);
     const authorUpdatedSlots = hasUnreadUpdate ? parseAuthorUpdatedSlots(sub.authorUpdatedSlots) : [];
-    if (user!.role === "admin") {
-      const seenAt = new Date();
+    if (user!.role === "admin" && hasUnreadUpdate) {
+      const seenAt = new Date(Math.max(Date.now(), sub.authorUpdatedAt ? new Date(sub.authorUpdatedAt).getTime() : 0));
       await db
         .update(submissions)
-        .set({ adminSeenAt: seenAt })
+        .set({ adminSeenAt: seenAt, updatedAt: sub.updatedAt })
         .where(eq(submissions.id, params.id));
       sub.adminSeenAt = seenAt;
     }
@@ -433,7 +433,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
             .update(submissions)
             .set(tracking)
             .where(eq(submissions.id, params.id));
-          await recordMetadataRevisionSnapshot(updated);
+          await recordMetadataRevisionSnapshot(sub, updated);
           updated = { ...updated, ...tracking };
         }
       }

@@ -276,7 +276,12 @@ export async function recordRevisionAndSnapshot(
   }
 
   const [latestSnapshot] = await db
-    .select({ version: submissionVersions.version })
+    .select({
+      id: submissionVersions.id,
+      version: submissionVersions.version,
+      kind: submissionVersions.kind,
+      changelog: submissionVersions.changelog,
+    })
     .from(submissionVersions)
     .where(eq(submissionVersions.submissionId, sub.id))
     .orderBy(desc(submissionVersions.version))
@@ -308,34 +313,65 @@ export async function recordRevisionAndSnapshot(
     });
   }
 
-  const snapshotVersion = Math.max((latestSnapshot?.version ?? 1) + 1, nextRevisionVersion + 1);
-  const newVersionId = crypto.randomUUID();
-  await db.insert(submissionVersions).values({
-    id: newVersionId,
-    submissionId: sub.id,
-    version: snapshotVersion,
-    kind: "revision",
-    title: sub.title,
-    titleEn: sub.titleEn,
-    abstract: sub.abstract,
-    keywords: sub.keywords,
-    creators: sub.creators,
-    track: sub.track,
-    submitterType: sub.submitterType,
-    educationLevel: sub.educationLevel,
-    presentationFormat: sub.presentationFormat,
-    fileUrl: primaryFileUrl(merged),
-    abstractFileUrl: merged.abstractFileUrl,
-    abstractWordFileUrl: merged.abstractWordFileUrl,
-    fullPaperFileUrl: merged.fullPaperFileUrl,
-    fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
-    changelog,
-    submittedAt: new Date(),
-  });
+  let targetVersionId: string;
+  if (
+    latestSnapshot &&
+    latestSnapshot.kind === "revision" &&
+    latestSnapshot.changelog === "แก้ไขข้อมูล/บทคัดย่อ" &&
+    latestSnapshot.version >= nextRevisionVersion + 1
+  ) {
+    targetVersionId = latestSnapshot.id;
+    await db
+      .update(submissionVersions)
+      .set({
+        title: sub.title,
+        titleEn: sub.titleEn,
+        abstract: sub.abstract,
+        keywords: sub.keywords,
+        creators: sub.creators,
+        track: sub.track,
+        submitterType: sub.submitterType,
+        educationLevel: sub.educationLevel,
+        presentationFormat: sub.presentationFormat,
+        fileUrl: primaryFileUrl(merged),
+        abstractFileUrl: merged.abstractFileUrl,
+        abstractWordFileUrl: merged.abstractWordFileUrl,
+        fullPaperFileUrl: merged.fullPaperFileUrl,
+        fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
+        changelog,
+        submittedAt: new Date(),
+      })
+      .where(eq(submissionVersions.id, latestSnapshot.id));
+  } else {
+    const snapshotVersion = Math.max((latestSnapshot?.version ?? 1) + 1, nextRevisionVersion + 1);
+    targetVersionId = crypto.randomUUID();
+    await db.insert(submissionVersions).values({
+      id: targetVersionId,
+      submissionId: sub.id,
+      version: snapshotVersion,
+      kind: "revision",
+      title: sub.title,
+      titleEn: sub.titleEn,
+      abstract: sub.abstract,
+      keywords: sub.keywords,
+      creators: sub.creators,
+      track: sub.track,
+      submitterType: sub.submitterType,
+      educationLevel: sub.educationLevel,
+      presentationFormat: sub.presentationFormat,
+      fileUrl: primaryFileUrl(merged),
+      abstractFileUrl: merged.abstractFileUrl,
+      abstractWordFileUrl: merged.abstractWordFileUrl,
+      fullPaperFileUrl: merged.fullPaperFileUrl,
+      fullPaperWordFileUrl: merged.fullPaperWordFileUrl,
+      changelog,
+      submittedAt: new Date(),
+    });
+  }
 
   await db
     .update(reviewRounds)
-    .set({ submissionVersionId: newVersionId })
+    .set({ submissionVersionId: targetVersionId })
     .where(and(eq(reviewRounds.submissionId, sub.id), ne(reviewRounds.status, "released")));
 
   return nextRevisionVersion;
@@ -477,71 +513,117 @@ export function hasSubmissionMetadataChanged(
 }
 
 export async function recordMetadataRevisionSnapshot(
-  sub: typeof submissions.$inferSelect,
-  changelog: string = "แก้ไขข้อมูล/บทคัดย่อ",
+  before: typeof submissions.$inferSelect,
+  after: typeof submissions.$inferSelect,
+  changelog = "แก้ไขข้อมูล/บทคัดย่อ",
 ): Promise<void> {
-  const currentUrls = resolveCurrentSlotUrls(sub);
-  const [latestSnapshot] = await db
-    .select({ version: submissionVersions.version })
-    .from(submissionVersions)
-    .where(eq(submissionVersions.submissionId, sub.id))
-    .orderBy(desc(submissionVersions.version))
-    .limit(1);
+  const afterUrls = resolveCurrentSlotUrls(after);
+  const [[latestSnapshot], [latestRev]] = await Promise.all([
+    db
+      .select({
+        id: submissionVersions.id,
+        version: submissionVersions.version,
+        kind: submissionVersions.kind,
+        changelog: submissionVersions.changelog,
+      })
+      .from(submissionVersions)
+      .where(eq(submissionVersions.submissionId, after.id))
+      .orderBy(desc(submissionVersions.version))
+      .limit(1),
+    db
+      .select({ version: revisions.version })
+      .from(revisions)
+      .where(eq(revisions.submissionId, after.id))
+      .orderBy(desc(revisions.version))
+      .limit(1),
+  ]);
 
   if (!latestSnapshot) {
+    const beforeUrls = resolveCurrentSlotUrls(before);
     await db.insert(submissionVersions).values({
       id: crypto.randomUUID(),
-      submissionId: sub.id,
+      submissionId: before.id,
       version: 1,
       kind: "initial",
-      title: sub.title,
-      titleEn: sub.titleEn,
-      abstract: sub.abstract,
-      keywords: sub.keywords,
-      creators: sub.creators,
-      track: sub.track,
-      submitterType: sub.submitterType,
-      educationLevel: sub.educationLevel,
-      presentationFormat: sub.presentationFormat,
-      fileUrl: primaryFileUrl(currentUrls),
-      abstractFileUrl: currentUrls.abstractFileUrl,
-      abstractWordFileUrl: currentUrls.abstractWordFileUrl,
-      fullPaperFileUrl: currentUrls.fullPaperFileUrl,
-      fullPaperWordFileUrl: currentUrls.fullPaperWordFileUrl,
+      title: before.title,
+      titleEn: before.titleEn,
+      abstract: before.abstract,
+      keywords: before.keywords,
+      creators: before.creators,
+      track: before.track,
+      submitterType: before.submitterType,
+      educationLevel: before.educationLevel,
+      presentationFormat: before.presentationFormat,
+      fileUrl: primaryFileUrl(beforeUrls),
+      abstractFileUrl: beforeUrls.abstractFileUrl,
+      abstractWordFileUrl: beforeUrls.abstractWordFileUrl,
+      fullPaperFileUrl: beforeUrls.fullPaperFileUrl,
+      fullPaperWordFileUrl: beforeUrls.fullPaperWordFileUrl,
       changelog: null,
-      submittedAt: sub.submittedAt ?? new Date(),
+      submittedAt: before.submittedAt ?? new Date(),
     });
   }
 
-  const snapshotVersion = (latestSnapshot?.version ?? 1) + 1;
-  const newVersionId = crypto.randomUUID();
-  await db.insert(submissionVersions).values({
-    id: newVersionId,
-    submissionId: sub.id,
-    version: snapshotVersion,
-    kind: "revision",
-    title: sub.title,
-    titleEn: sub.titleEn,
-    abstract: sub.abstract,
-    keywords: sub.keywords,
-    creators: sub.creators,
-    track: sub.track,
-    submitterType: sub.submitterType,
-    educationLevel: sub.educationLevel,
-    presentationFormat: sub.presentationFormat,
-    fileUrl: primaryFileUrl(currentUrls),
-    abstractFileUrl: currentUrls.abstractFileUrl,
-    abstractWordFileUrl: currentUrls.abstractWordFileUrl,
-    fullPaperFileUrl: currentUrls.fullPaperFileUrl,
-    fullPaperWordFileUrl: currentUrls.fullPaperWordFileUrl,
-    changelog,
-    submittedAt: new Date(),
-  });
+  let targetVersionId: string;
+  if (
+    latestSnapshot &&
+    latestSnapshot.kind === "revision" &&
+    latestSnapshot.changelog === "แก้ไขข้อมูล/บทคัดย่อ" &&
+    latestSnapshot.version > (latestRev?.version ?? 0) + 1
+  ) {
+    targetVersionId = latestSnapshot.id;
+    await db
+      .update(submissionVersions)
+      .set({
+        title: after.title,
+        titleEn: after.titleEn,
+        abstract: after.abstract,
+        keywords: after.keywords,
+        creators: after.creators,
+        track: after.track,
+        submitterType: after.submitterType,
+        educationLevel: after.educationLevel,
+        presentationFormat: after.presentationFormat,
+        fileUrl: primaryFileUrl(afterUrls),
+        abstractFileUrl: afterUrls.abstractFileUrl,
+        abstractWordFileUrl: afterUrls.abstractWordFileUrl,
+        fullPaperFileUrl: afterUrls.fullPaperFileUrl,
+        fullPaperWordFileUrl: afterUrls.fullPaperWordFileUrl,
+        changelog,
+        submittedAt: new Date(),
+      })
+      .where(eq(submissionVersions.id, latestSnapshot.id));
+  } else {
+    const snapshotVersion = (latestSnapshot?.version ?? 1) + 1;
+    targetVersionId = crypto.randomUUID();
+    await db.insert(submissionVersions).values({
+      id: targetVersionId,
+      submissionId: after.id,
+      version: snapshotVersion,
+      kind: "revision",
+      title: after.title,
+      titleEn: after.titleEn,
+      abstract: after.abstract,
+      keywords: after.keywords,
+      creators: after.creators,
+      track: after.track,
+      submitterType: after.submitterType,
+      educationLevel: after.educationLevel,
+      presentationFormat: after.presentationFormat,
+      fileUrl: primaryFileUrl(afterUrls),
+      abstractFileUrl: afterUrls.abstractFileUrl,
+      abstractWordFileUrl: afterUrls.abstractWordFileUrl,
+      fullPaperFileUrl: afterUrls.fullPaperFileUrl,
+      fullPaperWordFileUrl: afterUrls.fullPaperWordFileUrl,
+      changelog,
+      submittedAt: new Date(),
+    });
+  }
 
   await db
     .update(reviewRounds)
-    .set({ submissionVersionId: newVersionId })
-    .where(and(eq(reviewRounds.submissionId, sub.id), ne(reviewRounds.status, "released")));
+    .set({ submissionVersionId: targetVersionId })
+    .where(and(eq(reviewRounds.submissionId, after.id), ne(reviewRounds.status, "released")));
 }
 
 let ensureSubmissionUpdateColumnsPromise: Promise<void> | null = null;
