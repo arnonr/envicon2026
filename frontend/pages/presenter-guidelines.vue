@@ -116,7 +116,7 @@ const copyByLocale: Record<Locale, PageCopy> = {
         ],
         guidelinesHeading: "คำแนะนำสำหรับผู้นำเสนอ",
         guidelines: [
-          "จัดเตรียมโปสเตอร์ให้มีเนื้อหาครบถ้วน ถูกต้อง อ่านง่าย และมีการจัดวางองค์ประกอบอย่างเหมาะสม",
+          "จัดเตรียมโปสเตอร์ให้มีเนื้อหาครบถ้วน ถูกต้อง อ่านง่าย และมีการจัดวางองค์ประกอบอย่างเหมาะสม ขนาด A0",
           "สรุปประเด็นสำคัญของงานวิจัยให้กระชับและสามารถสื่อสารได้ภายในเวลาที่กำหนด",
           "เน้นวัตถุประสงค์ ระเบียบวิธีวิจัย ผลการศึกษา ข้อสรุป และผลกระทบของงานวิจัย",
           "เตรียมพร้อมอธิบายรายละเอียดเพิ่มเติมและตอบคำถามของคณะกรรมการ",
@@ -203,7 +203,7 @@ const copyByLocale: Record<Locale, PageCopy> = {
         ],
         guidelinesHeading: "Guidelines for Presenters",
         guidelines: [
-          "Ensure that your poster is scientifically accurate, well-organized, easy to read, and visually clear.",
+          "Ensure that your poster is scientifically accurate, well-organized, easy to read, and visually clear (A0 size).",
           "Present the key points of your research concisely within the allocated time.",
           "Highlight the research objectives, methodology, findings, conclusions, and potential impact.",
           "Be prepared to elaborate on your research and respond to questions from the evaluation committee.",
