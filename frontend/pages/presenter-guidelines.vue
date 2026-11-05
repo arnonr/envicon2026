@@ -116,7 +116,9 @@ const copyByLocale: Record<Locale, PageCopy> = {
         ],
         guidelinesHeading: "คำแนะนำสำหรับผู้นำเสนอ",
         guidelines: [
-          "จัดเตรียมโปสเตอร์ให้มีเนื้อหาครบถ้วน ถูกต้อง อ่านง่าย และมีการจัดวางองค์ประกอบอย่างเหมาะสม ขนาด A0",
+          "จัดเตรียมโปสเตอร์ขนาด A0 แนวตั้ง (Portrait) ขนาด 84.1 x 118.9 ซม. ให้มีเนื้อหาครบถ้วน ถูกต้อง อ่านง่าย และมีการจัดวางองค์ประกอบอย่างเหมาะสม",
+          "ผู้นำเสนอสามารถเริ่มติดโปสเตอร์ได้ในวันที่ 12 พฤศจิกายน 2569 เวลา 08:00 น. เป็นต้นไป",
+          "สามารถปลดและเก็บโปสเตอร์ได้ในวันที่ 13 พฤศจิกายน 2569 เวลา 16:00 น.",
           "สรุปประเด็นสำคัญของงานวิจัยให้กระชับและสามารถสื่อสารได้ภายในเวลาที่กำหนด",
           "เน้นวัตถุประสงค์ ระเบียบวิธีวิจัย ผลการศึกษา ข้อสรุป และผลกระทบของงานวิจัย",
           "เตรียมพร้อมอธิบายรายละเอียดเพิ่มเติมและตอบคำถามของคณะกรรมการ",
@@ -203,7 +205,9 @@ const copyByLocale: Record<Locale, PageCopy> = {
         ],
         guidelinesHeading: "Guidelines for Presenters",
         guidelines: [
-          "Ensure that your poster is scientifically accurate, well-organized, easy to read, and visually clear (A0 size).",
+          "Prepare your poster in A0 size, Portrait orientation (84.1 × 118.9 cm), ensuring that it is scientifically accurate, well-organized, easy to read, and visually clear.",
+          "Poster mounting begins on November 12, 2026 from 08:00 onward.",
+          "Poster removal takes place on November 13, 2026 at 16:00.",
           "Present the key points of your research concisely within the allocated time.",
           "Highlight the research objectives, methodology, findings, conclusions, and potential impact.",
           "Be prepared to elaborate on your research and respond to questions from the evaluation committee.",
@@ -382,6 +386,27 @@ const currentCopy = computed(() => copyByLocale[lang.value]);
                   </div>
                 </li>
               </ol>
+            </div>
+
+            <!-- Poster Schedule Highlight (only on poster section) -->
+            <div
+              v-if="section.id === 'poster'"
+              class="mt-6 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 text-xs sm:text-sm"
+            >
+              <div class="flex items-center gap-2 font-bold text-sky-900 mb-2">
+                <UIcon name="i-heroicons-calendar-days" class="h-5 w-5 text-sky-600" />
+                <span>{{ lang === 'th' ? 'กำหนดการติดและเก็บโปสเตอร์' : 'Poster Setup & Removal Schedule' }}</span>
+              </div>
+              <div class="grid gap-2 sm:grid-cols-2 text-stone-700">
+                <div class="flex items-start gap-2">
+                  <span class="font-semibold text-sky-800 shrink-0">{{ lang === 'th' ? '📌 ติดโปสเตอร์:' : '📌 Setup:' }}</span>
+                  <span>{{ lang === 'th' ? '12 พ.ย. 2569 เวลา 08:00 น. เป็นต้นไป' : 'Nov 12, 2026 from 08:00 onward' }}</span>
+                </div>
+                <div class="flex items-start gap-2">
+                  <span class="font-semibold text-rose-800 shrink-0">{{ lang === 'th' ? '📦 เก็บโปสเตอร์:' : '📦 Removal:' }}</span>
+                  <span>{{ lang === 'th' ? '13 พ.ย. 2569 เวลา 16:00 น.' : 'Nov 13, 2026 at 16:00' }}</span>
+                </div>
+              </div>
             </div>
 
             <!-- Presenter Guidelines -->
