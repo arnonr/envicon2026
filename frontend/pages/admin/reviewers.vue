@@ -228,6 +228,30 @@ async function confirmResetPassword() {
   await fetchReviewers();
 }
 
+const exporting = ref(false);
+
+async function exportReviewers() {
+  exporting.value = true;
+  const { data, error } = await handleApiCall(() =>
+    $fetch<Blob>(`${apiBase}/admin/reviewers/export`, {
+      headers: headers.value,
+      responseType: "blob",
+    }),
+  );
+  exporting.value = false;
+  if (error) return showError(error);
+
+  const url = URL.createObjectURL(data!);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `envicon-reviewers-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showSuccess("ดาวน์โหลดไฟล์ Excel สำเร็จ");
+}
+
 onMounted(fetchReviewers);
 </script>
 
@@ -238,7 +262,19 @@ onMounted(fetchReviewers);
         <h1 class="text-2xl font-bold text-gray-900">จัดการผู้รีวิว</h1>
         <p class="text-sm text-gray-500">สร้างบัญชี กำหนดสาขาความเชี่ยวชาญ และติดตามภาระงาน</p>
       </div>
-      <UButton color="gray" variant="ghost" to="/admin">กลับแผงผู้ดูแล</UButton>
+      <div class="flex items-center gap-2">
+        <UButton
+          icon="i-heroicons-arrow-down-tray"
+          color="emerald"
+          variant="soft"
+          :loading="exporting"
+          :disabled="loading || exporting || reviewers.length === 0"
+          @click="exportReviewers"
+        >
+          Export Excel
+        </UButton>
+        <UButton color="gray" variant="ghost" to="/admin">กลับแผงผู้ดูแล</UButton>
+      </div>
     </div>
 
     <div class="grid lg:grid-cols-[360px_1fr] gap-6">
