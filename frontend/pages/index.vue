@@ -859,6 +859,13 @@ const organizers = [
     logo: "https://www.thaihealth.or.th/logo.png",
     logoClass: "from-orange-400 to-emerald-400 text-white",
   },
+  {
+    mark: "วศ.",
+    name: "กรมวิทยาศาสตร์บริการ",
+    role: "Department of Science Service",
+    logo: `${appBaseUrl}/images/dss-logo.jpg`,
+    logoClass: "from-lime-500 to-amber-400 text-white",
+  },
 ];
 
 const supportingSponsors = [
