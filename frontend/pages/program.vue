@@ -24,7 +24,18 @@
             <tbody class="divide-y divide-gray-200">
               <tr v-for="item in day.items" :key="`${day.date}-${item.time}`" class="align-top">
                 <td class="px-5 py-3 text-gray-700 whitespace-nowrap">{{ item.time }} น.</td>
-                <td class="px-5 py-3 text-gray-800">{{ item.detail }}</td>
+                <td class="px-5 py-3 text-gray-800">
+                  <div>{{ item.detail }}</div>
+                  <div v-if="item.link" class="mt-2">
+                    <NuxtLink
+                      :to="item.link"
+                      class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-meadow-50 text-meadow-800 border border-meadow-200 hover:bg-meadow-100 transition-colors shadow-sm"
+                    >
+                      <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5 text-meadow-600" />
+                      {{ item.linkText || 'ดูรายละเอียด' }}
+                    </NuxtLink>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -62,7 +73,12 @@ const schedule = [
       { time: "10:15 – 10:30", detail: "พักรับประทานอาหารว่าง" },
       { time: "10:30 – 12:00", detail: "การนำเสนอผลงานแบบบรรยาย (ช่วงที่ 4)" },
       { time: "12:00 – 13:00", detail: "รับประทานอาหารกลางวัน" },
-      { time: "13:00 – 15:00", detail: "เยี่ยมชมอุทยานเทคโนโลยี มจพ." },
+      {
+        time: "13:00 – 15:00",
+        detail: "กิจกรรมศึกษาดูงาน 5 ศูนย์นวัตกรรมและเทคโนโลยี มจพ.",
+        link: "/study-tour",
+        linkText: "ดูรายละเอียดสถานที่ดูงานทั้ง 5 ศูนย์ →",
+      },
       { time: "15:00 – 15:15", detail: "พักรับประทานอาหารว่าง" },
       { time: "15:15 – 16:00", detail: "พิธีมอบประกาศนียบัตรและพิธีปิดการ" },
     ],

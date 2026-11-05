@@ -18,6 +18,7 @@ const navItems: NavItem[] = [
       { label: "เกี่ยวกับการประชุม", to: "/about" },
       { label: "คณะกรรมการ", to: "/committee" },
       { label: "ผู้สนับสนุน", to: "/sponsorship" },
+      { label: "สถานที่ศึกษาดูงาน", to: "/study-tour" },
     ],
   },
   { label: "กำหนดการ", to: "/important-dates" },
