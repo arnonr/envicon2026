@@ -225,8 +225,8 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         totalCount: assigned.length,
         completedCount: completed.length,
         pendingCount: pending.length,
-        completedTitles: completed.map((r) => r.title.trim()).filter(Boolean).join(", "),
-        pendingTitles: pending.map((r) => r.title.trim()).filter(Boolean).join(", "),
+        completedTitles: completed.map((r) => (r.title ?? "").trim()).filter(Boolean).join(", "),
+        pendingTitles: pending.map((r) => (r.title ?? "").trim()).filter(Boolean).join(", "),
       });
     });
 
@@ -240,13 +240,13 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF047857" } };
       cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     });
-    for (const key of ["completedTitles", "pendingTitles", "affiliation"] as const) {
-      worksheet.getColumn(key).alignment = { vertical: "top", wrapText: true };
-    }
     worksheet.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return;
       row.alignment = { vertical: "top" };
     });
+    for (const key of ["completedTitles", "pendingTitles", "affiliation"] as const) {
+      worksheet.getColumn(key).alignment = { vertical: "top", wrapText: true };
+    }
 
     const file = await workbook.xlsx.writeBuffer();
     const filename = `envicon-reviewers-${new Date().toISOString().slice(0, 10)}.xlsx`;
