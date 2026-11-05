@@ -1,6 +1,4 @@
 <script setup lang="ts">
-const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
-
 useHead({
   title: "สถานที่ศึกษาดูงาน — TSHE-CON 2026",
   meta: [
