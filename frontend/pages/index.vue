@@ -123,24 +123,24 @@
           <div class="relative px-8 py-12 sm:py-16 text-center text-white">
             <div class="inline-flex items-center gap-2 bg-rose-500/85 backdrop-blur-md rounded-full px-4 py-1.5 mb-5 border border-rose-300/40 shadow-lg">
               <span class="w-2 h-2 rounded-full bg-white animate-ping" />
-              <span class="text-xs font-bold tracking-wide uppercase text-white">ขยายเวลาเปิดรับสมัคร</span>
+              <span class="text-xs font-bold tracking-wide uppercase text-white">กำหนดการสำคัญ</span>
             </div>
             <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
-              ขยายเวลาเปิดรับบทคัดย่อถึง <span class="text-amber-200 drop-shadow-md">30 ตุลาคม 2569</span>
+              ปิดรับบทความฉบับเต็มเพื่อลง Proceeding <span class="text-amber-200 drop-shadow-md">20 พฤศจิกายน 2569</span>
             </h2>
             <p class="text-white/90 mb-7 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
-              ส่งบทคัดย่อของคุณเพื่อเข้าร่วมนำเสนอผลงานในการประชุมวิชาการระดับชาติ TSHE-CON 2026
+              สำหรับผู้นำเสนอผลงานที่ผ่านการพิจารณา สามารถนำส่งบทความฉบับสมบูรณ์ (Full Paper) เพื่อตีพิมพ์ในรายงานสืบเนื่องจากการประชุมวิชาการได้ถึงวันที่ 20 พ.ย. 2569
             </p>
             <div class="flex flex-wrap items-center justify-center gap-4">
               <button @click="goToAuthorDashboard"
                 class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-meadow-800 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-xl transition-all duration-300">
-                ส่งบทคัดย่อเลย →
+                เข้าสู่ระบบส่งบทความ →
               </button>
-              <a href="#poster-section"
+              <NuxtLink to="/presenter-guidelines"
                 class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 text-white font-semibold hover:bg-white/25 hover:scale-[1.03] transition-all duration-300">
-                <UIcon name="i-heroicons-photo" class="w-5 h-5 text-meadow-200" />
-                ดูโปสเตอร์ประชาสัมพันธ์
-              </a>
+                <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-meadow-200" />
+                คำแนะนำสำหรับผู้นำเสนอ
+              </NuxtLink>
             </div>
           </div>
         </div>
@@ -230,13 +230,13 @@
                     <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">
                       ประกาศสำคัญ
                     </span>
-                    <span class="text-xs font-semibold text-rose-800">ขยายเวลารับบทคัดย่อ</span>
+                    <span class="text-xs font-semibold text-rose-800">บทความเพื่อลง Proceeding</span>
                   </div>
                   <h3 class="text-lg sm:text-xl font-bold text-stone-900 leading-snug">
-                    ขยายเวลาเปิดรับบทคัดย่อ: วันนี้ — 30 ตุลาคม 2569
+                    ปิดรับบทความฉบับเต็มเพื่อลง Proceeding: 20 พฤศจิกายน 2569
                   </h3>
                   <p class="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
-                    เปิดโอกาสให้นักวิจัย คณาจารย์ นิสิตและนักศึกษา ส่งผลงานเข้าร่วมพิจารณาในการประชุมวิชาการระดับชาติ ครั้งที่ 5
+                    เปิดรับบทความฉบับสมบูรณ์ (Full Paper) สำหรับผู้ผ่านการพิจารณาเพื่อตีพิมพ์ในรายงานสืบเนื่องจากการประชุมวิชาการหลังจบการนำเสนอผลงาน
                   </p>
                 </div>
               </div>
@@ -250,9 +250,9 @@
               </h4>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-1">
-                <div class="p-3 rounded-xl bg-rose-50/80 border border-rose-200">
-                  <div class="text-[11px] font-bold uppercase tracking-wider text-rose-700">ขยายเวลารับบทคัดย่อ</div>
-                  <div class="font-bold text-stone-900 mt-0.5">1 เม.ย. — 30 ต.ค. 69</div>
+                <div class="p-3 rounded-xl bg-amber-50/80 border border-amber-300">
+                  <div class="text-[11px] font-bold uppercase tracking-wider text-amber-800">ปิดรับ Proceeding</div>
+                  <div class="font-bold text-stone-900 mt-0.5">20 พ.ย. 69</div>
                 </div>
                 <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-stone-500">ประกาศผลพิจารณาบทคัดย่อ</div>
@@ -792,8 +792,7 @@ const timeline = [
   {
     title: "เปิดรับบทคัดย่อ (Abstract Submission)",
     date: "1 เมษายน — 30 ตุลาคม 2569",
-    highlight: true,
-    badge: "ขยายเวลาถึง 30 ต.ค. 69",
+    highlight: false,
     icon: "i-heroicons-pencil-square"
   },
   {
@@ -817,8 +816,15 @@ const timeline = [
   {
     title: "วันจัดงานประชุม",
     date: "12 — 13 พฤศจิกายน 2569",
-    highlight: true,
+    highlight: false,
     icon: "i-heroicons-academic-cap"
+  },
+  {
+    title: "ปิดรับบทความฉบับเต็มเพื่อลง Proceeding",
+    date: "20 พฤศจิกายน 2569",
+    highlight: true,
+    badge: "ปิดรับ 20 พ.ย. 69",
+    icon: "i-heroicons-document-check"
   },
 ];
 

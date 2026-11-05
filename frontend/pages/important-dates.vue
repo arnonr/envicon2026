@@ -3,10 +3,9 @@ const dates = [
   {
     title: "เปิดรับบทคัดย่อ (Abstract Submission)",
     date: "1 เมษายน — 30 ตุลาคม 2569",
-    badge: "ขยายเวลาถึง 30 ต.ค. 69",
     icon: "i-heroicons-pencil-square",
     color: "primary",
-    active: true,
+    active: false,
   },
   {
     title: "ประกาศผลการพิจารณาบทคัดย่อ",
@@ -36,6 +35,14 @@ const dates = [
     color: "primary",
     active: false,
     link: "/program",
+  },
+  {
+    title: "ปิดรับบทความฉบับเต็มเพื่อลง Proceeding",
+    date: "20 พฤศจิกายน 2569",
+    badge: "ปิดรับ 20 พ.ย. 69",
+    icon: "i-heroicons-document-check",
+    color: "accent",
+    active: true,
   },
 ];
 
@@ -69,7 +76,7 @@ const hotels = [
         <p class="text-gray-500 text-lg">Important Dates</p>
       </div>
 
-      <!-- Extension Announcement Banner -->
+      <!-- Proceeding Announcement Banner -->
       <div class="mb-10 p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-rose-50 to-amber-50 border-2 border-amber-300/80 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
           <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-rose-500/20">
@@ -77,22 +84,22 @@ const hotels = [
           </div>
           <div>
             <div class="inline-flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">กำหนดการการรับสมัครรอบสุดท้าย</span>
-              <span class="text-xs font-semibold text-rose-700">ขยายเวลาเปิดรับบทคัดย่อ</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">กำหนดการสำคัญ</span>
+              <span class="text-xs font-semibold text-rose-700">บทความเพื่อลง Proceeding</span>
             </div>
             <p class="font-bold text-stone-900 text-base sm:text-lg">
-              เปิดรับบทคัดย่อ (Abstract) ถึงวันที่ <span class="text-rose-600 underline decoration-rose-300 underline-offset-4">30 ตุลาคม 2569</span>
+              ปิดรับบทความฉบับเต็มเพื่อลง Proceeding วันที่ <span class="text-rose-600 underline decoration-rose-300 underline-offset-4">20 พฤศจิกายน 2569</span>
             </p>
-            <p class="text-xs text-stone-600 mt-0.5">ผู้ที่สนใจสามารถส่งบทคัดย่อผ่านระบบออนไลน์ได้จนถึงวันดังกล่าว</p>
+            <p class="text-xs text-stone-600 mt-0.5">เปิดรับบทความฉบับสมบูรณ์ (Full Paper) สำหรับผู้ผ่านการพิจารณาเพื่อตีพิมพ์ใน Proceeding หลังจบการนำเสนอ</p>
           </div>
         </div>
         <UButton
-          to="/submit"
+          to="/presenter-guidelines"
           color="primary"
           size="md"
           class="flex-shrink-0 self-end sm:self-center font-semibold shadow-md"
         >
-          ส่งบทคัดย่อเลย
+          คำแนะนำผู้นำเสนอ
           <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
         </UButton>
       </div>
