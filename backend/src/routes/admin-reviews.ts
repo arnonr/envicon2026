@@ -1,4 +1,5 @@
 import { Elysia, t } from "elysia";
+import ExcelJS from "exceljs";
 import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { db } from "../db";
 import {
@@ -147,9 +148,115 @@ async function ensureCurrentSubmissionVersion(submission: typeof submissions.$in
   return version;
 }
 
+function splitReviewerName(fullName: string): { firstName: string; lastName: string } {
+  const trimmed = fullName.trim().replace(/\s+/g, " ");
+  if (!trimmed) return { firstName: "", lastName: "" };
+  const lastSpaceIndex = trimmed.lastIndexOf(" ");
+  if (lastSpaceIndex === -1) {
+    return { firstName: trimmed, lastName: "" };
+  }
+  return {
+    firstName: trimmed.slice(0, lastSpaceIndex).trim(),
+    lastName: trimmed.slice(lastSpaceIndex + 1).trim(),
+  };
+}
+
 export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
   .use(requireAdmin)
   .get("/reviewers", async () => ok(await reviewerDirectory()))
+  .get("/reviewers/export", async () => {
+    const profiles = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        affiliation: users.affiliation,
+      })
+      .from(reviewerProfiles)
+      .innerJoin(users, eq(reviewerProfiles.userId, users.id))
+      .orderBy(users.name);
+
+    const profileIds = profiles.map((p) => p.id);
+    const reviewerReviews = profileIds.length
+      ? await db
+          .select({
+            reviewerId: reviews.reviewerId,
+            status: reviews.status,
+            title: submissions.title,
+          })
+          .from(reviews)
+          .innerJoin(submissions, eq(reviews.submissionId, submissions.id))
+          .where(inArray(reviews.reviewerId, profileIds))
+          .orderBy(reviews.assignedAt)
+      : [];
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "TSHE-CON 2026";
+    workbook.created = new Date();
+    const worksheet = workbook.addWorksheet("ผู้รีวิว", {
+      views: [{ state: "frozen", ySplit: 1 }],
+    });
+
+    worksheet.columns = [
+      { header: "ลำดับ", key: "sequence", width: 9 },
+      { header: "ชื่อ", key: "firstName", width: 26 },
+      { header: "นามสกุล", key: "lastName", width: 24 },
+      { header: "ต้นสังกัด", key: "affiliation", width: 34 },
+      { header: "อีเมล", key: "email", width: 30 },
+      { header: "จำนวนงานที่ประเมินทั้งหมด", key: "totalCount", width: 24 },
+      { header: "จำนวนงานที่ประเมินแล้ว", key: "completedCount", width: 22 },
+      { header: "จำนวนงานที่ยังไม่ประเมิน", key: "pendingCount", width: 24 },
+      { header: "รายชื่องานที่ประเมินแล้ว", key: "completedTitles", width: 55 },
+      { header: "รายชื่องานที่ยังไม่ประเมิน", key: "pendingTitles", width: 55 },
+    ];
+
+    profiles.forEach((profile, index) => {
+      const { firstName, lastName } = splitReviewerName(profile.name);
+      const assigned = reviewerReviews.filter((r) => r.reviewerId === profile.id);
+      const completed = assigned.filter((r) => r.status === "completed");
+      const pending = assigned.filter((r) => r.status !== "completed");
+
+      worksheet.addRow({
+        sequence: index + 1,
+        firstName,
+        lastName,
+        affiliation: profile.affiliation ?? "",
+        email: profile.email,
+        totalCount: assigned.length,
+        completedCount: completed.length,
+        pendingCount: pending.length,
+        completedTitles: completed.map((r) => r.title.trim()).filter(Boolean).join(", "),
+        pendingTitles: pending.map((r) => r.title.trim()).filter(Boolean).join(", "),
+      });
+    });
+
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: worksheet.columns.length },
+    };
+    worksheet.getRow(1).height = 28;
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF047857" } };
+      cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    });
+    for (const key of ["completedTitles", "pendingTitles", "affiliation"] as const) {
+      worksheet.getColumn(key).alignment = { vertical: "top", wrapText: true };
+    }
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      row.alignment = { vertical: "top" };
+    });
+
+    const file = await workbook.xlsx.writeBuffer();
+    const filename = `envicon-reviewers-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    return new Response(new Uint8Array(file), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
+  })
   .post(
     "/reviewers",
     async ({ body, set }) => {
