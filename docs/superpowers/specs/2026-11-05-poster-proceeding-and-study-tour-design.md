@@ -1,6 +1,6 @@
 # Poster Guidelines, Proceeding Deadline & Technical Study Tour — Design Spec
 
-**Date:** 2026-11-05  
+**Date:** 2026-11-05
 **Topic:** อัปเดตข้อมูลโปสเตอร์, ประกาศปิดรับ Proceeding และเพิ่มหน้าแนะนำสถานที่ศึกษาดูงาน 5 ศูนย์
 
 ---
