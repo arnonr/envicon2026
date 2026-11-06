@@ -886,14 +886,6 @@ const organizers = [
     logoClass: "from-amber-300 to-orange-400 text-meadow-950",
   },
   {
-    mark: "TP",
-    name: "อุทยานเทคโนโลยี",
-    role: "Technology Park",
-    logo: "https://technopark.kmutnb.ac.th/static/uploads/froala/images/2023-8-22-t-1695347183511.png",
-    logoSize: "large",
-    logoClass: "from-sky-500 to-cyan-400 text-white",
-  },
-  {
     mark: "สสส",
     name: "สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ",
     role: "Health Promotion Partner",
@@ -906,6 +898,14 @@ const organizers = [
     role: "Department of Science Service",
     logo: `${appBaseUrl}/images/dss-logo.jpg`,
     logoClass: "from-lime-500 to-amber-400 text-white",
+  },
+  {
+    mark: "TP",
+    name: "อุทยานเทคโนโลยี",
+    role: "Technology Park",
+    logo: "https://technopark.kmutnb.ac.th/static/uploads/froala/images/2023-8-22-t-1695347183511.png",
+    logoSize: "large",
+    logoClass: "from-sky-500 to-cyan-400 text-white",
   },
 ];
 
