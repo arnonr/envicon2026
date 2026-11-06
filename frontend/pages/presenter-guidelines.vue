@@ -39,6 +39,8 @@ interface PageCopy {
 }
 
 const lang = ref<Locale>("th");
+const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+const programPdfUrl = `${appBaseUrl}/downloads/TSHE-CON-2026-Program.pdf`;
 
 const copyByLocale: Record<Locale, PageCopy> = {
   th: {
@@ -290,6 +292,40 @@ const currentCopy = computed(() => copyByLocale[lang.value]);
 
     <!-- Main Cards -->
     <section class="relative mx-auto max-w-6xl px-6 py-12 lg:px-8 lg:py-16">
+      <!-- Program & Schedule Quick Banner -->
+      <div class="mb-10 rounded-2xl border-2 border-meadow-300 bg-gradient-to-r from-meadow-50 via-white to-sky-50 p-5 sm:p-6 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-start sm:items-center gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-meadow-600 text-white shadow-md shadow-meadow-600/20">
+            <UIcon name="i-heroicons-calendar-days" class="h-6 w-6" />
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-stone-900">
+              {{ lang === 'th' ? 'ประกาศตารางการนำเสนอผลงาน (วันที่ 12–13 พฤศจิกายน 2569)' : 'Presentation Schedule & Room Assignments (Nov 12–13, 2026)' }}
+            </h2>
+            <p class="text-xs sm:text-sm text-stone-600 mt-0.5">
+              {{ lang === 'th' ? 'ตรวจสอบรหัสผลงาน วัน-เวลา ห้องนำเสนอ และรายชื่อผู้ประเมิน หรือดาวน์โหลดกำหนดการฉบับเต็ม (PDF)' : 'Check your paper code, presentation time, room assignment, or download the full Conference Program (PDF).' }}
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <NuxtLink
+            to="/program"
+            class="inline-flex items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-meadow-800 transition-colors shadow-sm"
+          >
+            <UIcon name="i-heroicons-magnifying-glass" class="h-4 w-4" />
+            {{ lang === 'th' ? 'ดูตารางนำเสนอผลงาน' : 'View Program Schedule' }}
+          </NuxtLink>
+          <a
+            :href="programPdfUrl"
+            download="TSHE-CON-2026-Program.pdf"
+            class="inline-flex items-center gap-2 rounded-xl border border-meadow-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-meadow-800 hover:bg-meadow-50 transition-colors shadow-sm"
+          >
+            <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4 text-meadow-600" />
+            {{ lang === 'th' ? 'ดาวน์โหลด PDF' : 'Download PDF' }}
+          </a>
+        </div>
+      </div>
+
       <div class="grid gap-8 lg:grid-cols-2">
         <article
           v-for="section in currentCopy.sections"

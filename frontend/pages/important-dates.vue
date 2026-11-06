@@ -1,4 +1,7 @@
 <script setup lang="ts">
+const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
+const programPdfUrl = `${appBaseUrl}/downloads/TSHE-CON-2026-Program.pdf`;
+
 const dates = [
   {
     title: "เปิดรับบทคัดย่อ (Abstract Submission)",
@@ -27,6 +30,8 @@ const dates = [
     icon: "i-heroicons-calendar-days",
     color: "accent",
     active: false,
+    link: "/program",
+    downloadPdf: true,
   },
   {
     title: "วันจัดงานประชุม",
@@ -35,6 +40,7 @@ const dates = [
     color: "primary",
     active: false,
     link: "/program",
+    downloadPdf: true,
   },
   {
     title: "ปิดรับบทความฉบับเต็มเพื่อลง Proceeding",
@@ -132,17 +138,27 @@ const hotels = [
                   </span>
                 </div>
                 <p class="text-primary-600 font-semibold mt-1">{{ item.date }}</p>
-                <UButton
-                  v-if="item.link"
-                  :to="item.link"
-                  color="primary"
-                  variant="soft"
-                  size="md"
-                  class="mt-4"
-                >
-                  ดูกำหนดการประชุม
-                  <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
-                </UButton>
+                <div v-if="item.link || item.downloadPdf" class="mt-4 flex flex-wrap items-center gap-3">
+                  <UButton
+                    v-if="item.link"
+                    :to="item.link"
+                    color="primary"
+                    variant="solid"
+                    size="md"
+                  >
+                    ดูโปรแกรมการประชุม
+                    <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
+                  </UButton>
+                  <a
+                    v-if="item.downloadPdf"
+                    :href="programPdfUrl"
+                    download="TSHE-CON-2026-Program.pdf"
+                    class="inline-flex items-center gap-2 rounded-lg border border-meadow-300 bg-meadow-50 px-4 py-2 text-sm font-semibold text-meadow-800 hover:bg-meadow-100 transition-colors"
+                  >
+                    <UIcon name="i-heroicons-arrow-down-tray" class="w-4 h-4 text-meadow-600" />
+                    ดาวน์โหลดกำหนดการ (PDF)
+                  </a>
+                </div>
               </div>
             </UCard>
           </div>

@@ -136,6 +136,11 @@
                 class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-meadow-800 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-xl transition-all duration-300">
                 เข้าสู่ระบบส่งบทความ →
               </button>
+              <NuxtLink to="/program"
+                class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-400 text-meadow-950 font-bold hover:bg-amber-300 hover:scale-[1.03] shadow-xl transition-all duration-300">
+                <UIcon name="i-heroicons-calendar-days" class="w-5 h-5" />
+                ตารางการนำเสนอผลงาน
+              </NuxtLink>
               <NuxtLink to="/presenter-guidelines"
                 class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 text-white font-semibold hover:bg-white/25 hover:scale-[1.03] transition-all duration-300">
                 <UIcon name="i-heroicons-document-text" class="w-5 h-5 text-meadow-200" />
@@ -268,15 +273,31 @@
                 </div>
               </div>
 
-              <div class="p-3 rounded-xl bg-meadow-50 border border-meadow-200 flex items-center justify-between">
-                <div class="flex items-center gap-2">
+              <div class="p-3.5 rounded-xl bg-meadow-50 border border-meadow-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
                   <UIcon name="i-heroicons-academic-cap" class="w-5 h-5 text-meadow-700 shrink-0" />
                   <div>
-                    <span class="text-xs font-bold text-meadow-900">วันจัดงานประชุมวิชาการ</span>
+                    <span class="text-xs font-bold text-meadow-900">วันจัดงานประชุมวิชาการ (12 — 13 พ.ย. 69)</span>
                     <span class="text-xs text-meadow-700 block">ณ อาคาร 99 อุทยานเทคโนโลยี มจพ.</span>
                   </div>
                 </div>
-                <span class="text-sm font-bold text-meadow-900">12 — 13 พ.ย. 69</span>
+                <div class="flex flex-wrap items-center gap-2">
+                  <NuxtLink
+                    to="/program"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-meadow-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-meadow-800 transition-colors shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-calendar-days" class="w-3.5 h-3.5" />
+                    ดูโปรแกรมการประชุม
+                  </NuxtLink>
+                  <a
+                    :href="programPdfUrl"
+                    download="TSHE-CON-2026-Program.pdf"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-meadow-300 bg-white px-3 py-1.5 text-xs font-bold text-meadow-800 hover:bg-meadow-100 transition-colors shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5 text-meadow-600" />
+                    ดาวน์โหลด PDF
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -431,6 +452,23 @@
                   </span>
                 </div>
                 <div class="text-sm font-semibold" :class="item.highlight ? 'text-amber-800' : 'text-sky-900'">{{ item.date }}</div>
+                <div v-if="item.programLink" class="mt-2.5 flex flex-wrap items-center gap-2">
+                  <NuxtLink
+                    to="/program"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-meadow-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-meadow-800 transition-colors shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-calendar-days" class="w-3.5 h-3.5" />
+                    ดูตารางนำเสนอผลงาน
+                  </NuxtLink>
+                  <a
+                    :href="programPdfUrl"
+                    download="TSHE-CON-2026-Program.pdf"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-meadow-300 bg-white px-3 py-1.5 text-xs font-bold text-meadow-800 hover:bg-meadow-50 transition-colors shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5 text-meadow-600" />
+                    ดาวน์โหลดกำหนดการ (PDF)
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -666,6 +704,7 @@ const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
 const heroImage = `${appBaseUrl}/images/tshe-con-low-carbon-tech-hero-20260811.png`;
 const wellbeingImage = `${appBaseUrl}/images/tshe-con-wellbeing-family-20260811.png`;
 const posterImage = `${appBaseUrl}/images/poster-envicon2026.png`;
+const programPdfUrl = `${appBaseUrl}/downloads/TSHE-CON-2026-Program.pdf`;
 
 const authStore = useAuthStore();
 const showRegModal = ref(false);
@@ -811,12 +850,14 @@ const timeline = [
     title: "ประกาศโปรแกรมการนำเสนอผลงาน",
     date: "6 พฤศจิกายน 2569",
     highlight: false,
+    programLink: true,
     icon: "i-heroicons-calendar-days"
   },
   {
     title: "วันจัดงานประชุม",
     date: "12 — 13 พฤศจิกายน 2569",
     highlight: false,
+    programLink: true,
     icon: "i-heroicons-academic-cap"
   },
   {

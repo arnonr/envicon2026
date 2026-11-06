@@ -38,6 +38,16 @@ const documents = [
     accent: "from-rose-500 to-amber-400",
     downloadUrl: `${appBaseUrl}/images/poster-envicon2026.png`,
   },
+  {
+    number: "05",
+    title: "กำหนดการและตารางนำเสนอผลงาน",
+    titleEn: "Official Conference Program (12–13 Nov 2026)",
+    type: "Adobe PDF · .PDF",
+    icon: "i-heroicons-calendar-days",
+    accent: "from-meadow-500 to-teal-400",
+    downloadUrl: `${appBaseUrl}/downloads/TSHE-CON-2026-Program.pdf`,
+    viewOnlineUrl: "/program",
+  },
 ];
 </script>
 
@@ -113,15 +123,25 @@ const documents = [
                 <span class="h-2 w-2 rounded-full bg-emerald-400" />
                 พร้อมดาวน์โหลด
               </span>
-              <a
-                :href="document.downloadUrl"
-                :download="document.downloadUrl.split('/').pop()"
-                :aria-label="`ดาวน์โหลด ${document.title} รูปแบบ ${document.type}`"
-                class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-meadow-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-meadow-500 focus-visible:ring-offset-2"
-              >
-                ดาวน์โหลด
-                <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4" />
-              </a>
+              <div class="flex flex-wrap items-center gap-2">
+                <NuxtLink
+                  v-if="document.viewOnlineUrl"
+                  :to="document.viewOnlineUrl"
+                  class="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-meadow-200 bg-meadow-50 px-3.5 py-2.5 text-sm font-semibold text-meadow-800 transition-colors hover:bg-meadow-100"
+                >
+                  ดูบนเว็บ
+                  <UIcon name="i-heroicons-arrow-top-right-on-square" class="h-4 w-4" />
+                </NuxtLink>
+                <a
+                  :href="document.downloadUrl"
+                  :download="document.downloadUrl.split('/').pop()"
+                  :aria-label="`ดาวน์โหลด ${document.title} รูปแบบ ${document.type}`"
+                  class="inline-flex min-h-11 items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-meadow-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-meadow-500 focus-visible:ring-offset-2"
+                >
+                  ดาวน์โหลด
+                  <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4" />
+                </a>
+              </div>
             </div>
           </div>
         </article>

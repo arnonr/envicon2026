@@ -21,7 +21,13 @@ const navItems: NavItem[] = [
       { label: "สถานที่ศึกษาดูงาน", to: "/study-tour" },
     ],
   },
-  { label: "กำหนดการ", to: "/important-dates" },
+  {
+    label: "กำหนดการ",
+    children: [
+      { label: "โปรแกรมการประชุม (12–13 พ.ย.)", to: "/program" },
+      { label: "กำหนดการสำคัญและสถานที่", to: "/important-dates" },
+    ],
+  },
   { label: "คำแนะนำสำหรับผู้นำเสนอ", to: "/presenter-guidelines" },
   { label: "ดาวน์โหลด", to: "/guidelines" },
   { label: "ลงทะเบียน", to: "/registration" },
@@ -31,7 +37,7 @@ const navItems: NavItem[] = [
 const route = useRoute();
 const { isLoggedIn, user, logout } = useAuth();
 const mobileMenuOpen = ref(false);
-const aboutMenuOpen = ref(false);
+const openDropdownLabel = ref<string | null>(null);
 const dropdownContainer = ref<HTMLElement | HTMLElement[] | null>(null);
 
 const accountPath = computed(() =>
@@ -43,8 +49,12 @@ function isGroupActive(children?: NavChildItem[]) {
   return children.some((child) => route.path === child.to);
 }
 
+function toggleDropdown(label: string) {
+  openDropdownLabel.value = openDropdownLabel.value === label ? null : label;
+}
+
 function handleDocumentClick(event: MouseEvent) {
-  if (!aboutMenuOpen.value) return;
+  if (!openDropdownLabel.value) return;
   const target = event.target as Node | null;
   if (!target || !dropdownContainer.value) return;
   const containers = Array.isArray(dropdownContainer.value)
@@ -52,13 +62,13 @@ function handleDocumentClick(event: MouseEvent) {
     : [dropdownContainer.value];
   const clickedInside = containers.some((el) => el?.contains(target));
   if (!clickedInside) {
-    aboutMenuOpen.value = false;
+    openDropdownLabel.value = null;
   }
 }
 
 function handleKeydown(event: KeyboardEvent) {
   if (event.key === "Escape") {
-    aboutMenuOpen.value = false;
+    openDropdownLabel.value = null;
     mobileMenuOpen.value = false;
   }
 }
@@ -66,7 +76,7 @@ function handleKeydown(event: KeyboardEvent) {
 watch(
   () => route.fullPath,
   () => {
-    aboutMenuOpen.value = false;
+    openDropdownLabel.value = null;
     mobileMenuOpen.value = false;
   },
 );
@@ -103,21 +113,21 @@ onBeforeUnmount(() => {
                     ? 'text-meadow-600 font-semibold'
                     : 'text-gray-700 hover:text-meadow-600'
                 "
-                :aria-expanded="aboutMenuOpen"
+                :aria-expanded="openDropdownLabel === item.label"
                 aria-haspopup="true"
-                @click.stop="aboutMenuOpen = !aboutMenuOpen"
+                @click.stop="toggleDropdown(item.label)"
               >
                 <span>{{ item.label }}</span>
                 <UIcon
                   name="i-heroicons-chevron-down-20-solid"
                   class="w-4 h-4 transition-transform duration-200"
-                  :class="aboutMenuOpen ? 'rotate-180' : ''"
+                  :class="openDropdownLabel === item.label ? 'rotate-180' : ''"
                 />
               </button>
 
               <div
-                v-if="aboutMenuOpen"
-                class="absolute left-0 mt-1.5 w-48 rounded-xl bg-white py-1.5 shadow-lg ring-1 ring-black/5 border border-meadow-100 z-50"
+                v-if="openDropdownLabel === item.label"
+                class="absolute left-0 mt-1.5 w-56 rounded-xl bg-white py-1.5 shadow-lg ring-1 ring-black/5 border border-meadow-100 z-50"
               >
                 <NuxtLink
                   v-for="child in item.children"
@@ -125,7 +135,7 @@ onBeforeUnmount(() => {
                   :to="child.to"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-meadow-50 hover:text-meadow-700 transition-colors"
                   active-class="bg-meadow-50/80 text-meadow-700 font-semibold"
-                  @click="aboutMenuOpen = false"
+                  @click="openDropdownLabel = null"
                 >
                   {{ child.label }}
                 </NuxtLink>
