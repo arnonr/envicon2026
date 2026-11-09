@@ -430,7 +430,7 @@ export const oralSessionBlocks: Record<"oral1" | "oral2" | "oral3", OralSessionB
         sessionCode: "GREEN",
         roomFloor: "ชั้น 4",
         roomName: "ห้องประชุม วายุ",
-        chair: { name: "พ.อ.รศ.ดร.กิตติภพ พรหมดี", affiliation: "โรงเรียนนายร้อยพระจุลจอมเกล้า" },
+        chair: { name: "ผศ.ดร.วินัย มีแสง", affiliation: "มหาวิทยาลัยราชภัฏอุดรธานี" },
         coChair: { name: "ผศ.ดร.ชลกาญจน์ วงศ์ก่อทรัพย์", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
         slots: {
           "14:30 – 14:45": "GREEN-O-01",

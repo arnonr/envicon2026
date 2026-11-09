@@ -11,3 +11,4 @@ mysql_data/
 .DS_Store
 .claude/
 .playwright-mcp/
+book-of-abstracts-export/
