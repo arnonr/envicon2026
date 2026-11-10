@@ -211,7 +211,7 @@ export const day2Schedule: GeneralScheduleItem[] = [
     bullets: [
       { title: "ศูนย์การเรียนรู้การบำบัดน้ำเสียจากสารเคมี" },
       { title: "ศูนย์การเรียนรู้ระบบบำบัดน้ำเสียโรงอาหาร อาคาร 40 ปี มจพ." },
-      { title: "ศูนย์ปฏิบัติการเทคโนโลยีนวัตกรรมยานยนต์สมัยใหม่และระบบขนส่งทางราง อุทยานเทคโนโลยี มจพ." },
+      { title: "ศูนย์ปฏิบัติการสิ่งแวดล้อมและการอนุรักษ์พลังงาน อุทยานเทคโนโลยี มจพ." },
       { title: "ศูนย์ปฏิบัติการระบบอัตโนมัติและหุ่นยนต์ อุทยานเทคโนโลยี มจพ." },
       { title: "สถาบันเทคโนโลยีอวกาศนานาชาติเพื่อการพัฒนาเศรษฐกิจ อุทยานเทคโนโลยี มจพ." },
     ],
@@ -246,7 +246,7 @@ export const oralSessionBlocks: Record<"oral1" | "oral2" | "oral3", OralSessionB
         sessionSubtitle: "Environmental Science and Pollution Control; ENV",
         sessionCode: "ENV",
         roomFloor: "ชั้น 4",
-        roomName: "ห้องประชุม อัคนี",
+        roomName: "ห้องประชุม วายุ",
         chair: { name: "ผศ.ดร.ปานใจ สื่อประเสริฐสิทธิ์", affiliation: "มหาวิทยาลัยมหาสารคาม" },
         coChair: { name: "ผศ.ดร.จิราภรณ์ ยงพิศาลภพ", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
         slots: {
@@ -349,7 +349,7 @@ export const oralSessionBlocks: Record<"oral1" | "oral2" | "oral3", OralSessionB
         sessionSubtitle: "Environmental Science and Pollution Control; ENV",
         sessionCode: "ENV",
         roomFloor: "ชั้น 4",
-        roomName: "ห้องประชุม อัคนี",
+        roomName: "ห้องประชุม วายุ",
         chair: { name: "รศ.ดร.สุเมธ วงศ์เขียว", affiliation: "จุฬาลงกรณ์มหาวิทยาลัย" },
         coChair: { name: "ผศ.ดร.ธีรวุฒิ ภู่สันติสัมพันธ์", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
         slots: {
@@ -429,7 +429,7 @@ export const oralSessionBlocks: Record<"oral1" | "oral2" | "oral3", OralSessionB
         sessionSubtitle: "Sustainable Cities, Green Industry, and Environmental Management; GREEN",
         sessionCode: "GREEN",
         roomFloor: "ชั้น 4",
-        roomName: "ห้องประชุม วายุ",
+        roomName: "ห้องประชุม อัคนี",
         chair: { name: "ผศ.ดร.วินัย มีแสง", affiliation: "มหาวิทยาลัยราชภัฏอุดรธานี" },
         coChair: { name: "ผศ.ดร.ชลกาญจน์ วงศ์ก่อทรัพย์", affiliation: "มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ" },
         slots: {
