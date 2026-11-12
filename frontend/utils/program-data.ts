@@ -1,4 +1,5 @@
 export const PROGRAM_PDF_PATH = "/downloads/TSHE-CON-2026-Program.pdf";
+export const BOOK_OF_ABSTRACTS_PDF_PATH = "/downloads/TSHE-CON-2026-Book-of-Abstracts.pdf";
 
 export interface GeneralScheduleSubItem {
   title: string;

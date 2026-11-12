@@ -37,7 +37,7 @@ export { useComingSoon } from '../composables/useComingSoon';
 export { useFees } from '../composables/useFees';
 export { useModalConfirm } from '../composables/useModalConfirm';
 export { createEmptyAdminSubmissionFilters, buildAdminSubmissionSearchParams, countSecondaryAdminFilters, hasActiveAdminSubmissionFilters, createRequestSequenceGuard, AdminSubmissionFilterState } from '../utils/admin-submission-filters';
-export { PROGRAM_PDF_PATH, day1Schedule, day2Schedule, oralSessionBlocks, posterSessionBlock, sessionTracks, normalizePaperCode, allEnrichedPapers, getPaperByCode, GeneralScheduleSubItem, GeneralScheduleItem, OralRoomTrack, OralSessionBlock, PosterEvaluationColumn, PosterSessionBlock, PaperItem, SessionTrackData, EnrichedPaperItem } from '../utils/program-data';
+export { PROGRAM_PDF_PATH, BOOK_OF_ABSTRACTS_PDF_PATH, day1Schedule, day2Schedule, oralSessionBlocks, posterSessionBlock, sessionTracks, normalizePaperCode, allEnrichedPapers, getPaperByCode, GeneralScheduleSubItem, GeneralScheduleItem, OralRoomTrack, OralSessionBlock, PosterEvaluationColumn, PosterSessionBlock, PaperItem, SessionTrackData, EnrichedPaperItem } from '../utils/program-data';
 export { STATUS_LABEL, STATUS_COLOR, ROUND_OF, canEdit, canRevise, canCameraReady, canUpdateFiles, TERMINAL_STATUSES, SubmissionStatus } from '../utils/submission-status';
 export { defineShortcuts } from '../node_modules/@nuxt/ui/dist/runtime/composables/defineShortcuts';
 export { useProvideButtonGroup, useInjectButtonGroup } from '../node_modules/@nuxt/ui/dist/runtime/composables/useButtonGroup';

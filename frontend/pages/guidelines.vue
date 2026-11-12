@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { BOOK_OF_ABSTRACTS_PDF_PATH, PROGRAM_PDF_PATH } from "~/utils/program-data";
+
 const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
 
 const documents = [
@@ -41,11 +43,21 @@ const documents = [
   {
     number: "05",
     title: "กำหนดการและตารางนำเสนอผลงาน",
-    titleEn: "Official Conference Program (12–13 Nov 2026)",
+    titleEn: "Official Conference Program (18 Pages)",
     type: "Adobe PDF · .PDF",
     icon: "i-heroicons-calendar-days",
     accent: "from-meadow-500 to-teal-400",
-    downloadUrl: `${appBaseUrl}/downloads/TSHE-CON-2026-Program.pdf`,
+    downloadUrl: `${appBaseUrl}${PROGRAM_PDF_PATH}`,
+    viewOnlineUrl: "/program",
+  },
+  {
+    number: "06",
+    title: "เอกสารประกอบการประชุมและเล่มรวมบทคัดย่อ",
+    titleEn: "Conference Program & Book of Abstracts (156 Pages)",
+    type: "Adobe PDF · .PDF (5.6 MB)",
+    icon: "i-heroicons-book-open",
+    accent: "from-sky-500 to-indigo-400",
+    downloadUrl: `${appBaseUrl}${BOOK_OF_ABSTRACTS_PDF_PATH}`,
     viewOnlineUrl: "/program",
   },
 ];
@@ -71,7 +83,7 @@ const documents = [
             เอกสารดาวน์โหลด
           </h1>
           <p class="mt-5 max-w-xl text-sm leading-relaxed text-meadow-100/80 sm:text-base">
-            เอกสารสำคัญสำหรับการจัดทำบทความและส่งผลงานเข้าร่วมการประชุมวิชาการ
+            เอกสารประกอบการประชุมวิชาการ เล่มรวมบทคัดย่อ ตารางนำเสนอผลงาน และแบบฟอร์มบทความ
           </p>
         </div>
 

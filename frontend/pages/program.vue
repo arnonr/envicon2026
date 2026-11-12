@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  BOOK_OF_ABSTRACTS_PDF_PATH,
   PROGRAM_PDF_PATH,
   day1Schedule,
   day2Schedule,
@@ -14,6 +15,7 @@ import {
 
 const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
 const programPdfUrl = `${appBaseUrl}${PROGRAM_PDF_PATH}`;
+const bookOfAbstractsPdfUrl = `${appBaseUrl}${BOOK_OF_ABSTRACTS_PDF_PATH}`;
 
 type MainTab = "day1" | "day2" | "papers";
 const activeTab = ref<MainTab>("day1");
@@ -141,17 +143,25 @@ function getScheduleTypeBadge(type: string) {
           </div>
 
           <!-- Download & Quick Links Card -->
-          <div class="flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-md sm:min-w-[320px]">
+          <div class="flex flex-col gap-2.5 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-md sm:min-w-[340px]">
             <div class="text-xs font-semibold uppercase tracking-wider text-meadow-200">
-              เอกสารกำหนดการฉบับสมบูรณ์ (18 หน้า)
+              เอกสารการประชุมวิชาการ (PDF)
             </div>
+            <a
+              :href="bookOfAbstractsPdfUrl"
+              download="TSHE-CON-2026-Book-of-Abstracts.pdf"
+              class="inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-meadow-500 to-emerald-500 px-5 py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-meadow-950/40 transition-all hover:from-meadow-400 hover:to-emerald-400 hover:scale-[1.02]"
+            >
+              <UIcon name="i-heroicons-book-open" class="h-5 w-5 shrink-0" />
+              เล่มรวมบทคัดย่อฉบับเต็ม (156 หน้า)
+            </a>
             <a
               :href="programPdfUrl"
               download="TSHE-CON-2026-Program.pdf"
-              class="inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-meadow-500 to-emerald-500 px-5 py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-meadow-950/40 transition-all hover:from-meadow-400 hover:to-emerald-400 hover:scale-[1.02]"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-300/40 bg-sky-500/20 px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition-all hover:bg-sky-500/30"
             >
-              <UIcon name="i-heroicons-arrow-down-tray" class="h-5 w-5 shrink-0" />
-              ดาวน์โหลดกำหนดการฉบับเต็ม (PDF)
+              <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4 shrink-0 text-sky-200" />
+              เฉพาะกำหนดการและตารางนำเสนอ (18 หน้า)
             </a>
             <div class="grid grid-cols-2 gap-2 pt-1">
               <NuxtLink
@@ -1043,18 +1053,28 @@ function getScheduleTypeBadge(type: string) {
       </section>
 
       <!-- Bottom Note & Download Callout -->
-      <div class="mt-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-meadow-200 bg-white p-5 shadow-sm">
+      <div class="mt-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 rounded-2xl border border-meadow-200 bg-white p-5 shadow-sm">
         <p class="text-xs sm:text-sm text-stone-600">
-          <span class="font-bold text-stone-900 underline">หมายเหตุ:</span> กำหนดการอาจเปลี่ยนแปลงได้ตามความเหมาะสม ผู้นำเสนอสามารถดาวน์โหลดเอกสารกำหนดการฉบับเต็มเก็บไว้ตรวจสอบได้
+          <span class="font-bold text-stone-900 underline">หมายเหตุ:</span> กำหนดการอาจเปลี่ยนแปลงได้ตามความเหมาะสม สามารถดาวน์โหลดเล่มรวมบทคัดย่อฉบับเต็มหรือเฉพาะตารางกำหนดการเก็บไว้ตรวจสอบได้
         </p>
-        <a
-          :href="programPdfUrl"
-          download="TSHE-CON-2026-Program.pdf"
-          class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-meadow-800 transition-colors"
-        >
-          <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4" />
-          ดาวน์โหลดกำหนดการ (PDF)
-        </a>
+        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+          <a
+            :href="bookOfAbstractsPdfUrl"
+            download="TSHE-CON-2026-Book-of-Abstracts.pdf"
+            class="inline-flex items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-meadow-800 transition-colors"
+          >
+            <UIcon name="i-heroicons-book-open" class="h-4 w-4" />
+            เล่มรวมบทคัดย่อ (156 หน้า)
+          </a>
+          <a
+            :href="programPdfUrl"
+            download="TSHE-CON-2026-Program.pdf"
+            class="inline-flex items-center gap-2 rounded-xl border border-meadow-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-meadow-800 hover:bg-meadow-50 transition-colors"
+          >
+            <UIcon name="i-heroicons-arrow-down-tray" class="h-4 w-4 text-meadow-600" />
+            กำหนดการ (18 หน้า)
+          </a>
+        </div>
       </div>
     </div>
   </main>
