@@ -96,19 +96,17 @@ function getUrlExtension(url: string, fallbackExt: string): string {
   return fallbackExt;
 }
 
-async function findLatestSubmissionsExcel(explicitPath?: string): Promise<string> {
-  if (explicitPath) {
-    return path.resolve(explicitPath);
-  }
+async function findSubmissionsExcelFiles(explicitPath?: string): Promise<string[]> {
   const downloadsDir = path.join(os.homedir(), "Downloads");
-  const entries = await readdir(downloadsDir);
+  let entries: string[] = [];
+  try {
+    entries = await readdir(downloadsDir);
+  } catch {
+    entries = [];
+  }
   const candidates = entries
     .filter((name) => /^envicon-submissions-.*\.xlsx$/i.test(name))
     .map((name) => path.join(downloadsDir, name));
-
-  if (candidates.length === 0) {
-    throw new Error(`ไม่พบไฟล์ envicon-submissions-*.xlsx ใน ${downloadsDir}`);
-  }
 
   const withStats = await Promise.all(
     candidates.map(async (filePath) => ({
@@ -117,7 +115,17 @@ async function findLatestSubmissionsExcel(explicitPath?: string): Promise<string
     })),
   );
   withStats.sort((a, b) => b.mtimeMs - a.mtimeMs);
-  return withStats[0]!.filePath;
+  const sortedPaths = withStats.map((item) => item.filePath);
+
+  if (explicitPath) {
+    const resolvedExplicit = path.resolve(explicitPath);
+    return [resolvedExplicit, ...sortedPaths.filter((p) => p !== resolvedExplicit)];
+  }
+
+  if (sortedPaths.length === 0) {
+    throw new Error(`ไม่พบไฟล์ envicon-submissions-*.xlsx ใน ${downloadsDir}`);
+  }
+  return sortedPaths;
 }
 
 async function parseSubmissionsExcel(excelPath: string): Promise<SubmissionExcelRow[]> {
@@ -157,6 +165,29 @@ async function parseSubmissionsExcel(excelPath: string): Promise<SubmissionExcel
   return rows;
 }
 
+async function loadMergedSubmissionsRows(
+  excelPaths: string[],
+): Promise<{ rows: SubmissionExcelRow[]; usedSources: Array<{ filePath: string; added: number }> }> {
+  const byId = new Map<string, SubmissionExcelRow>();
+  const usedSources: Array<{ filePath: string; added: number }> = [];
+
+  for (const filePath of excelPaths) {
+    const fileRows = await parseSubmissionsExcel(filePath);
+    let added = 0;
+    for (const row of fileRows) {
+      if (!byId.has(row.id)) {
+        byId.set(row.id, row);
+        added++;
+      }
+    }
+    if (added > 0) {
+      usedSources.push({ filePath, added });
+    }
+  }
+
+  return { rows: Array.from(byId.values()), usedSources };
+}
+
 export function matchProgramPapersToRows(
   papers: EnrichedPaperItem[],
   rows: SubmissionExcelRow[],
@@ -185,15 +216,33 @@ export function matchProgramPapersToRows(
     }
   }
 
-  // Pass 2: Author name match among remaining papers
+  // Pass 2a: Primary authorName match among remaining papers
   for (const paper of papers) {
     if (matchedByCode.has(paper.code)) continue;
     const normAuthor = normalizeForMatch(stripHonorificPrefix(paper.author));
     const candidates = rows.filter(
       (r) =>
         !usedRowIds.has(r.id) &&
-        (normalizeForMatch(stripHonorificPrefix(r.authorName)).includes(normAuthor) ||
-          normalizeForMatch(r.creators).includes(normAuthor)),
+        normalizeForMatch(stripHonorificPrefix(r.authorName)).includes(normAuthor),
+    );
+
+    if (candidates.length === 1) {
+      const match = candidates[0]!;
+      usedRowIds.add(match.id);
+      matchedByCode.set(paper.code, {
+        row: match,
+        matchMethod: "author_match",
+        titleChanged: normalizeForMatch(match.title) !== normalizeForMatch(paper.title),
+      });
+    }
+  }
+
+  // Pass 2b: Co-authors (creators) match among any still-unmatched papers
+  for (const paper of papers) {
+    if (matchedByCode.has(paper.code)) continue;
+    const normAuthor = normalizeForMatch(stripHonorificPrefix(paper.author));
+    const candidates = rows.filter(
+      (r) => !usedRowIds.has(r.id) && normalizeForMatch(r.creators).includes(normAuthor),
     );
 
     if (candidates.length === 1) {
@@ -482,11 +531,12 @@ async function main() {
   const explicitExcel = process.argv[2];
   const outputRoot = process.argv[3] ? path.resolve(process.argv[3]) : DEFAULT_OUTPUT_DIR;
 
-  const excelPath = await findLatestSubmissionsExcel(explicitExcel);
-  console.log(`📄 อ่านไฟล์ข้อมูลจาก: ${excelPath}`);
-
-  const rows = await parseSubmissionsExcel(excelPath);
-  console.log(`📊 พบรายการส่งผลงานใน Excel ทั้งหมด ${rows.length} รายการ`);
+  const excelPaths = await findSubmissionsExcelFiles(explicitExcel);
+  const { rows, usedSources } = await loadMergedSubmissionsRows(excelPaths);
+  for (const src of usedSources) {
+    console.log(`📄 อ่านไฟล์ข้อมูลจาก: ${src.filePath} (+${src.added} รายการ)`);
+  }
+  console.log(`📊 รวมรายการส่งผลงานทั้งหมด ${rows.length} รายการ`);
 
   const matched = matchProgramPapersToRows(allEnrichedPapers, rows);
   console.log(`✅ จับคู่รหัสผลงานในโปรแกรมสำเร็จครบ ${matched.length} / ${allEnrichedPapers.length} เรื่อง`);
