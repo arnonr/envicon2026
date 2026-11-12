@@ -44,7 +44,7 @@ const documents = [
     number: "05",
     title: "กำหนดการและตารางนำเสนอผลงาน",
     titleEn: "Official Conference Program (18 Pages)",
-    type: "Adobe PDF · .PDF",
+    type: "Adobe PDF · .PDF (591 KB)",
     icon: "i-heroicons-calendar-days",
     accent: "from-meadow-500 to-teal-400",
     downloadUrl: `${appBaseUrl}${PROGRAM_PDF_PATH}`,
@@ -52,9 +52,9 @@ const documents = [
   },
   {
     number: "06",
-    title: "เอกสารประกอบการประชุมและเล่มรวมบทคัดย่อ",
-    titleEn: "Conference Program & Book of Abstracts (156 Pages)",
-    type: "Adobe PDF · .PDF (5.6 MB)",
+    title: "เล่มรวมบทคัดย่อ",
+    titleEn: "Book of Abstracts (158 Pages)",
+    type: "Adobe PDF · .PDF (40.4 MB)",
     icon: "i-heroicons-book-open",
     accent: "from-sky-500 to-indigo-400",
     downloadUrl: `${appBaseUrl}${BOOK_OF_ABSTRACTS_PDF_PATH}`,
@@ -83,7 +83,7 @@ const documents = [
             เอกสารดาวน์โหลด
           </h1>
           <p class="mt-5 max-w-xl text-sm leading-relaxed text-meadow-100/80 sm:text-base">
-            เอกสารประกอบการประชุมวิชาการ เล่มรวมบทคัดย่อ ตารางนำเสนอผลงาน และแบบฟอร์มบทความ
+            เล่มรวมบทคัดย่อ ตารางนำเสนอผลงาน และแบบฟอร์มบทความสำหรับการประชุมวิชาการ
           </p>
         </div>
 

@@ -302,7 +302,7 @@
                     class="inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-800 transition-colors shadow-sm"
                   >
                     <UIcon name="i-heroicons-book-open" class="w-3.5 h-3.5" />
-                    เล่มรวมบทคัดย่อ (156 หน้า)
+                    เล่มรวมบทคัดย่อ (158 หน้า)
                   </a>
                   <a
                     :href="programPdfUrl"
@@ -481,7 +481,7 @@
                     class="inline-flex items-center gap-1.5 rounded-lg bg-sky-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-800 transition-colors shadow-sm"
                   >
                     <UIcon name="i-heroicons-book-open" class="w-3.5 h-3.5" />
-                    เล่มรวมบทคัดย่อ (156 หน้า)
+                    เล่มรวมบทคัดย่อ (158 หน้า)
                   </a>
                   <a
                     :href="programPdfUrl"

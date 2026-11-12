@@ -153,7 +153,7 @@ function getScheduleTypeBadge(type: string) {
               class="inline-flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-meadow-500 to-emerald-500 px-5 py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-meadow-950/40 transition-all hover:from-meadow-400 hover:to-emerald-400 hover:scale-[1.02]"
             >
               <UIcon name="i-heroicons-book-open" class="h-5 w-5 shrink-0" />
-              เล่มรวมบทคัดย่อฉบับเต็ม (156 หน้า)
+              เล่มรวมบทคัดย่อฉบับเต็ม (158 หน้า)
             </a>
             <a
               :href="programPdfUrl"
@@ -1064,7 +1064,7 @@ function getScheduleTypeBadge(type: string) {
             class="inline-flex items-center gap-2 rounded-xl bg-meadow-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-meadow-800 transition-colors"
           >
             <UIcon name="i-heroicons-book-open" class="h-4 w-4" />
-            เล่มรวมบทคัดย่อ (156 หน้า)
+            เล่มรวมบทคัดย่อ (158 หน้า)
           </a>
           <a
             :href="programPdfUrl"
