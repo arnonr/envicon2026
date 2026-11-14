@@ -23,13 +23,16 @@
 
       <!-- Content -->
       <div class="relative z-10 max-w-6xl mx-auto px-5 sm:px-6 text-center pt-8 sm:pt-0 sm:mt-[-5vh]">
-        <div
-          class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/30 rounded-full px-5 sm:px-6 py-2.5 mb-5 sm:mb-6 hero-fade hero-fade--1 shadow-lg shadow-meadow-950/30">
-          <span class="w-2.5 h-2.5 rounded-full bg-meadow-400 animate-pulse shadow-sm shadow-meadow-300" />
+        <NuxtLink
+          to="/awards"
+          class="inline-flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-amber-300/50 rounded-full px-5 sm:px-6 py-2.5 mb-5 sm:mb-6 hero-fade hero-fade--1 shadow-lg shadow-meadow-950/30 hover:bg-white/20 transition-colors">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-300 animate-pulse shadow-sm shadow-amber-200" />
           <span class="text-sm font-semibold tracking-wide text-white">TSHE-CON 2026</span>
           <span class="hidden sm:inline-block w-1 h-1 rounded-full bg-white/40" />
-          <span class="hidden sm:inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-500/90 text-white shadow-sm">ขยายเวลารับบทคัดย่อถึง 30 ต.ค. 69</span>
-        </div>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-meadow-950 shadow-sm">
+            ประกาศผลรางวัลการนำเสนอผลงานวิชาการ
+          </span>
+        </NuxtLink>
 
         <h1
           class="font-display flex flex-col items-center gap-2 sm:gap-3 md:gap-4 text-[1.65rem] sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-5 hero-fade hero-fade--2 text-white drop-shadow-2xl">
@@ -42,40 +45,41 @@
           The 5th National Academic Conference of Thai Society of Higher Education Institutes on Environment
         </p>
 
-        <p class="text-xs sm:text-base md:text-lg text-white/80 max-w-3xl mx-auto mb-6 sm:mb-10 hero-fade hero-fade--4 drop-shadow-md leading-relaxed">
+        <p class="text-xs sm:text-base md:text-lg text-white/80 max-w-3xl mx-auto mb-6 sm:mb-8 hero-fade hero-fade--4 drop-shadow-md leading-relaxed">
           <span class="font-semibold text-meadow-200">Theme:</span>
           Innovative Environmental Technologies for a Sustainable and Low-Carbon Future<br class="hidden sm:block" />
           เทคโนโลยีสิ่งแวดล้อมเชิงนวัตกรรมเพื่ออนาคตที่ยั่งยืนและสังคมคาร์บอนต่ำ
         </p>
 
-        <!-- Countdown -->
-        <div class="flex items-center justify-center gap-3 sm:gap-5 mb-10 hero-fade hero-fade--5">
-          <div v-for="unit in countdown" :key="unit.label" class="countdown-unit countdown-unit--hero">
-            <div class="countdown-value countdown-value--hero">{{ unit.value }}</div>
-            <div class="countdown-label countdown-label--hero">{{ unit.label }}</div>
+        <!-- Post-Conference Completion Banner -->
+        <div class="max-w-2xl mx-auto mb-8 sm:mb-10 hero-fade hero-fade--5 rounded-2xl border border-amber-300/45 bg-meadow-950/60 backdrop-blur-md px-5 py-4 shadow-xl shadow-meadow-950/40">
+          <div class="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-300 mb-1">
+            <UIcon name="i-heroicons-sparkles-solid" class="w-4 h-4" />
+            <span>12–13 พฤศจิกายน 2569 · งานประชุมวิชาการเสร็จสิ้นเรียบร้อยแล้ว</span>
           </div>
+          <p class="text-xs sm:text-sm text-white/90 leading-relaxed">
+            ขอขอบคุณผู้เข้าร่วมงานและผู้นำเสนอผลงานทุกท่าน และขอแสดงความยินดีกับผู้ได้รับรางวัลการนำเสนอผลงานวิชาการทั้ง 3 ประเภท
+          </p>
         </div>
 
         <div class="flex flex-col sm:flex-row flex-wrap gap-3.5 sm:gap-4 justify-center hero-fade hero-fade--6">
-          <NuxtLink to="/program"
-            class="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-meadow-500 to-meadow-600 font-bold text-white text-base sm:text-lg shadow-2xl shadow-meadow-500/40 hover:shadow-meadow-400/60 hover:scale-[1.04] hover:-translate-y-0.5 transition-all duration-300">
-            <UIcon name="i-heroicons-calendar-days" class="w-5 h-5" />
-            โปรแกรมการประชุม
+          <NuxtLink to="/awards"
+            class="group inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 font-bold text-meadow-950 text-base sm:text-lg shadow-2xl shadow-amber-500/40 hover:from-amber-300 hover:to-yellow-300 hover:scale-[1.04] hover:-translate-y-0.5 transition-all duration-300">
+            <UIcon name="i-heroicons-trophy-solid" class="w-5 h-5" />
+            ประกาศผลรางวัลการนำเสนอ
           </NuxtLink>
           <a
             :href="bookOfAbstractsPdfUrl"
             download="TSHE-CON-2026-Book-of-Abstracts.pdf"
-            class="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl border-2 border-amber-300/75 bg-amber-400/20 backdrop-blur-md text-white font-bold text-base sm:text-lg hover:bg-amber-400/30 hover:border-amber-200 hover:scale-[1.02] transition-all duration-300 shadow-lg shadow-amber-950/20">
-            <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-amber-200" />
+            class="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl border-2 border-meadow-300/75 bg-meadow-500/25 backdrop-blur-md text-white font-bold text-base sm:text-lg hover:bg-meadow-500/35 hover:border-meadow-200 hover:scale-[1.02] transition-all duration-300 shadow-lg shadow-meadow-950/20">
+            <UIcon name="i-heroicons-book-open" class="w-5 h-5 text-meadow-200" />
             เล่มรวมบทคัดย่อ (PDF)
           </a>
-          <button @click="showRegModal = true"
+          <NuxtLink to="/program"
             class="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl border-2 border-sky-300/60 bg-sky-400/15 backdrop-blur-md text-white font-semibold text-base sm:text-lg hover:bg-sky-400/25 hover:border-sky-300 hover:scale-[1.02] transition-all duration-300">
-            ลงทะเบียนเข้าร่วมงาน
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-            </svg>
-          </button>
+            <UIcon name="i-heroicons-calendar-days" class="w-5 h-5" />
+            โปรแกรมการประชุม
+          </NuxtLink>
         </div>
       </div>
 
@@ -84,6 +88,103 @@
         class="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/50 hero-fade hero-fade--7">
         <span class="text-xs tracking-[0.2em] uppercase font-medium">Scroll</span>
         <div class="w-px h-8 bg-gradient-to-b from-white/60 to-transparent scroll-line" />
+      </div>
+    </section>
+
+    <!-- ═══════════ AWARD RESULTS — Official Winners Showcase ═══════════ -->
+    <section id="awards-section" class="relative py-20 bg-gradient-to-b from-amber-50/60 via-white to-meadow-50/40 border-b border-meadow-100">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-12">
+          <div>
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold uppercase tracking-[0.2em] mb-3">
+              <UIcon name="i-heroicons-trophy-solid" class="w-4 h-4 text-amber-600" />
+              Award Results · TSHE-CON 2026
+            </div>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-meadow-950">
+              ประกาศผลรางวัลการนำเสนอผลงานวิชาการ
+            </h2>
+            <p class="text-stone-600 mt-2 text-sm sm:text-base">
+              การประชุมวิชาการระดับชาติ สมาคมสถาบันอุดมศึกษาสิ่งแวดล้อมไทย ครั้งที่ 5 (12–13 พฤศจิกายน 2569)
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <NuxtLink
+              to="/awards"
+              class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-meadow-700 text-white font-bold text-sm hover:bg-meadow-800 transition-colors shadow-md shadow-meadow-900/10"
+            >
+              <UIcon name="i-heroicons-trophy" class="w-4 h-4 text-amber-300" />
+              ดูหน้าประกาศผลฉบับเต็ม
+            </NuxtLink>
+            <a
+              :href="awardResultsPdfUrl"
+              download="TSHE-CON-2026-Award-Results.pdf"
+              class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-amber-300 bg-amber-50 text-amber-950 font-bold text-sm hover:bg-amber-100 transition-colors shadow-sm"
+            >
+              <UIcon name="i-heroicons-arrow-down-tray" class="w-4 h-4 text-amber-700" />
+              ดาวน์โหลดประกาศผล (PDF)
+            </a>
+          </div>
+        </div>
+
+        <div class="space-y-8">
+          <div
+            v-for="category in awardCategories"
+            :key="category.key"
+            class="rounded-3xl border border-stone-200 bg-white shadow-lg shadow-meadow-950/5 overflow-hidden"
+          >
+            <div
+              class="bg-gradient-to-r px-6 py-4 text-white flex flex-wrap items-center justify-between gap-3"
+              :class="category.headerClass"
+            >
+              <div class="flex items-center gap-2.5">
+                <UIcon name="i-heroicons-trophy-solid" class="w-5 h-5 text-amber-300 shrink-0" />
+                <h3 class="text-lg sm:text-xl font-bold">{{ category.title }}</h3>
+              </div>
+              <span class="rounded-full bg-white/15 px-3 py-0.5 text-xs font-bold text-white">
+                {{ category.awards.length }} รางวัล
+              </span>
+            </div>
+
+            <div class="divide-y divide-stone-100">
+              <div
+                v-for="award in category.awards"
+                :key="award.code"
+                class="p-5 sm:p-6 hover:bg-stone-50/70 transition-colors"
+              >
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-bold"
+                    :class="
+                      award.tier === 'first'
+                        ? 'bg-amber-400 text-meadow-950'
+                        : award.tier === 'second'
+                          ? 'bg-sky-600 text-white'
+                          : award.tier === 'third'
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-meadow-700 text-white'
+                    "
+                  >
+                    {{ award.rankLabel }}
+                  </span>
+                  <span class="inline-flex items-center rounded-md bg-stone-900 px-2.5 py-0.5 text-xs font-bold text-white">
+                    {{ award.code }}
+                  </span>
+                </div>
+
+                <h4 class="text-sm sm:text-base font-bold text-stone-900 leading-relaxed">
+                  {{ award.title }}
+                </h4>
+                <p class="mt-1.5 text-xs sm:text-sm text-stone-700 leading-relaxed">
+                  <span class="font-bold text-meadow-900">ผู้แต่ง:</span> {{ award.authors }}
+                </p>
+                <p class="mt-0.5 text-xs sm:text-sm text-sky-900 font-medium leading-relaxed">
+                  <span class="font-bold">สังกัด:</span> {{ award.affiliation }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -492,6 +593,23 @@
                     กำหนดการ (18 หน้า)
                   </a>
                 </div>
+                <div v-if="item.awardsLink" class="mt-2.5 flex flex-wrap items-center gap-2">
+                  <NuxtLink
+                    to="/awards"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-meadow-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-meadow-800 transition-colors shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-trophy" class="w-3.5 h-3.5 text-amber-300" />
+                    ดูประกาศผลรางวัล
+                  </NuxtLink>
+                  <a
+                    :href="awardResultsPdfUrl"
+                    download="TSHE-CON-2026-Award-Results.pdf"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-950 hover:bg-amber-100 transition-colors shadow-sm"
+                  >
+                    <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5 text-amber-700" />
+                    ดาวน์โหลดประกาศผล (PDF)
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -723,6 +841,7 @@
 </template>
 
 <script setup lang="ts">
+import { AWARD_RESULTS_PDF_PATH, awardCategories } from "~/utils/awards-data";
 import { BOOK_OF_ABSTRACTS_PDF_PATH, PROGRAM_PDF_PATH } from "~/utils/program-data";
 
 const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
@@ -731,6 +850,7 @@ const wellbeingImage = `${appBaseUrl}/images/tshe-con-wellbeing-family-20260811.
 const posterImage = `${appBaseUrl}/images/poster-envicon2026.png`;
 const programPdfUrl = `${appBaseUrl}${PROGRAM_PDF_PATH}`;
 const bookOfAbstractsPdfUrl = `${appBaseUrl}${BOOK_OF_ABSTRACTS_PDF_PATH}`;
+const awardResultsPdfUrl = `${appBaseUrl}${AWARD_RESULTS_PDF_PATH}`;
 
 const authStore = useAuthStore();
 const showRegModal = ref(false);
@@ -885,6 +1005,13 @@ const timeline = [
     highlight: false,
     programLink: true,
     icon: "i-heroicons-academic-cap"
+  },
+  {
+    title: "ประกาศผลรางวัลการนำเสนอผลงานวิชาการ",
+    date: "13 พฤศจิกายน 2569",
+    highlight: false,
+    awardsLink: true,
+    icon: "i-heroicons-trophy"
   },
   {
     title: "ปิดรับบทความฉบับเต็มเพื่อลง Proceeding",
