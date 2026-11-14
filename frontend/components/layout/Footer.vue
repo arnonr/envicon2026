@@ -16,6 +16,7 @@
         <div>
           <h3 class="text-white font-bold text-lg mb-4">ลิงก์ด่วน</h3>
           <ul class="space-y-2 text-sm">
+            <li><NuxtLink to="/awards" class="hover:text-primary-400 transition-colors">ประกาศผลรางวัลการนำเสนอ</NuxtLink></li>
             <li><NuxtLink to="/about" class="hover:text-primary-400 transition-colors">เกี่ยวกับการประชุม</NuxtLink></li>
             <li><NuxtLink to="/program" class="hover:text-primary-400 transition-colors">โปรแกรมการประชุม (12–13 พ.ย.)</NuxtLink></li>
             <li><NuxtLink to="/important-dates" class="hover:text-primary-400 transition-colors">กำหนดการสำคัญและสถานที่</NuxtLink></li>

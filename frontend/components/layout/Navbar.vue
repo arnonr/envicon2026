@@ -26,9 +26,10 @@ const navItems: NavItem[] = [
     children: [
       { label: "โปรแกรมการประชุม (12–13 พ.ย.)", to: "/program" },
       { label: "กำหนดการสำคัญและสถานที่", to: "/important-dates" },
+      { label: "คำแนะนำสำหรับผู้นำเสนอ", to: "/presenter-guidelines" },
     ],
   },
-  { label: "คำแนะนำสำหรับผู้นำเสนอ", to: "/presenter-guidelines" },
+  { label: "ประกาศผลรางวัล", to: "/awards" },
   { label: "ดาวน์โหลด", to: "/guidelines" },
   { label: "ลงทะเบียน", to: "/registration" },
   { label: "ติดต่อ", to: "/contact" },

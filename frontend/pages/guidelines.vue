@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AWARD_RESULTS_PDF_PATH } from "~/utils/awards-data";
 import { BOOK_OF_ABSTRACTS_PDF_PATH, PROGRAM_PDF_PATH } from "~/utils/program-data";
 
 const appBaseUrl = useRuntimeConfig().app.baseURL.replace(/\/$/, "");
@@ -59,6 +60,16 @@ const documents = [
     accent: "from-sky-500 to-indigo-400",
     downloadUrl: `${appBaseUrl}${BOOK_OF_ABSTRACTS_PDF_PATH}`,
     viewOnlineUrl: "/program",
+  },
+  {
+    number: "07",
+    title: "ประกาศผลรางวัลการนำเสนอผลงานวิชาการ",
+    titleEn: "Academic Presentation Award Results (4 Pages)",
+    type: "Adobe PDF · .PDF (90 KB)",
+    icon: "i-heroicons-trophy",
+    accent: "from-amber-400 to-yellow-300",
+    downloadUrl: `${appBaseUrl}${AWARD_RESULTS_PDF_PATH}`,
+    viewOnlineUrl: "/awards",
   },
 ];
 </script>
