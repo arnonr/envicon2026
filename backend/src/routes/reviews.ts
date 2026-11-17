@@ -1,3 +1,4 @@
+import path from "path";
 import { Elysia, t } from "elysia";
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "../db";
@@ -5,6 +6,7 @@ import { reviewRounds, reviews, revisions, submissionVersions, submissions, user
 import { getUserFromHeaders } from "../middleware/auth";
 import { requireReviewer } from "../middleware/roles";
 import { fail, ok } from "../utils/response";
+import { storedFileExists } from "../services/storage";
 
 export const reviewRoutes = new Elysia({ prefix: "/reviews" })
   .use(requireReviewer)
@@ -30,6 +32,8 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         completedAt: reviews.completedAt,
         recommendation: reviews.recommendation,
         roundNumber: reviewRounds.roundNumber,
+        reviewType: reviewRounds.reviewType,
+        blindFileUrl: reviewRounds.blindFileUrl,
         title: submissions.title,
         titleEn: submissions.titleEn,
         track: submissions.track,
@@ -38,7 +42,10 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
       .innerJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
       .innerJoin(submissions, eq(reviews.submissionId, submissions.id))
       .where(where);
-    return ok(assignments);
+    return ok(assignments.map(({ blindFileUrl, ...rest }) => ({
+      ...rest,
+      hasBlindFile: Boolean(blindFileUrl),
+    })));
   })
   .get(
     "/:id",
@@ -64,6 +71,8 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
           dueAt: reviews.dueAt,
           completedAt: reviews.completedAt,
           roundNumber: reviewRounds.roundNumber,
+          reviewType: reviewRounds.reviewType,
+          blindFileUrl: reviewRounds.blindFileUrl,
           submissionId: submissions.id,
           title: submissions.title,
           titleEn: submissions.titleEn,
@@ -114,8 +123,12 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         .where(eq(revisions.submissionId, assignment.submissionId));
       const hasSnapshot = assignment.versionTitle !== null;
       const resolvedCreators = hasSnapshot ? assignment.versionCreators : assignment.creators;
+      const hasBlindFile = Boolean(assignment.blindFileUrl && await storedFileExists(assignment.blindFileUrl));
+      const blindExt = assignment.blindFileUrl ? path.extname(assignment.blindFileUrl) || ".pdf" : ".pdf";
       const response: Record<string, unknown> = {
         ...assignment,
+        hasBlindFile,
+        blindFileName: hasBlindFile ? `blind-review-round-${assignment.roundNumber}${blindExt}` : null,
         title: hasSnapshot ? assignment.versionTitle : assignment.title,
         titleEn: hasSnapshot ? assignment.versionTitleEn : assignment.titleEn,
         abstract: hasSnapshot ? assignment.versionAbstract : assignment.abstract,
@@ -127,6 +140,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         submittedAt: hasSnapshot ? assignment.versionSubmittedAt : assignment.submittedAt,
         revisions: revisionList,
       };
+      delete response.blindFileUrl;
       if (isAdmin) {
         response.creators = resolvedCreators;
       } else {
@@ -144,6 +158,50 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
       delete response.versionCreators;
       delete response.versionPresentationFormat;
       return ok(response);
+    },
+    { params: t.Object({ id: t.String() }) },
+  )
+  .get(
+    "/:id/file",
+    async ({ params, headers, set }) => {
+      const currentUser = await getUserFromHeaders(headers.authorization);
+      if (!currentUser) {
+        set.status = 401;
+        return fail("UNAUTHORIZED", "Authentication required");
+      }
+      if (!["reviewer", "admin"].includes(currentUser.role)) {
+        set.status = 403;
+        return fail("FORBIDDEN", "Insufficient permissions");
+      }
+      const isAdmin = currentUser.role === "admin";
+      const [assignment] = await db
+        .select({
+          reviewerId: reviews.reviewerId,
+          status: reviews.status,
+          roundNumber: reviewRounds.roundNumber,
+          blindFileUrl: reviewRounds.blindFileUrl,
+        })
+        .from(reviews)
+        .innerJoin(reviewRounds, eq(reviews.roundId, reviewRounds.id))
+        .where(eq(reviews.id, params.id))
+        .limit(1);
+      if (!assignment || assignment.status === "assigned") {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบงานประเมิน");
+      }
+      if (!isAdmin && assignment.reviewerId !== currentUser.id) {
+        set.status = 403;
+        return fail("FORBIDDEN", "ไม่มีสิทธิ์เข้าถึงไฟล์งานประเมินนี้");
+      }
+      if (!assignment.blindFileUrl || !(await storedFileExists(assignment.blindFileUrl))) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบไฟล์ Blind Review สำหรับรอบนี้");
+      }
+      const filename = path.basename(assignment.blindFileUrl);
+      const filepath = path.resolve(process.cwd(), "uploads", filename);
+      const ext = path.extname(filename) || ".pdf";
+      set.headers["Content-Disposition"] = `inline; filename="blind-review-round-${assignment.roundNumber}${ext}"`;
+      return Bun.file(filepath);
     },
     { params: t.Object({ id: t.String() }) },
   )
