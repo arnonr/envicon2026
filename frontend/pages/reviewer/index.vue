@@ -7,6 +7,7 @@ interface ReviewAssignment {
   dueAt: string | null;
   completedAt: string | null;
   roundNumber: number;
+  reviewType?: "abstract" | "full_paper";
   title: string;
   titleEn: string | null;
   track: number;
@@ -162,7 +163,12 @@ onMounted(async () => {
             <div class="flex justify-between gap-3">
               <div>
                 <p class="font-medium">{{ item.title }}</p>
-                <p class="text-xs text-gray-500">รอบที่ {{ item.roundNumber }} | {{ TRACK_NAMES[item.track] }}</p>
+                <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                  <UBadge :color="item.reviewType === 'full_paper' ? 'indigo' : 'sky'" variant="soft" size="xs">
+                    {{ item.reviewType === "full_paper" ? "ประเมินฉบับเต็ม" : "ประเมินบทคัดย่อ" }}
+                  </UBadge>
+                  <span class="text-xs text-gray-500">รอบที่ {{ item.roundNumber }} | {{ TRACK_NAMES[item.track] }}</span>
+                </div>
               </div>
               <div class="text-right">
                 <UBadge :color="item.status === 'in_progress' ? 'yellow' : 'blue'" variant="soft">{{ item.status === "in_progress" ? "กำลังกรอก" : "รอประเมิน" }}</UBadge>
