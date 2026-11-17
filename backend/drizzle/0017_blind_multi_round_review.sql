@@ -20,3 +20,5 @@ ALTER TABLE `submissions`
 ALTER TABLE `review_rounds`
   ADD COLUMN `review_type` enum('abstract','full_paper') NOT NULL DEFAULT 'abstract' AFTER `round_number`,
   ADD COLUMN `blind_file_url` varchar(500) NULL AFTER `review_type`;
+
+UPDATE `review_rounds` SET `review_type` = 'full_paper' WHERE `round_number` >= 2;

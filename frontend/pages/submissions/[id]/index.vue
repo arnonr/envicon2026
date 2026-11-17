@@ -122,13 +122,10 @@ const fetchSubmission = async () => {
   submission.value = data!.data;
   if (
     submission.value.canUpdateFiles
-    && [
-      'accepted',
-      'revision_requested',
-      'submitted',
-      'under_review',
-    ].includes(submission.value.status)
-    && (submission.value.status !== 'accepted' || submission.value.latestReleasedReviewType !== 'full_paper')
+    && (
+      ['revision_requested', 'submitted', 'under_review'].includes(submission.value.status)
+      || (submission.value.status === 'accepted' && submission.value.latestReleasedReviewType === 'abstract')
+    )
   ) {
     isEditingFiles.value = true;
   }
@@ -292,7 +289,7 @@ onMounted(fetchSubmission);
       </UCard>
 
       <!-- Upload Full Paper prompt (when abstract round accepted) -->
-      <UCard v-if="submission.status === 'accepted' && submission.latestReleasedReviewType !== 'full_paper' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="mb-6 border-green-200">
+      <UCard v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="mb-6 border-green-200">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />

@@ -925,6 +925,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           adminNote: reviewRounds.adminNote,
           status: reviewRounds.status,
           roundNumber: reviewRounds.roundNumber,
+          reviewType: reviewRounds.reviewType,
           title: submissions.title,
           authorName: users.name,
           authorEmail: users.email,
@@ -960,6 +961,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         adminNote: round.adminNote,
         reviewerComments,
         roundNumber: round.roundNumber,
+        reviewType: round.reviewType,
       });
 
       const notification = await sendTrackedEmail({

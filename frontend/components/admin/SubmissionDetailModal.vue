@@ -640,7 +640,7 @@ watch(() => props.modelValue, (open) => {
             <p v-if="submission.titleEn" class="text-sm text-gray-500 mt-0.5">{{ submission.titleEn }}</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <SubmissionStatusBadge :status="submission.status" />
+            <SubmissionStatusBadge :status="submission.status" :current-round="submission.currentRound" />
           </div>
         </div>
       </template>
@@ -1108,7 +1108,7 @@ watch(() => props.modelValue, (open) => {
           </p>
         </div>
         <div
-          v-else-if="TERMINAL_STATUSES.includes(submission.status) && !workflow?.currentRound"
+          v-else-if="['accepted', 'revision_requested'].includes(submission.status) && !workflow?.currentRound"
           class="border border-rose-300 rounded-lg p-3 bg-rose-50"
         >
           <p class="font-medium text-sm text-rose-800">

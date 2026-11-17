@@ -154,6 +154,7 @@ export const reviewRoutes = new Elysia({ prefix: "/reviews" })
         delete response.round1FileUrl;
         delete response.round1FileType;
         delete response.versionFileUrl;
+        delete response.revisions;
       }
       delete response.versionCreators;
       delete response.versionPresentationFormat;

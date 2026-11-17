@@ -74,7 +74,7 @@ export const statusAfterFileUpload = (
   if (currentStatus === "draft") return "submitted";
   const reviseStatus = statusAfterReviseUpload(currentStatus);
   if (reviseStatus) return reviseStatus;
-  if (currentStatus === "accepted" && hasUploadedFullPaper && latestReleasedReviewType !== "full_paper") {
+  if (currentStatus === "accepted" && hasUploadedFullPaper && latestReleasedReviewType === "abstract") {
     return "submitted";
   }
   return null;

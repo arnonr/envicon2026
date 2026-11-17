@@ -38,6 +38,7 @@ interface Submission {
   fullPaperWordFileUrl: string | null;
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
+  currentRound?: number;
   latestReleasedReviewType?: "abstract" | "full_paper" | null;
   canUpdateFiles?: boolean;
   paymentSlipUrl: string | null;
@@ -251,13 +252,10 @@ const fetchSubmission = async () => {
   submission.value = data!.data;
   if (
     submission.value.canUpdateFiles
-    && [
-      'accepted',
-      'revision_requested',
-      'submitted',
-      'under_review',
-    ].includes(submission.value.status)
-    && (submission.value.status !== 'accepted' || submission.value.latestReleasedReviewType !== 'full_paper')
+    && (
+      ['revision_requested', 'submitted', 'under_review'].includes(submission.value.status)
+      || (submission.value.status === 'accepted' && submission.value.latestReleasedReviewType === 'abstract')
+    )
   ) {
     isEditingFiles.value = true;
   }
@@ -349,7 +347,7 @@ watch(() => props.modelValue, (open) => {
             <p v-if="submission.titleEn" class="text-sm text-gray-500 mt-0.5">{{ submission.titleEn }}</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <SubmissionStatusBadge :status="submission.status" />
+            <SubmissionStatusBadge :status="submission.status" :current-round="submission.currentRound" />
             <SubmissionPaymentStatusBadge :status="submission.paymentStatus" />
           </div>
         </div>
@@ -728,7 +726,7 @@ watch(() => props.modelValue, (open) => {
         </div>
 
         <!-- Upload full paper (abstract round accepted) -->
-        <div v-if="submission.status === 'accepted' && submission.latestReleasedReviewType !== 'full_paper'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
+        <div v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />

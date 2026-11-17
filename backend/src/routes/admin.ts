@@ -8,7 +8,7 @@ import { getUserFromHeaders } from "../middleware/auth";
 import { ok, fail, paginated } from "../utils/response";
 import { calculateFee } from "../utils/fees";
 import { STATUS_LABEL, type SubmissionStatus } from "../db/schema";
-import { ALL_NON_DRAFT, RE_REVIEW_STATUSES } from "../utils/submission-status";
+import { ALL_NON_DRAFT, RE_REVIEW_STATUSES, getStatusLabel } from "../utils/submission-status";
 import { syncEventRegistrationPaymentToSubmission } from "../services/event-registration-sync";
 import {
   type FileSlotInputs,
@@ -178,6 +178,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           educationLevel: submissions.educationLevel,
           presentationFormat: submissions.presentationFormat,
           wantsFullPaper: submissions.wantsFullPaper,
+          currentRound: submissions.currentRound,
           status: submissions.status,
           abstractFileUrl: submissions.abstractFileUrl,
           abstractWordFileUrl: submissions.abstractWordFileUrl,
@@ -266,6 +267,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         submitterType: submissions.submitterType,
         educationLevel: submissions.educationLevel,
         presentationFormat: submissions.presentationFormat,
+        currentRound: submissions.currentRound,
         status: submissions.status,
         abstractFileUrl: submissions.abstractFileUrl,
         abstractWordFileUrl: submissions.abstractWordFileUrl,
@@ -349,7 +351,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         educationLevel: EDUCATION_LEVEL_NAMES[submission.educationLevel] ?? submission.educationLevel,
         presentationFormat: PRESENTATION_FORMAT_NAMES[submission.presentationFormat] ?? submission.presentationFormat,
         track: TRACK_NAMES[submission.track] ?? String(submission.track),
-        status: STATUS_NAMES[submission.status] ?? submission.status,
+        status: getStatusLabel(submission.status, submission.currentRound),
         reviewerNames: (summaries.get(submission.id)?.reviewerNames ?? []).join(", "),
         keywords: submission.keywords ?? "",
         abstract: submission.abstract ?? "",

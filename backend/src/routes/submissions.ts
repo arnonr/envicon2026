@@ -93,7 +93,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     return ok(own.map((s) => ({
       ...s,
       ...resolveCurrentSlotUrls(s),
-      currentRoundNumber: roundBySubmission.get(s.id) ?? 0,
+      currentRoundNumber: s.currentRound || (roundBySubmission.get(s.id) ?? 0),
     })));
   })
 

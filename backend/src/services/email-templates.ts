@@ -139,6 +139,7 @@ interface AuthorResultData {
   adminNote?: string | null;
   reviewerComments: { reviewerIndex: number; comment: string }[];
   roundNumber: number;
+  reviewType?: "abstract" | "full_paper";
 }
 
 function emailLayout(body: string): string {
@@ -270,7 +271,8 @@ export function buildAuthorResultEmail(data: AuthorResultData): { subject: strin
 }
 
 function renderCta(data: AuthorResultData): string {
-  const { decision, submissionId, roundNumber } = data;
+  const { decision, submissionId, roundNumber, reviewType } = data;
+  const isAbstractRound = reviewType ? reviewType === "abstract" : roundNumber === 1;
   if (decision === "revise") {
     return `
       <div style="text-align:center;margin:28px 0 8px">
@@ -281,17 +283,17 @@ function renderCta(data: AuthorResultData): string {
       </div>
     `;
   }
-  if (decision === "accept" && roundNumber === 1) {
+  if (decision === "accept" && isAbstractRound) {
     return `
       <div style="text-align:center;margin:28px 0 8px">
         <a href="${appUrl(`/submissions/${submissionId}`)}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600">
-          อัปโหลดบทความฉบับสมบูรณ์เพื่อเข้าสู่รอบที่ 2
+          อัปโหลดบทความฉบับสมบูรณ์เพื่อเข้าสู่รอบที่ ${roundNumber + 1}
         </a>
-        <div style="font-size:12px;color:#6b7280;margin-top:8px">ผลงานที่ผ่านรอบที่ 1 ต้องส่งฉบับสมบูรณ์เพื่อเข้าสู่การพิจารณารอบที่ 2</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:8px">ผลงานที่ผ่านรอบบทคัดย่อต้องส่งฉบับสมบูรณ์เพื่อเข้าสู่การพิจารณารอบที่ ${roundNumber + 1}</div>
       </div>
     `;
   }
-  if (decision === "accept" && roundNumber === 2) {
+  if (decision === "accept") {
     return `
       <div style="text-align:center;margin:28px 0 8px">
         <a href="${appUrl(`/submissions/${submissionId}`)}" style="display:inline-block;background-color:#059669;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:600">
@@ -305,7 +307,8 @@ function renderCta(data: AuthorResultData): string {
 }
 
 function mainContentByDecision(data: AuthorResultData): string {
-  const { decision, roundNumber } = data;
+  const { decision, roundNumber, reviewType } = data;
+  const isAbstractRound = reviewType ? reviewType === "abstract" : roundNumber === 1;
 
   if (decision === "accept") {
     return `
@@ -313,8 +316,8 @@ function mainContentByDecision(data: AuthorResultData): string {
         ขอแสดงความยินดี ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber}</strong>ของการประชุมวิชาการ <strong>TSHE-CON 2026</strong>
       </p>
       <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:0">
-        ${roundNumber === 1
-          ? "กรุณาตรวจสอบข้อเสนอแนะจากผู้พิจารณา และอัปโหลดบทความฉบับสมบูรณ์เพื่อเข้าสู่การพิจารณา<strong>รอบที่ 2</strong>"
+        ${isAbstractRound
+          ? `กรุณาตรวจสอบข้อเสนอแนะจากผู้พิจารณา และอัปโหลดบทความฉบับสมบูรณ์เพื่อเข้าสู่การพิจารณา<strong>รอบที่ ${roundNumber + 1}</strong>`
           : "กรุณาตรวจสอบข้อเสนอแนะจากผู้พิจารณา และอัปโหลดบทความฉบับ Camera-ready สำหรับการจัดพิมพ์และนำเสนอ"}
       </p>
     `;
@@ -337,7 +340,7 @@ function mainContentByDecision(data: AuthorResultData): string {
       ผลงานของท่าน<strong>ผ่านการพิจารณารอบที่ ${roundNumber} แบบมีข้อแก้ไข</strong>ในการประชุมวิชาการ <strong>TSHE-CON 2026</strong>
     </p>
     <p style="font-size:14px;color:#4b5563;line-height:1.7;margin:8px 0 0">
-      คณะกรรมการมีข้อเสนอแนะบางประการที่ต้องการให้ท่านปรับปรุง กรุณาดำเนินการแก้ไขและส่งผลงานฉบับปรับปรุงผ่านระบบเพื่อเข้าสู่<strong>รอบที่ ${roundNumber === 1 ? 2 : "ถัดไป"}</strong>
+      คณะกรรมการมีข้อเสนอแนะบางประการที่ต้องการให้ท่านปรับปรุง กรุณาดำเนินการแก้ไขและส่งผลงานฉบับปรับปรุงผ่านระบบเพื่อเข้าสู่<strong>รอบที่ ${roundNumber + 1}</strong>
     </p>
   `;
 }
