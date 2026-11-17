@@ -635,10 +635,11 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         return fail("NOT_FOUND", "ไม่พบข้อมูลการส่งบทความ");
       }
       const forbiddenStatuses: SubmissionStatus[] = [
-        "under_review_round1",
-        "under_review_round2",
-        ...ALL_NON_DRAFT.filter((s) => s !== "submitted_round1" && s !== "submitted_round2"),
-      ] as SubmissionStatus[];
+        "under_review",
+        "accepted",
+        "revision_requested",
+        "rejected",
+      ];
       if (forbiddenStatuses.includes(body.status as SubmissionStatus)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "กรุณาเริ่มพิจารณา ตัดสิน และแจ้งผลผ่านกระบวนการรีวิว");
@@ -664,8 +665,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       body: t.Object({
         status: t.Union([
           t.Literal("draft"),
-          t.Literal("submitted_round1"),
-          t.Literal("submitted_round2"),
+          t.Literal("submitted"),
         ]),
       }),
     },
