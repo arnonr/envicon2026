@@ -7,6 +7,8 @@ import {
   hasActiveAdminSubmissionFilters,
 } from "~/utils/admin-submission-filters";
 
+import { getStatusLabel } from "~/utils/submission-status";
+
 definePageMeta({ middleware: ["auth", "role"] });
 
 interface Submission {
@@ -18,6 +20,7 @@ interface Submission {
   educationLevel: string;
   presentationFormat: string;
   wantsFullPaper: number;
+  currentRound?: number;
   status: string;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   abstractFileUrl: string | null;
@@ -155,17 +158,12 @@ const TRACK_NAMES: Record<number, string> = {
 
 const STATUS_OPTIONS = [
   { value: "", label: "ทั้งหมด (สถานะ) (All Status)" },
-  { value: "draft", label: "ร่าง (Draft)" },
-  { value: "submitted_round1", label: "ส่งรอบที่ 1 แล้ว (Round 1 Submitted)" },
-  { value: "under_review_round1", label: "อยู่ระหว่างรีวิวรอบที่ 1 (Round 1 Under Review)" },
-  { value: "passed_round1", label: "ผ่านรอบที่ 1 (Round 1 Passed)" },
-  { value: "passed_round1_with_revisions", label: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข (Round 1 Passed with Revisions)" },
-  { value: "rejected_round1", label: "ไม่ผ่านรอบที่ 1 (Round 1 Rejected)" },
-  { value: "submitted_round2", label: "ส่งรอบที่ 2 แล้ว (Round 2 Submitted)" },
-  { value: "under_review_round2", label: "อยู่ระหว่างรีวิวรอบที่ 2 (Round 2 Under Review)" },
-  { value: "passed_round2", label: "ผ่านรอบที่ 2 (Round 2 Passed)" },
-  { value: "passed_round2_with_revisions", label: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข (Round 2 Passed with Revisions)" },
-  { value: "rejected_round2", label: "ไม่ผ่านรอบที่ 2 (Round 2 Rejected)" },
+  { value: "draft", label: "ฉบับร่าง (Draft)" },
+  { value: "submitted", label: "รอส่งประเมิน (Submitted)" },
+  { value: "under_review", label: "อยู่ระหว่างประเมิน (Under Review)" },
+  { value: "accepted", label: "ผ่านการพิจารณา (Accepted)" },
+  { value: "revision_requested", label: "ส่งกลับแก้ไข (Revision Requested)" },
+  { value: "rejected", label: "ไม่ผ่านการพิจารณา (Rejected)" },
 ];
 
 const PAYMENT_OPTIONS = [
@@ -211,16 +209,11 @@ const FILE_STATUS_OPTIONS = [
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "gray",
-  submitted_round1: "blue",
-  under_review_round1: "amber",
-  passed_round1: "green",
-  passed_round1_with_revisions: "teal",
-  rejected_round1: "red",
-  submitted_round2: "blue",
-  under_review_round2: "amber",
-  passed_round2: "emerald",
-  passed_round2_with_revisions: "teal",
-  rejected_round2: "red",
+  submitted: "blue",
+  under_review: "amber",
+  accepted: "emerald",
+  revision_requested: "teal",
+  rejected: "red",
 };
 
 function formatDate(iso: string | null) {
@@ -857,7 +850,7 @@ onBeforeUnmount(() => {
             </td>
             <td class="py-3 px-3 text-center">
               <UBadge :color="(STATUS_COLORS[sub.status] || 'gray') as any" variant="soft" size="xs">
-                {{ STATUS_OPTIONS.find((s) => s.value === sub.status)?.label || sub.status }}
+                {{ getStatusLabel(sub.status, sub.currentRound) }}
               </UBadge>
             </td>
             <td class="py-3 px-3 text-center">

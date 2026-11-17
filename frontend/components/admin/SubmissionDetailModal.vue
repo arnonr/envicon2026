@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ManagedSlotUrls, SelectedSubmissionFiles } from '~/components/submission/FileSlotsGrid.vue';
+import { getStatusLabel, TERMINAL_STATUSES as TERMINAL_SUBMISSION_STATUSES, type ReviewType } from "~/utils/submission-status";
 
 interface Revision {
   id: string;
@@ -45,6 +46,7 @@ interface Submission {
   educationLevel: string;
   presentationFormat: string;
   wantsFullPaper: number;
+  currentRound?: number;
   status: string;
   abstractFileUrl: string | null;
   abstractWordFileUrl: string | null;
@@ -111,6 +113,9 @@ interface SubmissionVersion {
 interface WorkflowRound {
   id: string;
   roundNumber: number;
+  reviewType: ReviewType;
+  blindFileUrl: string | null;
+  blindFileAvailable: boolean;
   status: string;
   decision: "accept" | "reject" | "revise" | null;
   adminNote: string | null;
@@ -210,6 +215,15 @@ function requestCreateRound() {
   createRound();
 }
 
+const newRoundReviewType = ref<ReviewType>("abstract");
+const uploadingBlindFile = ref(false);
+const reviewTypeOptions = [
+  { value: "abstract", label: "บทคัดย่อ (Abstract)" },
+  { value: "full_paper", label: "ฉบับเต็ม (Full Paper)" },
+];
+const reviewTypeLabel = (type?: string | null) =>
+  type === "full_paper" ? "ประเมินฉบับเต็ม" : "ประเมินบทคัดย่อ";
+
 async function confirmCreateRound() {
   await createRound();
   reReviewConfirmOpen.value = false;
@@ -298,9 +312,9 @@ const recommendationLabel = (recommendation: string | null) =>
   ({ accept: "ผ่านการพิจารณา (Accept)", reject: "ไม่ผ่าน (Reject)", revise: "ผ่านการพิจารณาแบบแก้ไข" }[recommendation ?? ""] ?? recommendation ?? "-");
 
 const statusLabel = (status: string) =>
-  ({ draft: "ร่าง", submitted_round1: "ส่งรอบที่ 1 แล้ว", under_review_round1: "อยู่ระหว่างรีวิวรอบที่ 1", passed_round1: "ผ่านรอบที่ 1", passed_round1_with_revisions: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข", rejected_round1: "ไม่ผ่านรอบที่ 1", submitted_round2: "ส่งรอบที่ 2 แล้ว", under_review_round2: "อยู่ระหว่างรีวิวรอบที่ 2", passed_round2: "ผ่านรอบที่ 2", passed_round2_with_revisions: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข", rejected_round2: "ไม่ผ่านรอบที่ 2" }[status] ?? status);
+  getStatusLabel(status, submission.value?.currentRound);
 
-const TERMINAL_STATUSES = ["passed_round1", "passed_round1_with_revisions", "rejected_round1", "passed_round2", "passed_round2_with_revisions", "rejected_round2"];
+const TERMINAL_STATUSES: string[] = [...TERMINAL_SUBMISSION_STATUSES];
 
 const versionLabel = (version: SubmissionVersion) =>
   version.kind === "initial" ? "ฉบับเริ่มต้น" : `ฉบับแก้ไข ครั้งที่ ${version.version - 1}`;
@@ -363,6 +377,7 @@ const fetchWorkflow = async () => {
   workflowLoading.value = false;
   if (error) { showError(error); return; }
   workflow.value = data!.data;
+  newRoundReviewType.value = workflow.value.rounds.length >= 1 ? "full_paper" : "abstract";
   decision.value = workflow.value.currentRound?.decision ?? "";
   adminNote.value = workflow.value.currentRound?.adminNote ?? "";
   for (const assignment of workflow.value.currentRound?.assignments ?? []) {
@@ -374,11 +389,37 @@ const createRound = async () => {
   if (!props.submissionId) return;
   updating.value = true;
   const { error } = await handleApiCall(() =>
-    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/review-rounds`, { method: "POST", headers: headers.value })
+    $fetch(`${apiBase}/admin/submissions/${props.submissionId}/review-rounds`, {
+      method: "POST",
+      headers: headers.value,
+      body: { reviewType: newRoundReviewType.value },
+    })
   );
   updating.value = false;
   if (error) { showError(error); return; }
   showSuccess("เริ่มรอบพิจารณาเรียบร้อย");
+  emit("status-changed");
+  await Promise.all([fetchSubmission(), fetchWorkflow()]);
+};
+
+const uploadBlindFile = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file || !workflow.value?.currentRound) return;
+  const formData = new FormData();
+  formData.append("file", file);
+  uploadingBlindFile.value = true;
+  const { error } = await handleApiCall(() =>
+    $fetch(`${apiBase}/admin/review-rounds/${workflow.value!.currentRound!.id}/blind-file`, {
+      method: "POST",
+      headers: headers.value,
+      body: formData,
+    })
+  );
+  uploadingBlindFile.value = false;
+  input.value = "";
+  if (error) { showError(error); return; }
+  showSuccess("อัปโหลดไฟล์ Blind Review เรียบร้อย");
   await fetchWorkflow();
 };
 
@@ -599,7 +640,7 @@ watch(() => props.modelValue, (open) => {
             <p v-if="submission.titleEn" class="text-sm text-gray-500 mt-0.5">{{ submission.titleEn }}</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <SubmissionStatusBadge :status="submission.status" />
+            <SubmissionStatusBadge :status="submission.status" :current-round="submission.currentRound" />
           </div>
         </div>
       </template>
@@ -923,10 +964,21 @@ watch(() => props.modelValue, (open) => {
           <div v-else class="space-y-3">
             <div v-for="round in workflow.rounds" :key="round.id" class="border rounded-lg p-3 space-y-3">
               <div class="flex items-center justify-between gap-2">
-                <p class="font-medium text-sm">รอบที่ {{ round.roundNumber }}</p>
+                <div class="flex items-center gap-2">
+                  <p class="font-medium text-sm">รอบที่ {{ round.roundNumber }}</p>
+                  <UBadge :color="round.reviewType === 'full_paper' ? 'indigo' : 'sky'" variant="soft" size="xs">
+                    {{ reviewTypeLabel(round.reviewType) }}
+                  </UBadge>
+                </div>
                 <UBadge :color="round.status === 'released' ? 'green' : 'yellow'" variant="soft" size="xs">
                   {{ round.status === 'released' ? decisionLabel(round.decision) : 'กำลังดำเนินการ' }}
                 </UBadge>
+              </div>
+              <div v-if="round.blindFileAvailable && round.blindFileUrl" class="text-xs flex items-center gap-2">
+                <span class="text-gray-500">ไฟล์ Blind Review:</span>
+                <a :href="fileLink(round.blindFileUrl)" target="_blank" class="text-emerald-600 hover:underline font-medium">
+                  ดาวน์โหลด / ตรวจสอบไฟล์ Blind
+                </a>
               </div>
               <div v-if="round.submissionVersion" class="text-xs flex flex-wrap items-center gap-2">
                 <span class="text-gray-500">ไฟล์รอบนี้:</span>
@@ -1043,20 +1095,20 @@ watch(() => props.modelValue, (open) => {
 
         <!-- Review workflow -->
         <div
-          v-if="['submitted_round1', 'under_review_round1'].includes(submission.status) && workflow?.rounds.length && !workflow?.currentRound"
+          v-if="submission.status === 'submitted' && workflow?.rounds.length && !workflow?.currentRound"
           class="border border-amber-300 rounded-lg p-3 bg-amber-50"
         >
           <p class="font-medium text-sm text-amber-800">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 inline -mt-0.5" />
-            ผลงานนี้มีการส่งฉบับแก้ไขแล้ว — พร้อมเริ่มรอบพิจารณาใหม่
+            ผลงานนี้มีการอัปโหลดไฟล์ใหม่แล้ว — พร้อมเริ่มรอบพิจารณาใหม่
           </p>
           <p class="text-xs text-amber-700 mt-1">
             รอบที่ {{ workflow.rounds.length }} ผลตัดสิน: {{ decisionLabel(workflow.rounds[workflow.rounds.length - 1].decision) }}
-            — กดปุ่ม "เริ่มรอบที่ {{ workflow.rounds.length + 1 }}" ด้านล่างเพื่อส่งฉบับแก้ไขให้ผู้รีวิวประเมิน
+            — เลือกประเภทการประเมินและกดปุ่ม "เริ่มรอบที่ {{ workflow.rounds.length + 1 }}" ด้านล่าง
           </p>
         </div>
         <div
-          v-else-if="TERMINAL_STATUSES.includes(submission.status) && !workflow?.currentRound"
+          v-else-if="['accepted', 'revision_requested'].includes(submission.status) && !workflow?.currentRound"
           class="border border-rose-300 rounded-lg p-3 bg-rose-50"
         >
           <p class="font-medium text-sm text-rose-800">
@@ -1067,26 +1119,64 @@ watch(() => props.modelValue, (open) => {
             การเริ่มรอบใหม่จะส่งผลงานกลับเข้ากระบวนการรีวิวอีกครั้ง และเจ้าของผลงานจะได้รับอีเมลแจ้งผลเมื่อกด "แจ้งผลเจ้าของผลงาน"
           </p>
         </div>
-        <div v-if="['submitted_round1', 'under_review_round1', 'submitted_round2', 'under_review_round2', 'passed_round1', 'passed_round1_with_revisions', 'rejected_round1', 'passed_round2', 'passed_round2_with_revisions', 'rejected_round2'].includes(submission.status)" class="border border-emerald-200 rounded-lg p-4 bg-emerald-50/30 space-y-4">
-          <div class="flex items-center justify-between">
+        <div v-if="submission.status !== 'draft'" class="border border-emerald-200 rounded-lg p-4 bg-emerald-50/30 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="font-semibold text-sm text-emerald-800">ผู้รีวิวและรอบพิจารณา</h3>
-            <UButton
-              v-if="!workflow?.currentRound && !workflowLoading"
-              size="xs"
-              :color="TERMINAL_STATUSES.includes(submission.status) ? 'rose' : 'primary'"
-              :loading="updating"
-              @click="requestCreateRound"
-            >
-              เริ่มรอบที่ {{ (workflow?.rounds.length ?? 0) + 1 }}
-            </UButton>
+            <div v-if="!workflow?.currentRound && !workflowLoading && submission.status !== 'rejected'" class="flex items-center gap-2">
+              <USelectMenu
+                v-model="newRoundReviewType"
+                :options="reviewTypeOptions"
+                value-attribute="value"
+                option-attribute="label"
+                size="xs"
+                class="w-44"
+              />
+              <UButton
+                size="xs"
+                :color="TERMINAL_STATUSES.includes(submission.status) ? 'rose' : 'primary'"
+                :loading="updating"
+                @click="requestCreateRound"
+              >
+                เริ่มรอบที่ {{ (workflow?.rounds.length ?? 0) + 1 }}
+              </UButton>
+            </div>
           </div>
           <div v-if="workflowLoading" class="flex justify-center py-4">
             <UIcon name="i-heroicons-arrow-path" class="w-5 h-5 text-gray-400 animate-spin" />
           </div>
           <template v-else-if="workflow?.currentRound">
-            <p class="text-xs text-gray-500">
-              รอบที่ {{ workflow.currentRound.roundNumber }} | ส่งงาน {{ workflow.currentRound.dispatchedCount }} คน | ประเมินแล้ว {{ workflow.currentRound.completedCount }} คน
-            </p>
+            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+              <span>รอบที่ {{ workflow.currentRound.roundNumber }}</span>
+              <UBadge :color="workflow.currentRound.reviewType === 'full_paper' ? 'indigo' : 'sky'" variant="soft" size="xs">
+                {{ reviewTypeLabel(workflow.currentRound.reviewType) }}
+              </UBadge>
+              <span>| ส่งงาน {{ workflow.currentRound.dispatchedCount }} คน | ประเมินแล้ว {{ workflow.currentRound.completedCount }} คน</span>
+            </div>
+            <div class="bg-white border rounded-lg p-3 space-y-2">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs font-medium text-gray-700">
+                  ไฟล์สำหรับ Blind Review (ลบชื่อ/หน่วยงานผู้ส่งแล้ว)
+                </span>
+                <UBadge :color="workflow.currentRound.blindFileAvailable ? 'green' : 'amber'" variant="soft" size="xs">
+                  {{ workflow.currentRound.blindFileAvailable ? 'พร้อมส่งประเมิน' : 'ยังไม่ได้อัปโหลดไฟล์ Blind' }}
+                </UBadge>
+              </div>
+              <div class="flex flex-wrap items-center gap-3 text-xs">
+                <a
+                  v-if="workflow.currentRound.blindFileAvailable && workflow.currentRound.blindFileUrl"
+                  :href="fileLink(workflow.currentRound.blindFileUrl)"
+                  target="_blank"
+                  class="text-emerald-600 hover:underline font-medium"
+                >
+                  ดูไฟล์ Blind ปัจจุบัน
+                </a>
+                <label class="inline-flex items-center gap-1.5 cursor-pointer text-primary-600 hover:text-primary-700 font-medium">
+                  <UIcon name="i-heroicons-arrow-up-tray" class="w-4 h-4" />
+                  <span>{{ uploadingBlindFile ? 'กำลังอัปโหลด...' : (workflow.currentRound.blindFileAvailable ? 'เปลี่ยนไฟล์ Blind (.pdf/.doc/.docx)' : 'อัปโหลดไฟล์ Blind (.pdf/.doc/.docx)') }}</span>
+                  <input type="file" accept=".pdf,.doc,.docx" class="hidden" :disabled="uploadingBlindFile" @change="uploadBlindFile" />
+                </label>
+              </div>
+            </div>
             <div class="flex flex-col sm:flex-row gap-2">
               <USelectMenu
                 v-model="selectedReviewerIds"
@@ -1119,7 +1209,16 @@ watch(() => props.modelValue, (open) => {
               </div>
               <div v-if="assignment.status === 'assigned'" class="flex flex-wrap items-center gap-2">
                 <UInput v-model="dueDates[assignment.id]" type="date" size="sm" />
-                <UButton color="primary" size="xs" :loading="updating" @click="sendAssignment(assignment.id)">ส่งพิจารณา</UButton>
+                <UButton
+                  color="primary"
+                  size="xs"
+                  :loading="updating"
+                  :disabled="!workflow.currentRound.blindFileAvailable"
+                  :title="!workflow.currentRound.blindFileAvailable ? 'กรุณาอัปโหลดไฟล์ Blind Review ก่อนส่งพิจารณา' : undefined"
+                  @click="sendAssignment(assignment.id)"
+                >
+                  ส่งพิจารณา
+                </UButton>
                 <UButton color="gray" variant="ghost" size="xs" :loading="updating" @click="removeAssignment(assignment)">ถอดออก</UButton>
               </div>
               <div v-else-if="assignment.status !== 'completed'" class="flex flex-wrap items-center justify-between gap-2">

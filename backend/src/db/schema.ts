@@ -35,18 +35,14 @@ export const submissions = mysqlTable("submissions", {
   educationLevel: mysqlEnum("education_level", ["bachelor", "master", "doctorate"]).notNull(),
   presentationFormat: mysqlEnum("presentation_format", ["oral", "poster"]).notNull(),
   wantsFullPaper: int("wants_full_paper").notNull().default(0),
+  currentRound: int("current_round").notNull().default(0),
   status: mysqlEnum("status", [
     "draft",
-    "submitted_round1",
-    "under_review_round1",
-    "passed_round1",
-    "passed_round1_with_revisions",
-    "rejected_round1",
-    "submitted_round2",
-    "under_review_round2",
-    "passed_round2",
-    "passed_round2_with_revisions",
-    "rejected_round2",
+    "submitted",
+    "under_review",
+    "accepted",
+    "revision_requested",
+    "rejected",
   ]).notNull().default("draft"),
   abstractFileUrl: varchar("abstract_file_url", { length: 500 }),
   abstractWordFileUrl: varchar("abstract_word_file_url", { length: 500 }),
@@ -106,6 +102,8 @@ export const reviewRounds = mysqlTable("review_rounds", {
   submissionId: varchar("submission_id", { length: 36 }).notNull().references(() => submissions.id),
   submissionVersionId: varchar("submission_version_id", { length: 36 }).references(() => submissionVersions.id),
   roundNumber: int("round_number").notNull(),
+  reviewType: mysqlEnum("review_type", ["abstract", "full_paper"]).notNull().default("abstract"),
+  blindFileUrl: varchar("blind_file_url", { length: 500 }),
   status: mysqlEnum("status", ["assigning", "in_review", "ready_for_decision", "released"]).notNull().default("assigning"),
   decision: mysqlEnum("decision", ["accept", "reject", "revise"]),
   adminNote: text("admin_note"),
@@ -236,43 +234,30 @@ export const receiptAuditLogs = mysqlTable("receipt_audit_logs", {
 
 // ---------- Submission status helpers ----------
 
+export type ReviewType = "abstract" | "full_paper";
+
 export type SubmissionStatus =
   | "draft"
-  | "submitted_round1"
-  | "under_review_round1"
-  | "passed_round1"
-  | "passed_round1_with_revisions"
-  | "rejected_round1"
-  | "submitted_round2"
-  | "under_review_round2"
-  | "passed_round2"
-  | "passed_round2_with_revisions"
-  | "rejected_round2";
+  | "submitted"
+  | "under_review"
+  | "accepted"
+  | "revision_requested"
+  | "rejected";
 
 export const STATUS_LABEL: Record<SubmissionStatus, string> = {
-  draft: "ร่าง",
-  submitted_round1: "ส่งรอบที่ 1 แล้ว",
-  under_review_round1: "อยู่ระหว่างรีวิวรอบที่ 1",
-  passed_round1: "ผ่านรอบที่ 1",
-  passed_round1_with_revisions: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข",
-  rejected_round1: "ไม่ผ่านรอบที่ 1",
-  submitted_round2: "ส่งรอบที่ 2 แล้ว",
-  under_review_round2: "อยู่ระหว่างรีวิวรอบที่ 2",
-  passed_round2: "ผ่านรอบที่ 2",
-  passed_round2_with_revisions: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข",
-  rejected_round2: "ไม่ผ่านรอบที่ 2",
+  draft: "ฉบับร่าง",
+  submitted: "รอส่งประเมิน",
+  under_review: "อยู่ระหว่างประเมิน",
+  accepted: "ผ่านการพิจารณา",
+  revision_requested: "ส่งกลับแก้ไข",
+  rejected: "ไม่ผ่านการพิจารณา",
 };
 
 export const STATUS_COLOR: Record<SubmissionStatus, string> = {
   draft: "gray",
-  submitted_round1: "blue",
-  under_review_round1: "amber",
-  passed_round1: "green",
-  passed_round1_with_revisions: "teal",
-  rejected_round1: "red",
-  submitted_round2: "blue",
-  under_review_round2: "amber",
-  passed_round2: "emerald",
-  passed_round2_with_revisions: "teal",
-  rejected_round2: "red",
+  submitted: "blue",
+  under_review: "amber",
+  accepted: "emerald",
+  revision_requested: "teal",
+  rejected: "red",
 };

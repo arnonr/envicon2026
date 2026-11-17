@@ -8,6 +8,9 @@ interface ReviewDetail {
   commentsToAuthor: string | null;
   dueAt: string | null;
   roundNumber: number;
+  reviewType: "abstract" | "full_paper";
+  hasBlindFile: boolean;
+  blindFileName: string | null;
   title: string;
   titleEn: string | null;
   abstract: string | null;
@@ -25,6 +28,7 @@ const headers = computed(() => authStore.token ? { Authorization: `Bearer ${auth
 const review = ref<ReviewDetail | null>(null);
 const loading = ref(true);
 const saving = ref(false);
+const downloadingFile = ref(false);
 const form = reactive({
   recommendation: "" as "" | "accept" | "reject" | "revise",
   commentsToAuthor: "",
@@ -116,6 +120,33 @@ async function submitReview() {
   await navigateTo("/reviewer");
 }
 
+async function downloadBlindFile() {
+  if (!review.value?.hasBlindFile || !authStore.token) return;
+  downloadingFile.value = true;
+  try {
+    const res = await fetch(`${apiBase}/reviews/${route.params.id}/file`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    });
+    if (!res.ok) {
+      showError({ status: res.status, error: "ไม่สามารถดาวน์โหลดไฟล์สำหรับประเมินได้" });
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = review.value.blindFileName ?? `blind-review-round-${review.value.roundNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch {
+    showError({ status: 500, error: "เกิดข้อผิดพลาดในการดาวน์โหลดไฟล์" });
+  } finally {
+    downloadingFile.value = false;
+  }
+}
+
 onMounted(fetchReview);
 </script>
 
@@ -130,10 +161,16 @@ onMounted(fetchReview);
     <template v-else-if="review">
       <div class="flex justify-between gap-4 mb-6">
         <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <UBadge :color="review.reviewType === 'full_paper' ? 'indigo' : 'sky'" variant="soft" size="xs">
+              {{ review.reviewType === "full_paper" ? "ประเมินฉบับเต็ม (Full Paper)" : "ประเมินบทคัดย่อ (Abstract)" }}
+            </UBadge>
+            <UBadge color="gray" variant="soft" size="xs">รอบที่ {{ review.roundNumber }}</UBadge>
+          </div>
           <h1 class="text-xl font-bold">{{ review.title }}</h1>
           <p v-if="review.titleEn" class="text-gray-500">{{ review.titleEn }}</p>
         </div>
-        <UBadge :color="review.status === 'completed' ? 'green' : 'yellow'" variant="soft">
+        <UBadge :color="review.status === 'completed' ? 'green' : 'yellow'" variant="soft" class="self-start">
           {{ review.status === "completed" ? "ส่งผลแล้ว" : "รอประเมิน" }}
         </UBadge>
       </div>
@@ -141,6 +178,22 @@ onMounted(fetchReview);
         <dl class="grid sm:grid-cols-2 gap-3 text-sm">
           <div><dt class="text-gray-500">สาขาที่ส่งผลงาน</dt><dd class="mt-1 font-medium">{{ TRACK_NAMES[review.track] ?? review.track }}</dd></div>
           <div><dt class="text-gray-500">รูปแบบการนำเสนอ</dt><dd class="mt-1 font-medium">{{ presentationFormatLabel(review.presentationFormat) }}</dd></div>
+          <div class="sm:col-span-2">
+            <dt class="text-gray-500">เอกสารสำหรับประเมิน (Blind Review)</dt>
+            <dd class="mt-2">
+              <UButton
+                v-if="review.hasBlindFile"
+                color="primary"
+                variant="soft"
+                icon="i-heroicons-arrow-down-tray"
+                :loading="downloadingFile"
+                @click="downloadBlindFile"
+              >
+                ดาวน์โหลดไฟล์สำหรับประเมิน (Blind Review)
+              </UButton>
+              <span v-else class="text-xs text-amber-600">ยังไม่มีไฟล์เอกสารสำหรับรอบนี้</span>
+            </dd>
+          </div>
           <div v-if="review.abstract" class="sm:col-span-2"><dt class="text-gray-500">บทคัดย่อ</dt><dd class="mt-1 whitespace-pre-line">{{ review.abstract }}</dd></div>
         </dl>
       </UCard>

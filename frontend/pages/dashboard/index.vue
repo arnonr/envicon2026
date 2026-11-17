@@ -179,7 +179,7 @@ onMounted(async () => {
                   แก้ไขแบบร่างต่อ
                 </UButton>
                 <UButton
-                  v-if="sub.status === 'passed_round1_with_revisions' || sub.status === 'passed_round2_with_revisions'"
+                  v-if="sub.status === 'revision_requested'"
                   size="xs"
                   color="orange"
                   variant="soft"

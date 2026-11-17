@@ -1,100 +1,81 @@
-import type { SubmissionStatus } from "../db/schema";
-
-export const ROUND_OF: Record<SubmissionStatus, 0 | 1 | 2> = {
-  draft: 0,
-  submitted_round1: 1,
-  under_review_round1: 1,
-  passed_round1: 1,
-  passed_round1_with_revisions: 1,
-  rejected_round1: 1,
-  submitted_round2: 2,
-  under_review_round2: 2,
-  passed_round2: 2,
-  passed_round2_with_revisions: 2,
-  rejected_round2: 2,
-};
+import type { ReviewType, SubmissionStatus } from "../db/schema";
+import { STATUS_LABEL } from "../db/schema";
 
 export const isDraft = (s: SubmissionStatus) => s === "draft";
 
 export const canEdit = (s: SubmissionStatus) =>
-  s === "draft" || s === "passed_round1_with_revisions" || s === "passed_round2_with_revisions";
+  s === "draft" || s === "revision_requested";
 
 export const canRevise = (s: SubmissionStatus) =>
-  s === "passed_round1_with_revisions" || s === "passed_round2_with_revisions";
+  s === "revision_requested";
 
 export const canCameraReady = (s: SubmissionStatus) =>
-  s === "passed_round1" || s === "passed_round2";
+  s === "accepted";
 
 export const canReplaceFile = (s: SubmissionStatus) =>
-  s === "submitted_round1" || s === "submitted_round2";
+  s === "submitted";
 
 export const canUpdateFiles = (s: SubmissionStatus) =>
-  s !== "rejected_round1" && s !== "rejected_round2";
+  s !== "rejected";
 
 export const isUnderReview = (s: SubmissionStatus) =>
-  s === "under_review_round1" || s === "under_review_round2";
+  s === "under_review";
 
 export const isSubmitted = (s: SubmissionStatus) =>
-  s === "submitted_round1" || s === "submitted_round2";
+  s === "submitted";
 
 export const isTerminal = (s: SubmissionStatus) =>
-  /^rejected_round[12]$|^passed_round[12](_with_revisions)?$/.test(s);
+  s === "accepted" || s === "revision_requested" || s === "rejected";
 
 export const TERMINAL_STATUSES: SubmissionStatus[] = [
-  "passed_round1",
-  "passed_round1_with_revisions",
-  "rejected_round1",
-  "passed_round2",
-  "passed_round2_with_revisions",
-  "rejected_round2",
+  "accepted",
+  "revision_requested",
+  "rejected",
 ];
 
 export const RE_REVIEW_STATUSES: SubmissionStatus[] = [
-  "passed_round1_with_revisions",
-  "passed_round2_with_revisions",
+  "revision_requested",
 ];
 
 export const ALL_NON_DRAFT: SubmissionStatus[] = [
-  "submitted_round1",
-  "under_review_round1",
-  "passed_round1",
-  "passed_round1_with_revisions",
-  "rejected_round1",
-  "submitted_round2",
-  "under_review_round2",
-  "passed_round2",
-  "passed_round2_with_revisions",
-  "rejected_round2",
+  "submitted",
+  "under_review",
+  "accepted",
+  "revision_requested",
+  "rejected",
 ];
 
+export const getStatusLabel = (status: SubmissionStatus, currentRound = 0): string => {
+  const base = STATUS_LABEL[status] ?? status;
+  if (status === "draft" || currentRound <= 0) return base;
+  return `${base} (รอบ ${currentRound})`;
+};
+
 export const statusAfterDecision = (
-  roundNumber: number,
   decision: "accept" | "reject" | "revise",
 ): SubmissionStatus => {
-  const effectiveRound = Math.min(Math.max(roundNumber, 1), 2);
-  if (decision === "accept") return `passed_round${effectiveRound}` as SubmissionStatus;
-  if (decision === "reject") return `rejected_round${effectiveRound}` as SubmissionStatus;
-  return `passed_round${effectiveRound}_with_revisions` as SubmissionStatus;
+  if (decision === "accept") return "accepted";
+  if (decision === "reject") return "rejected";
+  return "revision_requested";
 };
 
-export const statusAfterSendReview = (roundNumber: number): SubmissionStatus => {
-  const effectiveRound = Math.min(Math.max(roundNumber, 1), 2);
-  return `under_review_round${effectiveRound}` as SubmissionStatus;
-};
+export const statusAfterSendReview = (): SubmissionStatus => "under_review";
 
 export const statusAfterReviseUpload = (currentStatus: SubmissionStatus): SubmissionStatus | null => {
-  if (currentStatus === "passed_round1_with_revisions") return "submitted_round2";
-  if (currentStatus === "passed_round2_with_revisions") return "submitted_round2";
+  if (currentStatus === "revision_requested") return "submitted";
   return null;
 };
 
 export const statusAfterFileUpload = (
   currentStatus: SubmissionStatus,
   hasUploadedFullPaper: boolean,
+  latestReleasedReviewType?: ReviewType | null,
 ): SubmissionStatus | null => {
-  if (currentStatus === "draft") return "submitted_round1";
+  if (currentStatus === "draft") return "submitted";
   const reviseStatus = statusAfterReviseUpload(currentStatus);
   if (reviseStatus) return reviseStatus;
-  if (currentStatus === "passed_round1" && hasUploadedFullPaper) return "submitted_round2";
+  if (currentStatus === "accepted" && hasUploadedFullPaper && latestReleasedReviewType === "abstract") {
+    return "submitted";
+  }
   return null;
 };

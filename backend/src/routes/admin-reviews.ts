@@ -20,7 +20,7 @@ import { appUrl, escapeHtml, retryTrackedEmail, sendTrackedEmail } from "../serv
 import { buildAuthorResultEmail, buildReviewerInvitationEmail, buildReviewAssignmentEmail } from "../services/email-templates";
 import { issuePasswordSetupToken } from "../services/password-setup";
 import { fail, ok } from "../utils/response";
-import { storedFileExists } from "../services/storage";
+import { saveFile, storedFileExists } from "../services/storage";
 import { syncSubmissionPaymentToEventRegistration } from "../services/event-registration-sync";
 
 function generateSecurePassword(): string {
@@ -468,6 +468,8 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           submissionId: reviewRounds.submissionId,
           submissionVersionId: reviewRounds.submissionVersionId,
           roundNumber: reviewRounds.roundNumber,
+          reviewType: reviewRounds.reviewType,
+          blindFileUrl: reviewRounds.blindFileUrl,
           status: reviewRounds.status,
           decision: reviewRounds.decision,
           adminNote: reviewRounds.adminNote,
@@ -537,12 +539,14 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           absWordAvail,
           fullPdfAvail,
           fullWordAvail,
+          blindFileAvailable,
         ] = await Promise.all([
           storedFileExists(resolvedFileUrl),
           storedFileExists(resolvedAbstractFileUrl),
           storedFileExists(resolvedAbstractWordFileUrl),
           storedFileExists(resolvedFullPaperFileUrl),
           storedFileExists(resolvedFullPaperWordFileUrl),
+          storedFileExists(round.blindFileUrl),
         ]);
 
         return {
@@ -550,6 +554,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           submissionId: round.submissionId,
           submissionVersionId: round.submissionVersionId,
           roundNumber: round.roundNumber,
+          reviewType: round.reviewType,
+          blindFileUrl: round.blindFileUrl,
+          blindFileAvailable,
           status: round.status,
           decision: round.decision,
           adminNote: round.adminNote,
@@ -647,9 +654,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
   )
   .post(
     "/submissions/:id/review-rounds",
-    async ({ params, set }) => {
+    async ({ params, body, set }) => {
       const [submission] = await db.select().from(submissions).where(eq(submissions.id, params.id)).limit(1);
-      if (!submission || (!ALL_NON_DRAFT.includes(submission.status) && !RE_REVIEW_STATUSES.includes(submission.status as never))) {
+      if (!submission || submission.status === "draft" || submission.status === "rejected") {
         set.status = 400;
         return fail("VALIDATION_ERROR", "ผลงานยังไม่พร้อมเริ่มรอบพิจารณา");
       }
@@ -669,17 +676,60 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .where(eq(reviewRounds.submissionId, params.id))
         .orderBy(desc(reviewRounds.roundNumber))
         .limit(1);
+      const nextRound = (latest?.roundNumber ?? 0) + 1;
+      const reviewType = body?.reviewType ?? (nextRound === 1 ? "abstract" : "full_paper");
       const version = await ensureCurrentSubmissionVersion(submission);
       const id = crypto.randomUUID();
       await db.insert(reviewRounds).values({
         id,
         submissionId: params.id,
         submissionVersionId: version.id,
-        roundNumber: (latest?.roundNumber ?? 0) + 1,
+        roundNumber: nextRound,
+        reviewType,
       });
-      return ok({ id, isReReview });
+      await db
+        .update(submissions)
+        .set({
+          currentRound: nextRound,
+          ...(submission.status !== "submitted" ? { status: "submitted" } : {}),
+        })
+        .where(eq(submissions.id, params.id));
+      return ok({ id, isReReview, roundNumber: nextRound, reviewType });
     },
-    { params: t.Object({ id: t.String() }) },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Optional(t.Object({
+        reviewType: t.Optional(t.Union([t.Literal("abstract"), t.Literal("full_paper")])),
+      })),
+    },
+  )
+  .post(
+    "/review-rounds/:roundId/blind-file",
+    async ({ params, body, set }) => {
+      const [round] = await db.select().from(reviewRounds).where(eq(reviewRounds.id, params.roundId)).limit(1);
+      if (!round) {
+        set.status = 404;
+        return fail("NOT_FOUND", "ไม่พบรอบพิจารณา");
+      }
+      if (round.status === "released") {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "ไม่สามารถเปลี่ยนไฟล์ Blind ของรอบที่แจ้งผลแล้วได้");
+      }
+      const lower = body.file.name.toLowerCase();
+      if (!lower.endsWith(".pdf") && !lower.endsWith(".doc") && !lower.endsWith(".docx")) {
+        set.status = 400;
+        return fail("VALIDATION_ERROR", "รองรับเฉพาะไฟล์ .pdf, .doc หรือ .docx เท่านั้น");
+      }
+      const blindFileUrl = await saveFile(body.file, `blind-r${round.roundNumber}-${round.submissionId}`);
+      await db.update(reviewRounds).set({ blindFileUrl }).where(eq(reviewRounds.id, round.id));
+      return ok({ blindFileUrl, blindFileAvailable: true });
+    },
+    {
+      params: t.Object({ roundId: t.String() }),
+      body: t.Object({
+        file: t.File({ maxSize: 50 * 1024 * 1024 }),
+      }),
+    },
   )
   .post(
     "/review-rounds/:roundId/assignments",
@@ -772,6 +822,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           versionFullPaperFileUrl: submissionVersions.fullPaperFileUrl,
           versionFullPaperWordFileUrl: submissionVersions.fullPaperWordFileUrl,
           roundNumber: reviewRounds.roundNumber,
+          blindFileUrl: reviewRounds.blindFileUrl,
           reviewerId: users.id,
           reviewerName: users.name,
           reviewerEmail: users.email,
@@ -788,22 +839,9 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "งานนี้ถูกส่งไปแล้วหรือไม่พบการมอบหมาย");
       }
-      const candidateUrls = [
-        assignment.versionFullPaperFileUrl,
-        assignment.versionFullPaperWordFileUrl,
-        assignment.versionAbstractFileUrl,
-        assignment.versionAbstractWordFileUrl,
-        assignment.versionFileUrl,
-        assignment.fullPaperFileUrl,
-        assignment.fullPaperWordFileUrl,
-        assignment.abstractFileUrl,
-        assignment.abstractWordFileUrl,
-        assignment.round1FileUrl,
-      ].filter(Boolean) as string[];
-      const availability = await Promise.all(candidateUrls.map((url) => storedFileExists(url)));
-      if (!availability.some(Boolean)) {
+      if (!assignment.blindFileUrl || !(await storedFileExists(assignment.blindFileUrl))) {
         set.status = 400;
-        return fail("VALIDATION_ERROR", "ไม่พบไฟล์ผลงานสำหรับรอบพิจารณานี้ กรุณาให้เจ้าของผลงานแนบไฟล์ใหม่ก่อนส่งพิจารณา");
+        return fail("VALIDATION_ERROR", "กรุณาอัปโหลดไฟล์ Blind Review สำหรับรอบนี้ก่อนส่งงานให้ผู้ทรงคุณวุฒิ");
       }
 
       const reviewPath = `/reviewer/reviews/${assignment.id}`;
@@ -836,7 +874,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         .set({ status: "sent", dueAt: new Date(body.dueAt), sentAt: new Date() })
         .where(eq(reviews.id, assignment.id));
       await db.update(reviewRounds).set({ status: "in_review" }).where(eq(reviewRounds.id, assignment.roundId));
-      await db.update(submissions).set({ status: statusAfterSendReview(assignment.roundNumber ?? 1) }).where(eq(submissions.id, assignment.submissionId));
+      await db.update(submissions).set({ status: statusAfterSendReview() }).where(eq(submissions.id, assignment.submissionId));
       return ok({ sent: true });
     },
     {
@@ -887,6 +925,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
           adminNote: reviewRounds.adminNote,
           status: reviewRounds.status,
           roundNumber: reviewRounds.roundNumber,
+          reviewType: reviewRounds.reviewType,
           title: submissions.title,
           authorName: users.name,
           authorEmail: users.email,
@@ -900,7 +939,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "ยังไม่มีผลตัดสินที่พร้อมแจ้ง");
       }
-      const status = statusAfterDecision(round.roundNumber, round.decision ?? "accept");
+      const status = statusAfterDecision(round.decision ?? "accept");
       await db.update(reviewRounds).set({ status: "released", releasedAt: new Date() }).where(eq(reviewRounds.id, round.id));
       await db.update(submissions).set({ status }).where(eq(submissions.id, round.submissionId));
 
@@ -922,6 +961,7 @@ export const adminReviewRoutes = new Elysia({ prefix: "/admin" })
         adminNote: round.adminNote,
         reviewerComments,
         roundNumber: round.roundNumber,
+        reviewType: round.reviewType,
       });
 
       const notification = await sendTrackedEmail({

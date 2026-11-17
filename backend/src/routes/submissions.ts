@@ -93,7 +93,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     return ok(own.map((s) => ({
       ...s,
       ...resolveCurrentSlotUrls(s),
-      currentRoundNumber: roundBySubmission.get(s.id) ?? 0,
+      currentRoundNumber: s.currentRound || (roundBySubmission.get(s.id) ?? 0),
     })));
   })
 
@@ -136,6 +136,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
     const [releasedRound] = await db
       .select({
         id: reviewRounds.id,
+        reviewType: reviewRounds.reviewType,
         decision: reviewRounds.decision,
         adminNote: reviewRounds.adminNote,
         releasedAt: reviewRounds.releasedAt,
@@ -155,6 +156,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       .select({
         id: reviewRounds.id,
         roundNumber: reviewRounds.roundNumber,
+        reviewType: reviewRounds.reviewType,
         status: reviewRounds.status,
         decision: reviewRounds.decision,
         adminNote: reviewRounds.adminNote,
@@ -163,9 +165,9 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       .from(reviewRounds)
       .where(eq(reviewRounds.submissionId, params.id))
       .orderBy(reviewRounds.roundNumber);
-    const currentRoundNumber = roundSummaries.length
+    const currentRoundNumber = sub.currentRound || (roundSummaries.length
       ? Math.max(...roundSummaries.map((r) => r.roundNumber))
-      : 0;
+      : 0);
 
     const latestRevision = revisionList[0] ?? null;
     const dispatchedInOpenRound = latestRevision && canReplaceFile(sub.status)
@@ -204,6 +206,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       revisions: revisionList,
       receiptAuditLogs: receiptLogs,
       currentRoundNumber,
+      latestReleasedReviewType: releasedRound?.reviewType ?? null,
       rounds: roundSummaries,
       canUpdateFiles: user!.role === "author"
         && sub.authorId === user!.id
@@ -531,7 +534,17 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       const isInitialSubmit = sub.status === "draft";
       const hasUploadedFullPaper = Boolean(files.fullPaperPdf || files.fullPaperWord);
-      const nextStatus = statusAfterFileUpload(sub.status, hasUploadedFullPaper);
+      let latestReleasedReviewType: "abstract" | "full_paper" | null = null;
+      if (sub.status === "accepted" && hasUploadedFullPaper) {
+        const [released] = await db
+          .select({ reviewType: reviewRounds.reviewType })
+          .from(reviewRounds)
+          .where(and(eq(reviewRounds.submissionId, params.id), eq(reviewRounds.status, "released")))
+          .orderBy(desc(reviewRounds.roundNumber))
+          .limit(1);
+        latestReleasedReviewType = released?.reviewType ?? null;
+      }
+      const nextStatus = statusAfterFileUpload(sub.status, hasUploadedFullPaper, latestReleasedReviewType);
       const tracking = !isInitialSubmit
         ? buildAuthorUpdateTracking(sub, detectUploadedAuthorSlots(files))
         : null;
@@ -545,7 +558,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           round1FileUrl,
           round1FileType,
           ...(nextStatus && { status: nextStatus }),
-          ...(isInitialSubmit && { submittedAt: new Date() }),
+          ...(isInitialSubmit && { currentRound: 1, submittedAt: new Date() }),
           ...(tracking ?? {}),
         })
         .where(eq(submissions.id, params.id));
@@ -609,7 +622,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
 
       await db
         .update(submissions)
-        .set({ abstractFileUrl: fileUrl, round1FileUrl: fileUrl, round1FileType: "abstract", status: "submitted_round1", submittedAt: new Date() })
+        .set({ abstractFileUrl: fileUrl, round1FileUrl: fileUrl, round1FileType: "abstract", status: "submitted", currentRound: 1, submittedAt: new Date() })
         .where(eq(submissions.id, params.id));
 
       await recordInitialSnapshot(sub, merged);
@@ -664,7 +677,8 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           round1FileUrl: fileUrl,
           round1FileType: body.fileType,
           ...(body.fileType === "abstract" ? { abstractFileUrl: fileUrl } : { fullPaperFileUrl: fileUrl }),
-          status: "submitted_round1",
+          status: "submitted",
+          currentRound: 1,
           submittedAt: new Date(),
         })
         .where(eq(submissions.id, params.id));
@@ -720,7 +734,13 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       };
       const merged: FileSlotUrls = { ...currentSlots, fullPaperFileUrl: fileUrl };
 
-      const nextStatus = statusAfterFileUpload(sub.status, true);
+      const [released] = await db
+        .select({ reviewType: reviewRounds.reviewType })
+        .from(reviewRounds)
+        .where(and(eq(reviewRounds.submissionId, params.id), eq(reviewRounds.status, "released")))
+        .orderBy(desc(reviewRounds.roundNumber))
+        .limit(1);
+      const nextStatus = statusAfterFileUpload(sub.status, true, released?.reviewType ?? null);
       const tracking = buildAuthorUpdateTracking(sub, ["fullPaperPdf"]);
       await db
         .update(submissions)
@@ -955,7 +975,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         body.changelog ?? null,
       );
 
-      const nextStatus = statusAfterReviseUpload(sub.status) ?? "submitted_round2";
+      const nextStatus = statusAfterReviseUpload(sub.status) ?? "submitted";
       const changedSlots = detectUploadedAuthorSlots(files);
       const tracking = buildAuthorUpdateTracking(sub, changedSlots.length ? changedSlots : ["metadata"]);
 

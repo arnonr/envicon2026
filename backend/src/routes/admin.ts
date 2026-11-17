@@ -8,7 +8,7 @@ import { getUserFromHeaders } from "../middleware/auth";
 import { ok, fail, paginated } from "../utils/response";
 import { calculateFee } from "../utils/fees";
 import { STATUS_LABEL, type SubmissionStatus } from "../db/schema";
-import { ALL_NON_DRAFT, RE_REVIEW_STATUSES } from "../utils/submission-status";
+import { ALL_NON_DRAFT, RE_REVIEW_STATUSES, getStatusLabel } from "../utils/submission-status";
 import { syncEventRegistrationPaymentToSubmission } from "../services/event-registration-sync";
 import {
   type FileSlotInputs,
@@ -178,6 +178,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
           educationLevel: submissions.educationLevel,
           presentationFormat: submissions.presentationFormat,
           wantsFullPaper: submissions.wantsFullPaper,
+          currentRound: submissions.currentRound,
           status: submissions.status,
           abstractFileUrl: submissions.abstractFileUrl,
           abstractWordFileUrl: submissions.abstractWordFileUrl,
@@ -266,6 +267,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         submitterType: submissions.submitterType,
         educationLevel: submissions.educationLevel,
         presentationFormat: submissions.presentationFormat,
+        currentRound: submissions.currentRound,
         status: submissions.status,
         abstractFileUrl: submissions.abstractFileUrl,
         abstractWordFileUrl: submissions.abstractWordFileUrl,
@@ -349,7 +351,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         educationLevel: EDUCATION_LEVEL_NAMES[submission.educationLevel] ?? submission.educationLevel,
         presentationFormat: PRESENTATION_FORMAT_NAMES[submission.presentationFormat] ?? submission.presentationFormat,
         track: TRACK_NAMES[submission.track] ?? String(submission.track),
-        status: STATUS_NAMES[submission.status] ?? submission.status,
+        status: getStatusLabel(submission.status, submission.currentRound),
         reviewerNames: (summaries.get(submission.id)?.reviewerNames ?? []).join(", "),
         keywords: submission.keywords ?? "",
         abstract: submission.abstract ?? "",
@@ -635,10 +637,11 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
         return fail("NOT_FOUND", "ไม่พบข้อมูลการส่งบทความ");
       }
       const forbiddenStatuses: SubmissionStatus[] = [
-        "under_review_round1",
-        "under_review_round2",
-        ...ALL_NON_DRAFT.filter((s) => s !== "submitted_round1" && s !== "submitted_round2"),
-      ] as SubmissionStatus[];
+        "under_review",
+        "accepted",
+        "revision_requested",
+        "rejected",
+      ];
       if (forbiddenStatuses.includes(body.status as SubmissionStatus)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "กรุณาเริ่มพิจารณา ตัดสิน และแจ้งผลผ่านกระบวนการรีวิว");
@@ -664,8 +667,7 @@ export const adminRoutes = new Elysia({ prefix: "/admin" })
       body: t.Object({
         status: t.Union([
           t.Literal("draft"),
-          t.Literal("submitted_round1"),
-          t.Literal("submitted_round2"),
+          t.Literal("submitted"),
         ]),
       }),
     },

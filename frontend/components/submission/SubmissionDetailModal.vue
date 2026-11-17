@@ -38,6 +38,8 @@ interface Submission {
   fullPaperWordFileUrl: string | null;
   round1FileUrl: string | null;
   round1FileType: "abstract" | "full_paper" | null;
+  currentRound?: number;
+  latestReleasedReviewType?: "abstract" | "full_paper" | null;
   canUpdateFiles?: boolean;
   paymentSlipUrl: string | null;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
@@ -250,13 +252,10 @@ const fetchSubmission = async () => {
   submission.value = data!.data;
   if (
     submission.value.canUpdateFiles
-    && [
-      'passed_round1',
-      'passed_round1_with_revisions',
-      'passed_round2_with_revisions',
-      'submitted_round2',
-      'under_review_round2',
-    ].includes(submission.value.status)
+    && (
+      ['revision_requested', 'submitted', 'under_review'].includes(submission.value.status)
+      || (submission.value.status === 'accepted' && submission.value.latestReleasedReviewType === 'abstract')
+    )
   ) {
     isEditingFiles.value = true;
   }
@@ -348,7 +347,7 @@ watch(() => props.modelValue, (open) => {
             <p v-if="submission.titleEn" class="text-sm text-gray-500 mt-0.5">{{ submission.titleEn }}</p>
           </div>
           <div class="flex items-center gap-2 flex-shrink-0">
-            <SubmissionStatusBadge :status="submission.status" />
+            <SubmissionStatusBadge :status="submission.status" :current-round="submission.currentRound" />
             <SubmissionPaymentStatusBadge :status="submission.paymentStatus" />
           </div>
         </div>
@@ -726,8 +725,8 @@ watch(() => props.modelValue, (open) => {
           </div>
         </div>
 
-        <!-- Upload full paper (passed round 1) -->
-        <div v-if="submission.status === 'passed_round1'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
+        <!-- Upload full paper (abstract round accepted) -->
+        <div v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
@@ -740,7 +739,7 @@ watch(() => props.modelValue, (open) => {
         </div>
 
         <!-- Revision requested -->
-        <div v-if="submission.status === 'passed_round1_with_revisions' || submission.status === 'passed_round2_with_revisions'" class="border border-orange-200 rounded-lg p-4 bg-orange-50/50">
+        <div v-if="submission.status === 'revision_requested'" class="border border-orange-200 rounded-lg p-4 bg-orange-50/50">
           <div class="flex items-center gap-2 mb-3">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-orange-500" />
             <h3 class="text-sm font-semibold text-orange-700">คณะกรรมการขอให้แก้ไขผลงาน</h3>
