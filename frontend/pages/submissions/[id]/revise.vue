@@ -123,7 +123,7 @@ onMounted(async () => {
     showError(error);
     return;
   }
-  if (data!.data.status !== 'passed_round1_with_revisions' && data!.data.status !== 'passed_round2_with_revisions') {
+  if (data!.data.status !== 'revision_requested') {
     await navigateTo(`/submissions/${route.params.id}`);
     return;
   }

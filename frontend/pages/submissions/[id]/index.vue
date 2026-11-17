@@ -56,6 +56,7 @@ interface Submission {
   revisions: Revision[];
   rounds: RoundSummary[];
   currentRoundNumber: number;
+  latestReleasedReviewType?: "abstract" | "full_paper" | null;
   canUpdateFiles: boolean;
   canReplaceLatestRevisionFile: boolean;
   releasedResult: ReleasedResult | null;
@@ -122,12 +123,12 @@ const fetchSubmission = async () => {
   if (
     submission.value.canUpdateFiles
     && [
-      'passed_round1',
-      'passed_round1_with_revisions',
-      'passed_round2_with_revisions',
-      'submitted_round2',
-      'under_review_round2',
+      'accepted',
+      'revision_requested',
+      'submitted',
+      'under_review',
     ].includes(submission.value.status)
+    && (submission.value.status !== 'accepted' || submission.value.latestReleasedReviewType !== 'full_paper')
   ) {
     isEditingFiles.value = true;
   }
@@ -290,8 +291,8 @@ onMounted(fetchSubmission);
         </div>
       </UCard>
 
-      <!-- Upload Full Paper prompt (when passed round 1) -->
-      <UCard v-if="submission.status === 'passed_round1' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="mb-6 border-green-200">
+      <!-- Upload Full Paper prompt (when abstract round accepted) -->
+      <UCard v-if="submission.status === 'accepted' && submission.latestReleasedReviewType !== 'full_paper' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="mb-6 border-green-200">
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
@@ -304,7 +305,7 @@ onMounted(fetchSubmission);
       </UCard>
 
       <!-- Revision requested -->
-      <UCard v-if="submission.status === 'passed_round1_with_revisions' || submission.status === 'passed_round2_with_revisions'" class="mb-6 border-orange-200">
+      <UCard v-if="submission.status === 'revision_requested'" class="mb-6 border-orange-200">
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-orange-500" />

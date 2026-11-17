@@ -1,70 +1,51 @@
+export type ReviewType = "abstract" | "full_paper";
+
 export type SubmissionStatus =
   | "draft"
-  | "submitted_round1"
-  | "under_review_round1"
-  | "passed_round1"
-  | "passed_round1_with_revisions"
-  | "rejected_round1"
-  | "submitted_round2"
-  | "under_review_round2"
-  | "passed_round2"
-  | "passed_round2_with_revisions"
-  | "rejected_round2";
+  | "submitted"
+  | "under_review"
+  | "accepted"
+  | "revision_requested"
+  | "rejected";
 
 export const STATUS_LABEL: Record<SubmissionStatus, string> = {
-  draft: "ร่าง",
-  submitted_round1: "ส่งรอบที่ 1 แล้ว",
-  under_review_round1: "อยู่ระหว่างรีวิวรอบที่ 1",
-  passed_round1: "ผ่านรอบที่ 1",
-  passed_round1_with_revisions: "ผ่านรอบที่ 1 แบบมีข้อแก้ไข",
-  rejected_round1: "ไม่ผ่านรอบที่ 1",
-  submitted_round2: "ส่งรอบที่ 2 แล้ว",
-  under_review_round2: "อยู่ระหว่างรีวิวรอบที่ 2",
-  passed_round2: "ผ่านรอบที่ 2",
-  passed_round2_with_revisions: "ผ่านรอบที่ 2 แบบมีข้อแก้ไข",
-  rejected_round2: "ไม่ผ่านรอบที่ 2",
+  draft: "ฉบับร่าง",
+  submitted: "รอส่งประเมิน",
+  under_review: "อยู่ระหว่างประเมิน",
+  accepted: "ผ่านการพิจารณา",
+  revision_requested: "ส่งกลับแก้ไข",
+  rejected: "ไม่ผ่านการพิจารณา",
 };
 
 export const STATUS_COLOR: Record<SubmissionStatus, string> = {
   draft: "gray",
-  submitted_round1: "blue",
-  under_review_round1: "amber",
-  passed_round1: "green",
-  passed_round1_with_revisions: "teal",
-  rejected_round1: "red",
-  submitted_round2: "blue",
-  under_review_round2: "amber",
-  passed_round2: "emerald",
-  passed_round2_with_revisions: "teal",
-  rejected_round2: "red",
+  submitted: "blue",
+  under_review: "amber",
+  accepted: "emerald",
+  revision_requested: "teal",
+  rejected: "red",
 };
 
-export const ROUND_OF: Record<SubmissionStatus, 0 | 1 | 2> = {
-  draft: 0,
-  submitted_round1: 1, under_review_round1: 1,
-  passed_round1: 1, passed_round1_with_revisions: 1, rejected_round1: 1,
-  submitted_round2: 2, under_review_round2: 2,
-  passed_round2: 2, passed_round2_with_revisions: 2, rejected_round2: 2,
+export const getStatusLabel = (status: string, currentRound = 0): string => {
+  const base = STATUS_LABEL[status as SubmissionStatus] ?? status;
+  if (status === "draft" || !currentRound || currentRound <= 0) return base;
+  return `${base} (รอบ ${currentRound})`;
 };
 
 export const canEdit = (s: SubmissionStatus) =>
-  s === "draft" || s === "passed_round1_with_revisions" || s === "passed_round2_with_revisions";
+  s === "draft" || s === "revision_requested";
 
 export const canRevise = (s: SubmissionStatus) =>
-  s === "passed_round1_with_revisions" || s === "passed_round2_with_revisions";
+  s === "revision_requested";
 
 export const canCameraReady = (s: SubmissionStatus) =>
-  s === "passed_round1" || s === "passed_round2";
+  s === "accepted";
 
 export const canUpdateFiles = (s: SubmissionStatus) =>
-  s !== "rejected_round1"
-  && s !== "rejected_round2";
+  s !== "rejected";
 
 export const TERMINAL_STATUSES: SubmissionStatus[] = [
-  "passed_round1",
-  "passed_round1_with_revisions",
-  "rejected_round1",
-  "passed_round2",
-  "passed_round2_with_revisions",
-  "rejected_round2",
+  "accepted",
+  "revision_requested",
+  "rejected",
 ];
