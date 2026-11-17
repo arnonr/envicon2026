@@ -1181,6 +1181,8 @@ watch(() => props.modelValue, (open) => {
               <USelectMenu
                 v-model="selectedReviewerIds"
                 multiple
+                searchable
+                searchable-placeholder="ค้นหาชื่อผู้รีวิว..."
                 :options="availableReviewers.map((reviewer) => ({
                   value: reviewer.id,
                   label: `${reviewer.name}${reviewer.matchesTrack ? '' : ' (ต่างสาขา)'}${reviewer.overCapacity ? ' (เกินภาระงาน)' : ''}`,
@@ -1189,10 +1191,53 @@ watch(() => props.modelValue, (open) => {
                 option-attribute="label"
                 placeholder="เลือกผู้รีวิว (เลือกได้หลายคน)"
                 class="flex-1"
-              />
+              >
+                <template #label>
+                  <span v-if="selectedReviewerIds.length === 0" class="text-gray-400">
+                    เลือกผู้รีวิว (เลือกได้หลายคน)
+                  </span>
+                  <span v-else class="truncate text-emerald-700 font-medium">
+                    เลือกแล้ว {{ selectedReviewerIds.length }} คน
+                  </span>
+                </template>
+                <template #option="{ option, selected }">
+                  <div
+                    class="flex items-center justify-between w-full gap-2 px-1 py-0.5 rounded"
+                    :class="selected ? 'text-emerald-700 font-semibold' : 'text-gray-700'"
+                  >
+                    <span class="truncate">{{ option.label }}</span>
+                    <UIcon
+                      v-if="selected"
+                      name="i-heroicons-check-circle-solid"
+                      class="w-4 h-4 text-emerald-600 flex-shrink-0"
+                    />
+                  </div>
+                </template>
+              </USelectMenu>
               <UButton color="primary" variant="soft" :disabled="selectedReviewerIds.length === 0" :loading="updating" @click="assignReviewers">
                 เพิ่มผู้รีวิว
               </UButton>
+            </div>
+            <div v-if="selectedReviewerIds.length > 0" class="flex flex-wrap items-center gap-1.5">
+              <span class="text-xs text-gray-500">ที่เลือกไว้:</span>
+              <UBadge
+                v-for="id in selectedReviewerIds"
+                :key="id"
+                color="emerald"
+                variant="soft"
+                size="xs"
+                class="inline-flex items-center gap-1"
+              >
+                <span>{{ availableReviewers.find((r) => r.id === id)?.name ?? id }}</span>
+                <button
+                  type="button"
+                  class="hover:text-emerald-900 ml-0.5"
+                  aria-label="นำออก"
+                  @click="selectedReviewerIds = selectedReviewerIds.filter((item) => item !== id)"
+                >
+                  ×
+                </button>
+              </UBadge>
             </div>
             <div v-if="workflow.currentRound.assignments.length === 0" class="text-sm text-gray-400 text-center py-4">
               กรุณาเลือกผู้รีวิวก่อนส่งพิจารณา
