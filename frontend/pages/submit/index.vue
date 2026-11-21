@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Creator, SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
 import type { SelectedSlotFiles } from '~/components/submission/FileSlotsGrid.vue';
+import { FULL_PAPER_SUBMISSION_OPEN } from '~/utils/submission-status';
 
 definePageMeta({ middleware: ['auth', 'role'] });
 
@@ -121,7 +122,7 @@ const loadDraft = async (id: string) => {
   };
   initialCreators.value = parseCreators(draft.creators);
   if (draft.round1FileType) {
-    round1FileType.value = draft.round1FileType;
+    round1FileType.value = FULL_PAPER_SUBMISSION_OPEN ? draft.round1FileType : 'abstract';
     step.value = 2;
   }
 };
@@ -266,8 +267,7 @@ const hasAnySelectedFile = computed(() =>
   Boolean(
     selectedFiles.value.abstractPdf
     || selectedFiles.value.abstractWord
-    || selectedFiles.value.fullPaperPdf
-    || selectedFiles.value.fullPaperWord
+    || (FULL_PAPER_SUBMISSION_OPEN && (selectedFiles.value.fullPaperPdf || selectedFiles.value.fullPaperWord))
   )
 );
 
@@ -282,8 +282,12 @@ const uploadInitialFiles = async () => {
   const formData = new FormData();
   if (selectedFiles.value.abstractPdf) formData.append('abstractPdf', selectedFiles.value.abstractPdf);
   if (selectedFiles.value.abstractWord) formData.append('abstractWord', selectedFiles.value.abstractWord);
-  if (selectedFiles.value.fullPaperPdf) formData.append('fullPaperPdf', selectedFiles.value.fullPaperPdf);
-  if (selectedFiles.value.fullPaperWord) formData.append('fullPaperWord', selectedFiles.value.fullPaperWord);
+  if (FULL_PAPER_SUBMISSION_OPEN && selectedFiles.value.fullPaperPdf) {
+    formData.append('fullPaperPdf', selectedFiles.value.fullPaperPdf);
+  }
+  if (FULL_PAPER_SUBMISSION_OPEN && selectedFiles.value.fullPaperWord) {
+    formData.append('fullPaperWord', selectedFiles.value.fullPaperWord);
+  }
 
   const { error } = await handleApiCall(() =>
     $fetch(`${apiBase}/submissions/${submissionId.value}/upload-files`, {
@@ -361,7 +365,12 @@ const uploadInitialFiles = async () => {
         description="เมื่อสร้างผลงาน ระบบจะดึงหลักฐานการชำระเงิน (สลิป) และข้อมูลใบเสร็จรับเงินที่คุณเคยแจ้งไว้มาผูกกับผลงานนี้ให้อัตโนมัติ"
       />
 
-      <SubmissionForm ref="submissionFormRef" v-model="form" :initial-creators="initialCreators" />
+      <SubmissionForm
+        ref="submissionFormRef"
+        v-model="form"
+        :initial-creators="initialCreators"
+        :full-paper-open="FULL_PAPER_SUBMISSION_OPEN"
+      />
 
       <template #footer>
         <div class="flex justify-between">
@@ -390,6 +399,7 @@ const uploadInitialFiles = async () => {
 
       <SubmissionFileSlotsGrid
         editable
+        :full-paper-editable="FULL_PAPER_SUBMISSION_OPEN"
         :loading="uploading"
         @update:files="onFilesUpdated"
       />

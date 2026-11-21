@@ -32,6 +32,9 @@ export const getStatusLabel = (status: string, currentRound = 0): string => {
   return `${base} (รอบ ${currentRound})`;
 };
 
+// Set to true to re-open new full paper submissions.
+export const FULL_PAPER_SUBMISSION_OPEN = false;
+
 export const canEdit = (s: SubmissionStatus) =>
   s === "draft" || s === "revision_requested";
 
@@ -40,6 +43,9 @@ export const canRevise = (s: SubmissionStatus) =>
 
 export const canCameraReady = (s: SubmissionStatus) =>
   s === "accepted";
+
+export const canUploadFullPaper = (s: string) =>
+  FULL_PAPER_SUBMISSION_OPEN || s === "revision_requested";
 
 export const canUpdateFiles = (s: SubmissionStatus) =>
   s !== "rejected";

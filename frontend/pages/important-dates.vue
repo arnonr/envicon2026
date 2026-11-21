@@ -45,10 +45,10 @@ const dates = [
   {
     title: "ปิดรับบทความฉบับเต็มเพื่อลง Proceeding",
     date: "20 พฤศจิกายน 2569",
-    badge: "ปิดรับ 20 พ.ย. 69",
+    badge: "ปิดรับแล้ว",
     icon: "i-heroicons-document-check",
     color: "accent",
-    active: true,
+    active: false,
   },
 ];
 
@@ -82,30 +82,30 @@ const hotels = [
         <p class="text-gray-500 text-lg">Important Dates</p>
       </div>
 
-      <!-- Proceeding Announcement Banner -->
-      <div class="mb-10 p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-rose-50 to-amber-50 border-2 border-amber-300/80 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <!-- Proceeding Status Banner -->
+      <div class="mb-10 p-5 rounded-2xl bg-gradient-to-r from-stone-50 via-gray-50 to-stone-50 border-2 border-stone-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-3.5">
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-rose-500/20">
-            <UIcon name="i-heroicons-megaphone" class="w-6 h-6 animate-pulse" />
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-600 to-stone-700 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+            <UIcon name="i-heroicons-lock-closed" class="w-6 h-6" />
           </div>
           <div>
             <div class="inline-flex items-center gap-2 mb-1">
-              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">กำหนดการสำคัญ</span>
-              <span class="text-xs font-semibold text-rose-700">บทความเพื่อลง Proceeding</span>
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-stone-700 text-white">ปิดรับแล้ว</span>
+              <span class="text-xs font-semibold text-stone-600">บทความเพื่อลง Proceeding</span>
             </div>
             <p class="font-bold text-stone-900 text-base sm:text-lg">
-              ปิดรับบทความฉบับเต็มเพื่อลง Proceeding วันที่ <span class="text-rose-600 underline decoration-rose-300 underline-offset-4">20 พฤศจิกายน 2569</span>
+              ปิดรับบทความฉบับเต็มเพื่อลง Proceeding แล้ว (ครบกำหนด <span class="text-stone-700 underline decoration-stone-300 underline-offset-4">20 พฤศจิกายน 2569</span>)
             </p>
-            <p class="text-xs text-stone-600 mt-0.5">เปิดรับบทความฉบับสมบูรณ์ (Full Paper) สำหรับผู้ผ่านการพิจารณาเพื่อตีพิมพ์ใน Proceeding หลังจบการนำเสนอ</p>
+            <p class="text-xs text-stone-600 mt-0.5">สำหรับผู้นำเสนอที่ได้รับแจ้งให้แก้ไขจากคณะกรรมการ สามารถเข้าสู่ระบบเพื่อติดตามผลและส่งฉบับแก้ไขได้</p>
           </div>
         </div>
         <UButton
-          to="/presenter-guidelines"
+          to="/dashboard"
           color="primary"
           size="md"
           class="flex-shrink-0 self-end sm:self-center font-semibold shadow-md"
         >
-          คำแนะนำผู้นำเสนอ
+          ติดตามสถานะผลงาน
           <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-1" />
         </UButton>
       </div>
@@ -131,9 +131,10 @@ const hotels = [
                   <h3 class="font-semibold text-gray-900 text-lg">{{ item.title }}</h3>
                   <span
                     v-if="item.badge"
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 border border-rose-200 shadow-sm animate-pulse"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-sm"
+                    :class="item.active ? 'bg-rose-100 text-rose-700 border-rose-200 animate-pulse' : 'bg-stone-100 text-stone-700 border-stone-200'"
                   >
-                    <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+                    <UIcon :name="item.active ? 'i-heroicons-clock' : 'i-heroicons-lock-closed'" class="w-3.5 h-3.5" />
                     {{ item.badge }}
                   </span>
                 </div>

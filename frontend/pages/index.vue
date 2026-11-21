@@ -222,20 +222,20 @@
             :style="ctaBubbleStyle(i)" />
 
           <div class="relative px-8 py-12 sm:py-16 text-center text-white">
-            <div class="inline-flex items-center gap-2 bg-rose-500/85 backdrop-blur-md rounded-full px-4 py-1.5 mb-5 border border-rose-300/40 shadow-lg">
-              <span class="w-2 h-2 rounded-full bg-white animate-ping" />
-              <span class="text-xs font-bold tracking-wide uppercase text-white">กำหนดการสำคัญ</span>
+            <div class="inline-flex items-center gap-2 bg-stone-900/70 backdrop-blur-md rounded-full px-4 py-1.5 mb-5 border border-white/25 shadow-lg">
+              <UIcon name="i-heroicons-lock-closed" class="w-3.5 h-3.5 text-amber-200" />
+              <span class="text-xs font-bold tracking-wide text-white">ปิดรับบทความฉบับเต็มแล้ว</span>
             </div>
             <h2 class="font-display text-3xl sm:text-4xl font-bold mb-3">
-              ปิดรับบทความฉบับเต็มเพื่อลง Proceeding <span class="text-amber-200 drop-shadow-md">20 พฤศจิกายน 2569</span>
+              ปิดรับบทความฉบับเต็มเพื่อลง Proceeding แล้ว <span class="text-amber-200 drop-shadow-md">(ครบกำหนด 20 พ.ย. 2569)</span>
             </h2>
-            <p class="text-white/90 mb-7 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
-              สำหรับผู้นำเสนอผลงานที่ผ่านการพิจารณา สามารถนำส่งบทความฉบับสมบูรณ์ (Full Paper) เพื่อตีพิมพ์ในรายงานสืบเนื่องจากการประชุมวิชาการได้ถึงวันที่ 20 พ.ย. 2569
+            <p class="text-white/90 mb-7 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+              ระบบปิดรับการส่งบทความฉบับสมบูรณ์ (Full Paper) เรียบร้อยแล้ว ขอบคุณผู้นำเสนอทุกท่าน สำหรับผู้ที่ได้รับแจ้งให้แก้ไขจากคณะกรรมการ สามารถเข้าสู่ระบบเพื่อติดตามผลและส่งฉบับแก้ไขได้
             </p>
             <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
               <button @click="goToAuthorDashboard"
                 class="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white text-meadow-800 font-bold hover:bg-meadow-50 hover:scale-[1.03] shadow-xl transition-all duration-300">
-                เข้าสู่ระบบส่งบทความ →
+                เข้าสู่ระบบติดตามสถานะ →
               </button>
               <NuxtLink to="/program"
                 class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-amber-400 text-meadow-950 font-bold hover:bg-amber-300 hover:scale-[1.03] shadow-xl transition-all duration-300">
@@ -332,24 +332,24 @@
 
           <!-- Poster Info & Key Highlights (7 cols) -->
           <div class="lg:col-span-7 space-y-5">
-            <!-- Extension Alert Card -->
-            <div class="rounded-2xl bg-gradient-to-br from-rose-50 via-amber-50/60 to-white border-2 border-rose-200 p-5 sm:p-6 shadow-sm">
+            <!-- Proceeding Status Card -->
+            <div class="rounded-2xl bg-gradient-to-br from-stone-50 via-amber-50/40 to-white border-2 border-stone-200 p-5 sm:p-6 shadow-sm">
               <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-rose-500/25">
-                  <UIcon name="i-heroicons-bell-alert" class="w-6 h-6 animate-pulse" />
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-600 to-stone-700 text-white flex items-center justify-center flex-shrink-0 shadow-md">
+                  <UIcon name="i-heroicons-lock-closed" class="w-6 h-6" />
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="inline-flex items-center gap-2 mb-1">
-                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white">
-                      ประกาศสำคัญ
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-stone-700 text-white">
+                      ปิดรับแล้ว
                     </span>
-                    <span class="text-xs font-semibold text-rose-800">บทความเพื่อลง Proceeding</span>
+                    <span class="text-xs font-semibold text-stone-600">บทความเพื่อลง Proceeding</span>
                   </div>
                   <h3 class="text-lg sm:text-xl font-bold text-stone-900 leading-snug">
-                    ปิดรับบทความฉบับเต็มเพื่อลง Proceeding: 20 พฤศจิกายน 2569
+                    ปิดรับบทความฉบับเต็มเพื่อลง Proceeding แล้ว (20 พฤศจิกายน 2569)
                   </h3>
                   <p class="text-xs sm:text-sm text-stone-600 mt-1 leading-relaxed">
-                    เปิดรับบทความฉบับสมบูรณ์ (Full Paper) สำหรับผู้ผ่านการพิจารณาเพื่อตีพิมพ์ในรายงานสืบเนื่องจากการประชุมวิชาการหลังจบการนำเสนอผลงาน
+                    ระบบปิดรับบทความฉบับสมบูรณ์ (Full Paper) เรียบร้อยแล้ว ปัจจุบันอยู่ระหว่างกระบวนการพิจารณาและจัดทำรายงานสืบเนื่องจากการประชุมวิชาการ
                   </p>
                 </div>
               </div>
@@ -363,8 +363,8 @@
               </h4>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm pt-1">
-                <div class="p-3 rounded-xl bg-amber-50/80 border border-amber-300">
-                  <div class="text-[11px] font-bold uppercase tracking-wider text-amber-800">ปิดรับ Proceeding</div>
+                <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
+                  <div class="text-[11px] font-bold uppercase tracking-wider text-stone-600">ปิดรับ Proceeding (ปิดรับแล้ว)</div>
                   <div class="font-bold text-stone-900 mt-0.5">20 พ.ย. 69</div>
                 </div>
                 <div class="p-3 rounded-xl bg-stone-50 border border-stone-200">
@@ -561,9 +561,10 @@
                   <span class="font-bold text-meadow-950">{{ item.title }}</span>
                   <span
                     v-if="item.badge"
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white shadow-sm"
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold shadow-sm"
+                    :class="item.highlight ? 'bg-rose-600 text-white' : 'bg-stone-600 text-white'"
                   >
-                    <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+                    <UIcon :name="item.highlight ? 'i-heroicons-clock' : 'i-heroicons-lock-closed'" class="w-3.5 h-3.5" />
                     {{ item.badge }}
                   </span>
                 </div>
@@ -1016,8 +1017,8 @@ const timeline = [
   {
     title: "ปิดรับบทความฉบับเต็มเพื่อลง Proceeding",
     date: "20 พฤศจิกายน 2569",
-    highlight: true,
-    badge: "ปิดรับ 20 พ.ย. 69",
+    highlight: false,
+    badge: "ปิดรับแล้ว",
     icon: "i-heroicons-document-check"
   },
 ];

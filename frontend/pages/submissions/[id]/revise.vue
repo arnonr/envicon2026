@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Creator, SubmissionFormData } from '~/components/submission/SubmissionForm.vue';
 import type { SelectedSlotFiles } from '~/components/submission/FileSlotsGrid.vue';
+import { canUploadFullPaper } from '~/utils/submission-status';
 
 definePageMeta({ middleware: ['auth', 'role'] });
 
@@ -285,6 +286,7 @@ const submitRevision = async () => {
           </div>
           <SubmissionFileSlotsGrid
             editable
+            :full-paper-editable="canUploadFullPaper('revision_requested')"
             :loading="uploading"
             :abstract-file-url="currentFiles.abstractFileUrl"
             :abstract-word-file-url="currentFiles.abstractWordFileUrl"

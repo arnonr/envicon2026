@@ -1,6 +1,10 @@
 import type { ReviewType, SubmissionStatus } from "../db/schema";
 import { STATUS_LABEL } from "../db/schema";
 
+// Set to true to re-open new full paper submissions.
+export const FULL_PAPER_SUBMISSION_OPEN = false;
+export const FULL_PAPER_CLOSED_MESSAGE = "ปิดรับบทความฉบับสมบูรณ์ (Full Paper) แล้ว";
+
 export const isDraft = (s: SubmissionStatus) => s === "draft";
 
 export const canEdit = (s: SubmissionStatus) =>
@@ -11,6 +15,9 @@ export const canRevise = (s: SubmissionStatus) =>
 
 export const canCameraReady = (s: SubmissionStatus) =>
   s === "accepted";
+
+export const canUploadFullPaper = (s: SubmissionStatus) =>
+  FULL_PAPER_SUBMISSION_OPEN || s === "revision_requested";
 
 export const canReplaceFile = (s: SubmissionStatus) =>
   s === "submitted";

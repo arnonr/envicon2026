@@ -39,6 +39,7 @@ interface SlotConfig {
 }
 
 interface SectionConfig {
+  key: 'abstract' | 'fullPaper';
   title: string;
   icon: string;
   iconClass: string;
@@ -47,6 +48,7 @@ interface SectionConfig {
 
 const SECTIONS: SectionConfig[] = [
   {
+    key: 'abstract',
     title: '1. บทคัดย่อ (Abstract)',
     icon: 'i-heroicons-document',
     iconClass: 'text-primary-600',
@@ -74,6 +76,7 @@ const SECTIONS: SectionConfig[] = [
     ],
   },
   {
+    key: 'fullPaper',
     title: '2. บทความฉบับสมบูรณ์ (Full Paper)',
     icon: 'i-heroicons-document-text',
     iconClass: 'text-emerald-600',
@@ -110,9 +113,16 @@ const props = defineProps<{
   fullPaperFileUrl?: string | null;
   fullPaperWordFileUrl?: string | null;
   editable?: boolean;
+  fullPaperEditable?: boolean;
   manageExisting?: boolean;
   loading?: boolean;
 }>();
+
+const isFullPaperClosed = (section: SectionConfig) =>
+  section.key === 'fullPaper' && props.fullPaperEditable === false;
+
+const isSectionEditable = (section: SectionConfig) =>
+  Boolean(props.editable) && !isFullPaperClosed(section);
 
 const emit = defineEmits<{
   'update:files': [files: SelectedSlotFiles];
@@ -259,10 +269,23 @@ defineExpose({ clearAll, resetAll, selected, workingUrls });
       :key="section.title"
       class="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50/40"
     >
-      <div class="flex items-center gap-2">
-        <UIcon :name="section.icon" class="w-5 h-5" :class="section.iconClass" />
-        <h4 class="font-semibold text-sm text-gray-900">{{ section.title }}</h4>
+      <div class="flex items-center justify-between gap-2 flex-wrap">
+        <div class="flex items-center gap-2">
+          <UIcon :name="section.icon" class="w-5 h-5" :class="section.iconClass" />
+          <h4 class="font-semibold text-sm text-gray-900">{{ section.title }}</h4>
+        </div>
+        <UBadge v-if="isFullPaperClosed(section)" color="red" variant="soft" size="xs">
+          ปิดรับแล้ว
+        </UBadge>
       </div>
+
+      <p
+        v-if="isFullPaperClosed(section)"
+        class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-start gap-1.5"
+      >
+        <UIcon name="i-heroicons-lock-closed" class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+        <span>ปิดรับบทความฉบับสมบูรณ์ (Full Paper) แล้ว หากคณะกรรมการส่งกลับแก้ไข จะสามารถอัปโหลดไฟล์ฉบับแก้ไขได้ในหน้าแก้ไขผลงาน</span>
+      </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div
@@ -336,7 +359,7 @@ defineExpose({ clearAll, resetAll, selected, workingUrls });
           </div>
 
           <CommonFileUpload
-            v-if="editable"
+            v-if="isSectionEditable(section)"
             :ref="(el) => setUploadRef(slot.fileKey, el)"
             compact
             :accept="slot.accept"

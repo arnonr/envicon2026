@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SelectedSubmissionFiles } from '~/components/submission/FileSlotsGrid.vue';
+import { canUploadFullPaper } from '~/utils/submission-status';
 
 interface Revision {
   id: string;
@@ -41,6 +42,7 @@ interface Submission {
   currentRound?: number;
   latestReleasedReviewType?: "abstract" | "full_paper" | null;
   canUpdateFiles?: boolean;
+  canUploadFullPaper?: boolean;
   paymentSlipUrl: string | null;
   paymentStatus: 'unpaid' | 'pending_verification' | 'verified' | 'rejected';
   paymentNote: string | null;
@@ -96,12 +98,15 @@ const openFileEditor = async () => {
   filesSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
+const isFullPaperUploadAllowed = computed(() =>
+  submission.value?.canUploadFullPaper ?? canUploadFullPaper(submission.value?.status ?? '')
+);
+
 const hasAnyFileToUpload = computed(() =>
   Boolean(
     fileSlots.value.abstractPdf ||
       fileSlots.value.abstractWord ||
-      fileSlots.value.fullPaperPdf ||
-      fileSlots.value.fullPaperWord
+      (isFullPaperUploadAllowed.value && (fileSlots.value.fullPaperPdf || fileSlots.value.fullPaperWord))
   )
 );
 
@@ -122,8 +127,12 @@ const saveFileUpdates = async () => {
   const formData = new FormData();
   if (fileSlots.value.abstractPdf) formData.append('abstractPdf', fileSlots.value.abstractPdf);
   if (fileSlots.value.abstractWord) formData.append('abstractWord', fileSlots.value.abstractWord);
-  if (fileSlots.value.fullPaperPdf) formData.append('fullPaperPdf', fileSlots.value.fullPaperPdf);
-  if (fileSlots.value.fullPaperWord) formData.append('fullPaperWord', fileSlots.value.fullPaperWord);
+  if (isFullPaperUploadAllowed.value && fileSlots.value.fullPaperPdf) {
+    formData.append('fullPaperPdf', fileSlots.value.fullPaperPdf);
+  }
+  if (isFullPaperUploadAllowed.value && fileSlots.value.fullPaperWord) {
+    formData.append('fullPaperWord', fileSlots.value.fullPaperWord);
+  }
   if (fileUpdateChangelog.value.trim()) formData.append('changelog', fileUpdateChangelog.value.trim());
 
   const { error } = await handleApiCall(() =>
@@ -254,7 +263,11 @@ const fetchSubmission = async () => {
     submission.value.canUpdateFiles
     && (
       ['revision_requested', 'submitted', 'under_review'].includes(submission.value.status)
-      || (submission.value.status === 'accepted' && submission.value.latestReleasedReviewType === 'abstract')
+      || (
+        submission.value.status === 'accepted'
+        && submission.value.latestReleasedReviewType === 'abstract'
+        && isFullPaperUploadAllowed.value
+      )
     )
   ) {
     isEditingFiles.value = true;
@@ -426,6 +439,7 @@ watch(() => props.modelValue, (open) => {
             v-model="fileSlots"
             :current-urls="submission"
             :editable="isEditingFiles"
+            :full-paper-editable="isFullPaperUploadAllowed"
             :loading="savingFiles"
           />
           <div v-if="isEditingFiles" class="mt-3 pt-3 border-t border-gray-100 space-y-3">
@@ -726,7 +740,10 @@ watch(() => props.modelValue, (open) => {
         </div>
 
         <!-- Upload full paper (abstract round accepted) -->
-        <div v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract'" class="border border-green-200 rounded-lg p-4 bg-green-50/50">
+        <div
+          v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract' && isFullPaperUploadAllowed"
+          class="border border-green-200 rounded-lg p-4 bg-green-50/50"
+        >
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
@@ -735,6 +752,18 @@ watch(() => props.modelValue, (open) => {
             <UButton color="green" variant="soft" size="xs" @click="openFileEditor">
               อัปโหลดไฟล์
             </UButton>
+          </div>
+        </div>
+        <div
+          v-else-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl"
+          class="border border-gray-200 rounded-lg p-4 bg-gray-50"
+        >
+          <div class="flex items-start gap-2.5">
+            <UIcon name="i-heroicons-lock-closed" class="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
+            <div>
+              <h3 class="text-sm font-semibold text-gray-800">ปิดรับบทความฉบับสมบูรณ์ (Full Paper) แล้ว</h3>
+              <p class="text-xs text-gray-500 mt-0.5">หมดเขตการส่งบทความฉบับสมบูรณ์เพื่อลง Proceeding เมื่อวันที่ 20 พฤศจิกายน 2569</p>
+            </div>
           </div>
         </div>
 

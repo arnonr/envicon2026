@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SelectedSlotFiles } from '~/components/submission/FileSlotsGrid.vue';
+import { canUploadFullPaper } from '~/utils/submission-status';
 
 definePageMeta({ middleware: ['auth', 'role'] });
 
@@ -58,6 +59,7 @@ interface Submission {
   currentRoundNumber: number;
   latestReleasedReviewType?: "abstract" | "full_paper" | null;
   canUpdateFiles: boolean;
+  canUploadFullPaper?: boolean;
   canReplaceLatestRevisionFile: boolean;
   releasedResult: ReleasedResult | null;
 }
@@ -88,12 +90,15 @@ const selectedSlotFiles = ref<SelectedSlotFiles>({
 });
 const replacingRevisionFile = ref(false);
 
+const isFullPaperUploadAllowed = computed(() =>
+  submission.value?.canUploadFullPaper ?? canUploadFullPaper(submission.value?.status ?? '')
+);
+
 const hasSelectedSlotFile = computed(() =>
   Boolean(
     selectedSlotFiles.value.abstractPdf
     || selectedSlotFiles.value.abstractWord
-    || selectedSlotFiles.value.fullPaperPdf
-    || selectedSlotFiles.value.fullPaperWord
+    || (isFullPaperUploadAllowed.value && (selectedSlotFiles.value.fullPaperPdf || selectedSlotFiles.value.fullPaperWord))
   )
 );
 
@@ -124,7 +129,11 @@ const fetchSubmission = async () => {
     submission.value.canUpdateFiles
     && (
       ['revision_requested', 'submitted', 'under_review'].includes(submission.value.status)
-      || (submission.value.status === 'accepted' && submission.value.latestReleasedReviewType === 'abstract')
+      || (
+        submission.value.status === 'accepted'
+        && submission.value.latestReleasedReviewType === 'abstract'
+        && isFullPaperUploadAllowed.value
+      )
     )
   ) {
     isEditingFiles.value = true;
@@ -137,8 +146,12 @@ const saveUpdatedFiles = async () => {
   const formData = new FormData();
   if (selectedSlotFiles.value.abstractPdf) formData.append('abstractPdf', selectedSlotFiles.value.abstractPdf);
   if (selectedSlotFiles.value.abstractWord) formData.append('abstractWord', selectedSlotFiles.value.abstractWord);
-  if (selectedSlotFiles.value.fullPaperPdf) formData.append('fullPaperPdf', selectedSlotFiles.value.fullPaperPdf);
-  if (selectedSlotFiles.value.fullPaperWord) formData.append('fullPaperWord', selectedSlotFiles.value.fullPaperWord);
+  if (isFullPaperUploadAllowed.value && selectedSlotFiles.value.fullPaperPdf) {
+    formData.append('fullPaperPdf', selectedSlotFiles.value.fullPaperPdf);
+  }
+  if (isFullPaperUploadAllowed.value && selectedSlotFiles.value.fullPaperWord) {
+    formData.append('fullPaperWord', selectedSlotFiles.value.fullPaperWord);
+  }
   if (fileChangelog.value.trim()) formData.append('changelog', fileChangelog.value.trim());
 
   const { error } = await handleApiCall(() =>
@@ -260,6 +273,7 @@ onMounted(fetchSubmission);
           <SubmissionFileSlotsGrid
             ref="fileSlotsRef"
             :editable="isEditingFiles"
+            :full-paper-editable="isFullPaperUploadAllowed"
             :loading="uploadingFiles"
             :abstract-file-url="submission.abstractFileUrl"
             :abstract-word-file-url="submission.abstractWordFileUrl"
@@ -289,7 +303,10 @@ onMounted(fetchSubmission);
       </UCard>
 
       <!-- Upload Full Paper prompt (when abstract round accepted) -->
-      <UCard v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl" class="mb-6 border-green-200">
+      <UCard
+        v-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl && isFullPaperUploadAllowed"
+        class="mb-6 border-green-200"
+      >
         <div class="flex items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-green-600" />
@@ -298,6 +315,18 @@ onMounted(fetchSubmission);
           <UButton color="green" variant="soft" size="xs" @click="isEditingFiles = true">
             เลือกไฟล์อัปโหลด
           </UButton>
+        </div>
+      </UCard>
+      <UCard
+        v-else-if="submission.status === 'accepted' && submission.latestReleasedReviewType === 'abstract' && !submission.fullPaperFileUrl && !submission.fullPaperWordFileUrl"
+        class="mb-6 border-gray-200 bg-gray-50/70"
+      >
+        <div class="flex items-start gap-2.5">
+          <UIcon name="i-heroicons-lock-closed" class="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
+          <div>
+            <p class="font-semibold text-sm text-gray-800">ปิดรับบทความฉบับสมบูรณ์ (Full Paper) แล้ว</p>
+            <p class="text-xs text-gray-500 mt-0.5">หมดเขตการส่งบทความฉบับสมบูรณ์เพื่อลง Proceeding เมื่อวันที่ 20 พฤศจิกายน 2569</p>
+          </div>
         </div>
       </UCard>
 

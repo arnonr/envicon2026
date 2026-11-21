@@ -20,6 +20,7 @@ export interface Creator {
 const props = defineProps<{
   modelValue: SubmissionFormData;
   initialCreators?: Creator[];
+  fullPaperOpen?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -142,8 +143,9 @@ defineExpose({ creators });
     <UFormGroup>
       <UCheckbox
         :model-value="modelValue.wantsFullPaper"
+        :disabled="fullPaperOpen === false"
         label="ต้องการส่งบทความฉบับสมบูรณ์ (Full Paper) ด้วย"
-        help="หากไม่เลือก ระบบจะรับส่งเฉพาะบทคัดย่อได้ โดยไม่ต้องติดตามขอ Full Paper"
+        :help="fullPaperOpen === false ? 'ปิดรับบทความฉบับสมบูรณ์ (Full Paper) แล้ว' : 'หากไม่เลือก ระบบจะรับส่งเฉพาะบทคัดย่อได้ โดยไม่ต้องติดตามขอ Full Paper'"
         @update:model-value="update('wantsFullPaper', $event as boolean)"
       />
     </UFormGroup>

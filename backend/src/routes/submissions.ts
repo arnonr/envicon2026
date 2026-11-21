@@ -15,9 +15,12 @@ import {
   recordReceiptAuditLog,
 } from "../services/receipt-audit";
 import {
+  FULL_PAPER_SUBMISSION_OPEN,
+  FULL_PAPER_CLOSED_MESSAGE,
   canEdit,
   canRevise,
   canCameraReady,
+  canUploadFullPaper,
   canReplaceFile,
   canUpdateFiles,
   statusAfterFileUpload,
@@ -211,6 +214,10 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       canUpdateFiles: user!.role === "author"
         && sub.authorId === user!.id
         && canUpdateFiles(sub.status),
+      canUploadFullPaper: user!.role === "author"
+        && sub.authorId === user!.id
+        && canUploadFullPaper(sub.status),
+      fullPaperSubmissionOpen: FULL_PAPER_SUBMISSION_OPEN,
       canReplaceLatestRevisionFile: user!.role === "author"
         && sub.authorId === user!.id
         && canReplaceFile(sub.status)
@@ -267,7 +274,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         submitterType: body.submitterType,
         educationLevel: body.educationLevel,
         presentationFormat: body.presentationFormat,
-        wantsFullPaper: body.wantsFullPaper ? 1 : 0,
+        wantsFullPaper: FULL_PAPER_SUBMISSION_OPEN && body.wantsFullPaper ? 1 : 0,
         ...initialReceipt,
       });
 
@@ -402,6 +409,12 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "Cannot edit in current status");
       }
+      if (body.round1FileType === "full_paper" && !canUploadFullPaper(sub.status)) {
+        set.status = 400;
+        return fail("FULL_PAPER_CLOSED", FULL_PAPER_CLOSED_MESSAGE);
+      }
+
+      const allowWantsFullPaperUpdate = FULL_PAPER_SUBMISSION_OPEN || sub.status === "revision_requested";
 
       await db
         .update(submissions)
@@ -415,7 +428,7 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
           ...(body.submitterType && { submitterType: body.submitterType }),
           ...(body.educationLevel && { educationLevel: body.educationLevel }),
           ...(body.presentationFormat && { presentationFormat: body.presentationFormat }),
-          ...(body.wantsFullPaper !== undefined && { wantsFullPaper: body.wantsFullPaper ? 1 : 0 }),
+          ...(allowWantsFullPaperUpdate && body.wantsFullPaper !== undefined && { wantsFullPaper: body.wantsFullPaper ? 1 : 0 }),
           ...(body.round1FileType && { round1FileType: body.round1FileType }),
           ...(body.receiptName !== undefined && { receiptName: body.receiptName.trim() || null }),
           ...(body.receiptTaxId !== undefined && { receiptTaxId: body.receiptTaxId.trim() || null }),
@@ -515,6 +528,12 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         return fail("VALIDATION_ERROR", "กรุณาเลือกไฟล์อย่างน้อย 1 ไฟล์");
       }
 
+      const hasUploadedFullPaper = Boolean(files.fullPaperPdf || files.fullPaperWord);
+      if (hasUploadedFullPaper && !canUploadFullPaper(sub.status)) {
+        set.status = 400;
+        return fail("FULL_PAPER_CLOSED", FULL_PAPER_CLOSED_MESSAGE);
+      }
+
       const extError = validateSlotFiles(files);
       if (extError) {
         set.status = 400;
@@ -533,7 +552,6 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       const { round1FileUrl, round1FileType } = deriveLegacyRound1Fields(merged);
 
       const isInitialSubmit = sub.status === "draft";
-      const hasUploadedFullPaper = Boolean(files.fullPaperPdf || files.fullPaperWord);
       let latestReleasedReviewType: "abstract" | "full_paper" | null = null;
       if (sub.status === "accepted" && hasUploadedFullPaper) {
         const [released] = await db
@@ -664,6 +682,10 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         set.status = 400;
         return fail("VALIDATION_ERROR", "Cannot upload in current status");
       }
+      if (body.fileType === "full_paper" && !canUploadFullPaper(sub.status)) {
+        set.status = 400;
+        return fail("FULL_PAPER_CLOSED", FULL_PAPER_CLOSED_MESSAGE);
+      }
 
       const fileUrl = await saveFile(body.file, `round1-${params.id}-${body.fileType}`);
       const currentSlots = resolveCurrentSlotUrls(sub);
@@ -722,6 +744,10 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
       if (!canCameraReady(sub.status)) {
         set.status = 400;
         return fail("VALIDATION_ERROR", "อัปโหลดบทความฉบับสมบูรณ์ได้หลังจากผลงานผ่านการพิจารณาแล้วเท่านั้น");
+      }
+      if (!canUploadFullPaper(sub.status)) {
+        set.status = 400;
+        return fail("FULL_PAPER_CLOSED", FULL_PAPER_CLOSED_MESSAGE);
       }
 
       const fileUrl = await saveFile(body.file, `paper-${params.id}`);
@@ -943,6 +969,10 @@ export const submissionRoutes = new Elysia({ prefix: "/submissions" })
         fullPaperPdf: body.fullPaperPdf ?? body.file,
         fullPaperWord: body.fullPaperWord,
       };
+      if ((files.fullPaperPdf || files.fullPaperWord) && !canUploadFullPaper(sub.status)) {
+        set.status = 400;
+        return fail("FULL_PAPER_CLOSED", FULL_PAPER_CLOSED_MESSAGE);
+      }
 
       const extError = validateSlotFiles(files);
       if (extError) {
