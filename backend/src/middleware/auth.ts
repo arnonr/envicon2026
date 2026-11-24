@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { jwt } from "@elysiajs/jwt";
-import { jwtVerify } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 import { db } from "../db";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
@@ -14,18 +14,48 @@ export const jwtPlugin = new Elysia({ name: "jwt" }).use(
   jwt({ name: "jwt", secret: JWT_SECRET, exp: "7d" })
 );
 
+async function findAuthUserById(userId: string) {
+  const [user] = await db
+    .select({ id: users.id, email: users.email, name: users.name, affiliation: users.affiliation, phone: users.phone, role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return user ?? null;
+}
+
 // Verifies Bearer token, returns user from DB or null
 export async function getUserFromHeaders(authorization: string | undefined) {
   if (!authorization?.startsWith("Bearer ")) return null;
   try {
     const { payload } = await jwtVerify(authorization.slice(7), SECRET_KEY);
-    if (typeof payload.sub !== "string") return null;
-    const [user] = await db
-      .select({ id: users.id, email: users.email, name: users.name, affiliation: users.affiliation, phone: users.phone, role: users.role })
-      .from(users)
-      .where(eq(users.id, payload.sub))
-      .limit(1);
-    return user ?? null;
+    if (typeof payload.sub !== "string" || payload.purpose !== undefined) return null;
+    return findAuthUserById(payload.sub);
+  } catch {
+    return null;
+  }
+}
+
+export async function signReviewFileTicket(userId: string, reviewId: string): Promise<string> {
+  return new SignJWT({ purpose: "review_file", reviewId })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime("2h")
+    .sign(SECRET_KEY);
+}
+
+export async function verifyReviewFileTicket(ticket: string | undefined, reviewId: string) {
+  if (!ticket) return null;
+  try {
+    const { payload } = await jwtVerify(ticket, SECRET_KEY);
+    if (
+      payload.purpose !== "review_file" ||
+      payload.reviewId !== reviewId ||
+      typeof payload.sub !== "string"
+    ) {
+      return null;
+    }
+    return findAuthUserById(payload.sub);
   } catch {
     return null;
   }

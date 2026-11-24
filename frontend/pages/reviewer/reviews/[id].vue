@@ -11,6 +11,7 @@ interface ReviewDetail {
   reviewType: "abstract" | "full_paper";
   hasBlindFile: boolean;
   blindFileName: string | null;
+  blindFileTicket: string | null;
   title: string;
   titleEn: string | null;
   abstract: string | null;
@@ -120,6 +121,15 @@ async function submitReview() {
   await navigateTo("/reviewer");
 }
 
+const blindFileViewUrl = computed(() => {
+  if (!review.value?.hasBlindFile || !review.value.blindFileTicket) return "";
+  return `${apiBase}/reviews/${route.params.id}/file?ticket=${encodeURIComponent(review.value.blindFileTicket)}`;
+});
+
+const blindFileDownloadUrl = computed(() =>
+  blindFileViewUrl.value ? `${blindFileViewUrl.value}&download=1` : "",
+);
+
 async function downloadBlindFile() {
   if (!review.value?.hasBlindFile || !authStore.token) return;
   downloadingFile.value = true;
@@ -128,7 +138,14 @@ async function downloadBlindFile() {
       headers: { Authorization: `Bearer ${authStore.token}` },
     });
     if (!res.ok) {
-      showError({ status: res.status, error: "ไม่สามารถดาวน์โหลดไฟล์สำหรับประเมินได้" });
+      const errBody = await res.json().catch(() => null);
+      if (res.status === 401) {
+        authStore.logout();
+      }
+      showError({
+        status: res.status,
+        error: errBody?.message || errBody?.error || "ไม่สามารถดาวน์โหลดไฟล์สำหรับประเมินได้",
+      });
       return;
     }
     const blob = await res.blob();
@@ -138,8 +155,10 @@ async function downloadBlindFile() {
     link.download = review.value.blindFileName ?? `blind-review-round-${review.value.roundNumber}.pdf`;
     document.body.appendChild(link);
     link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      link.remove();
+      URL.revokeObjectURL(url);
+    }, 60_000);
   } catch {
     showError({ status: 500, error: "เกิดข้อผิดพลาดในการดาวน์โหลดไฟล์" });
   } finally {
@@ -181,8 +200,31 @@ onMounted(fetchReview);
           <div class="sm:col-span-2">
             <dt class="text-gray-500">เอกสารสำหรับประเมิน (Blind Review)</dt>
             <dd class="mt-2">
+              <div v-if="review.hasBlindFile && blindFileViewUrl && blindFileDownloadUrl" class="flex flex-wrap gap-2">
+                <UButton
+                  color="primary"
+                  icon="i-heroicons-document-text"
+                  :to="blindFileViewUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  external
+                >
+                  เปิดดูไฟล์ (Blind Review)
+                </UButton>
+                <UButton
+                  color="primary"
+                  variant="soft"
+                  icon="i-heroicons-arrow-down-tray"
+                  :to="blindFileDownloadUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  external
+                >
+                  ดาวน์โหลดไฟล์
+                </UButton>
+              </div>
               <UButton
-                v-if="review.hasBlindFile"
+                v-else-if="review.hasBlindFile"
                 color="primary"
                 variant="soft"
                 icon="i-heroicons-arrow-down-tray"
